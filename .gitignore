@@ -1,0 +1,74 @@
+# ============================
+# GLOBAL / ROOT IGNORE
+# ============================
+
+# Node
+node_modules/
+
+# Environment files
+.env
+.env.*    # .env.production, .env.local, etc.
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+debug.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor folders
+.vscode/
+.idea/
+
+# ============================
+# BACKEND (server folder)
+# ============================
+
+server/node_modules/
+server/.env
+server/.env.*
+server/dist/
+server/build/
+server/coverage/
+
+# PM2 logs (if ever used)
+.pids
+*.pid
+*.seed
+*.pid.lock
+
+# ============================
+# FRONTEND (vite + react)
+# ============================
+
+frontend/node_modules/
+frontend/.env
+frontend/.env.*
+frontend/dist/
+frontend/build/
+
+# If your frontend folder name is different:
+client/node_modules/
+client/.env
+client/.env.*
+client/dist/
+client/build/
+
+# Vite cache
+frontend/.vite/
+bclient.vite/
+
+# ============================
+# OPTIONAL / SAFE
+# ============================
+
+# Firebase cache
+.firebase/
+
+# Local tooling
+*.local
+*.tmp
