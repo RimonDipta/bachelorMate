@@ -1,6 +1,6 @@
 // src/services/api.js
 
-const BASE_URL = "http://localhost:5000/api"; // adjust if backend is different
+const BASE_URL = "https://bachelormate.onrender.com"; // adjust if backend is different
 
 class APIClient {
   constructor() {
