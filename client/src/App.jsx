@@ -7,6 +7,7 @@ import HomeLayout from "./components/layout/HomeLayout";
 import { PageSkeleton } from "./components/ui";
 
 const Landing = lazy(() => import("./pages/Landing"));
+const Legal = lazy(() => import("./pages/Legal"));
 const Login = lazy(() => import("./pages/auth/Login"));
 const Register = lazy(() => import("./pages/auth/Register"));
 const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
@@ -75,6 +76,8 @@ export default function App() {
     <Suspense fallback={<Spinner />}>
       <Routes>
         <Route path="/" element={<PublicOnly><Landing /></PublicOnly>} />
+        <Route path="/privacy" element={<Legal page="privacy" />} />
+        <Route path="/terms" element={<Legal page="terms" />} />
         <Route path="/login" element={<PublicOnly><Login /></PublicOnly>} />
         <Route path="/register" element={<PublicOnly><Register /></PublicOnly>} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
