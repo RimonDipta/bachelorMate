@@ -116,12 +116,15 @@ Without SMTP settings, emails (verification, reset, invitations) are printed to 
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` | | Outgoing email (any SMTP provider: Resend, SendGrid, Mailgun, Gmail app password…) |
 | `FIREBASE_PROJECT_ID` | | Enables Google sign-in. Tokens are verified against Google's public keys, so no service account is needed |
 | `UPLOAD_DIR`, `MAX_UPLOAD_MB` | | Where avatars and receipts are stored, and the size limit |
+| `SERVE_CLIENT` | | `true` to serve `client/dist` from the API (one-service deploy) |
+| `SEED_DEMO`, `DEMO_PASSWORD` | | Seed the demo home on first start, and its password |
 
 **client/.env**
 
 | Variable | Purpose |
 | --- | --- |
-| `VITE_API_URL` | API origin in production (leave empty in development) |
+| `VITE_API_URL` | API origin when the frontend is hosted separately without a proxy (leave empty for the one-service and Vercel-rewrite setups) |
+| `VITE_SOCKET_URL` | API origin for WebSockets when `/api` is proxied (Vercel → Render) |
 | `VITE_FIREBASE_*` | Firebase web config. Leave empty to hide the Google button |
 
 ## Database & migration
@@ -143,7 +146,7 @@ The legacy collections are only read, never modified. Re-running skips families 
 ```bash
 npm --prefix server test
 ```
-The suite runs 46 tests (43 API integration and 3 unit) against an in-memory MongoDB replica set. They cover registration, login, email verification, password reset and change, refresh rotation and reuse detection, multiple homes, link/code/in-app joining, approvals, usage limits, revocation, IDOR isolation, role and permission escalation attempts, meal grids and defaults, meal-rate maths, period close/reopen with ledger reversal, payments, expenses with exact splits, edit audit, voiding, reversals, CSV reports, meal-off, guest and departure requests with notice exceptions, home chat access control, editing and deleting messages, friends and DMs, notifications, announcements, grocery-to-expense, dashboard, calendar, member removal, ownership transfer, archiving and deletion.
+The suite runs 47 tests (43 API integration, 1 demo-seed and 3 unit) against an in-memory MongoDB replica set. They cover registration, login, email verification, password reset and change, refresh rotation and reuse detection, multiple homes, link/code/in-app joining, approvals, usage limits, revocation, IDOR isolation, role and permission escalation attempts, meal grids and defaults, meal-rate maths, period close/reopen with ledger reversal, payments, expenses with exact splits, edit audit, voiding, reversals, CSV reports, meal-off, guest and departure requests with notice exceptions, home chat access control, editing and deleting messages, friends and DMs, notifications, announcements, grocery-to-expense, dashboard, calendar, member removal, ownership transfer, archiving and deletion.
 
 Client checks:
 ```bash
@@ -153,14 +156,28 @@ npm --prefix client run lint
 npm --prefix client run build
 ```
 
+## Demo accounts
+
+Load a fully populated demo home ("Green Villa Mess", with five members, two weeks of meals, expenses, payments, requests, chat and more):
+```bash
+npm --prefix server run seed:demo
+```
+It only replaces the `@demo.bachelormate.app` accounts and their home. Every demo account uses the password `Demo@1234` (override it with `DEMO_PASSWORD`):
+
+| Role | Email |
+| --- | --- |
+| Admin | `admin@demo.bachelormate.app` |
+| Manager | `manager@demo.bachelormate.app` |
+| Meal manager | `meal@demo.bachelormate.app` |
+| Member | `member@demo.bachelormate.app`, `member2@demo.bachelormate.app` |
+
+Setting `SEED_DEMO=true` seeds the demo automatically on server start, once.
+
 ## Deployment
 
-Socket.IO needs a long-running Node process, so deploy the **API** to a host like Render, Railway, Fly.io or a VPS (not Vercel serverless). `server/vercel.json` is kept for reference, but chat, presence and local uploads won't work there.
+**→ Step-by-step guide: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** (MongoDB Atlas + Render, one-click via [`render.yaml`](render.yaml)).
 
-1. **Database:** MongoDB Atlas (replica set by default).
-2. **API:** `npm --prefix server install --omit=dev && npm --prefix server start`. Set the env vars above with `NODE_ENV=production`, `TRUST_PROXY=true`, and `COOKIE_SAMESITE=none` + `COOKIE_SECURE=true` if the client is on another domain. Mount a persistent disk at `UPLOAD_DIR` (or swap in S3-compatible storage).
-3. **Client:** `npm --prefix client run build` with `VITE_API_URL=https://your-api`, then deploy `client/dist` to Vercel, Netlify or Cloudflare Pages. Add an SPA fallback rewrite to `index.html`.
-4. Set `CLIENT_URL` and `CORS_ORIGINS` on the API to the client's URL.
+Socket.IO needs a long-running Node process, so the API can't run on Vercel serverless functions. The recommended setup is a single Render service where the API also serves the built client (`SERVE_CLIENT=true`): one URL, first-party cookies and native WebSockets. Hosting the frontend on Vercel with the API on Render is also supported (see Option B in the guide). `server/vercel.json` and `server/api/` are legacy and not used by either setup.
 
 ## Known limitations
 

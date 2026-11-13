@@ -35,6 +35,7 @@ const env = {
   FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID,
   UPLOAD_DIR: process.env.UPLOAD_DIR || require("path").join(__dirname, "..", "uploads"),
   MAX_UPLOAD_MB: Number(process.env.MAX_UPLOAD_MB) || 5,
+  SERVE_CLIENT: bool(process.env.SERVE_CLIENT, false),
 };
 
 if (!env.JWT_ACCESS_SECRET) {

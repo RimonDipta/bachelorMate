@@ -10,19 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <script>
-      // Apply the saved theme before first paint to avoid a flash.
-      try {
-        var t = JSON.parse(localStorage.getItem("bm_theme") || "{}");
-        var mode = t.mode || "system";
-        var dark = mode === "dark" || (mode === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
-        var el = document.documentElement;
-        el.dataset.theme = dark ? "dark" : "light";
-        el.dataset.accent = t.accent || "violet";
-        el.dataset.preset = t.preset || "default";
-        el.dataset.density = t.density || "comfortable";
-      } catch (e) {}
-    </script>
+    <script src="/theme-init.js"></script>
   </head>
   <body>
     <div id="root"></div>

@@ -1,0 +1,38 @@
+# Render Blueprint: deploys BachelorMate as ONE web service.
+# The Node API serves the built React app, so the frontend, REST API and
+# WebSockets share one URL (no CORS or third-party-cookie problems).
+# Render dashboard → New → Blueprint → pick this repository.
+services:
+  - type: web
+    name: bachelormate
+    runtime: node
+    plan: free
+    buildCommand: npm ci --prefix server --omit=dev && npm ci --prefix client --include=dev && npm --prefix client run build
+    startCommand: npm --prefix server start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "22"
+      - key: SERVE_CLIENT
+        value: "true"
+      - key: TRUST_PROXY
+        value: "true"
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: COOKIE_SAMESITE
+        value: lax
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: MONGO_URI
+        sync: false # paste your MongoDB Atlas connection string
+      - key: CLIENT_URL
+        sync: false # e.g. https://bachelormate.onrender.com
+      - key: CORS_ORIGINS
+        sync: false # same as CLIENT_URL
+      - key: SEED_DEMO
+        value: "true" # loads the demo home once; set to false to disable
+      - key: MAIL_FROM
+        value: BachelorMate <no-reply@example.com>
+      # Optional: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, FIREBASE_PROJECT_ID

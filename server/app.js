@@ -17,7 +17,44 @@ const app = express();
 if (env.TRUST_PROXY) app.set("trust proxy", 1);
 app.disable("x-powered-by");
 
-app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    // Allows popups for optional Google sign-in.
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "https://apis.google.com"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
+        imgSrc: ["'self'", "data:", "blob:", "https:"],
+        connectSrc: ["'self'", "https://*.googleapis.com", ...env.CORS_ORIGINS],
+        frameSrc: ["'self'", "https://*.firebaseapp.com", "https://accounts.google.com"],
+        objectSrc: ["'none'"],
+        baseUri: ["'self'"],
+        formAction: ["'self'"],
+      },
+    },
+  })
+);
+
+// Optional: serve the built React client from this same service (one-URL
+// deploy: same-origin cookies and WebSockets, no CORS needed).
+if (env.SERVE_CLIENT) {
+  const dist = path.resolve(__dirname, "..", "client", "dist");
+  const fs = require("fs");
+  if (fs.existsSync(path.join(dist, "index.html"))) {
+    app.use(express.static(dist, { index: false, maxAge: "1y", setHeaders: (res, file) => file.endsWith(".html") && res.setHeader("Cache-Control", "no-cache") }));
+    app.get(/^\/(?!api\/|uploads\/|socket\.io\/|health$).*/, (req, res, next) => {
+      if (!req.accepts("html")) return next();
+      res.setHeader("Cache-Control", "no-cache");
+      res.sendFile(path.join(dist, "index.html"));
+    });
+  } else {
+    console.warn(`SERVE_CLIENT is on but ${dist} has no build. Run: npm --prefix client run build`);
+  }
+}
 app.use(
   cors({
     origin: (origin, cb) => cb(null, !origin || env.CORS_ORIGINS.includes(origin.replace(/\/$/, ""))),

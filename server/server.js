@@ -7,6 +7,17 @@ const { initSockets } = require("./sockets");
 
 async function start() {
   await connectDB();
+
+  // SEED_DEMO=true loads the demo home once (only if the demo admin doesn't exist yet).
+  if (["1", "true", "yes"].includes(String(process.env.SEED_DEMO).toLowerCase())) {
+    const User = require("./models/User");
+    const { seedDemo, DOMAIN } = require("./scripts/seed-demo");
+    if (!(await User.exists({ email: `admin@${DOMAIN}` }))) {
+      await seedDemo();
+      console.log(`Demo data seeded. Sign in as admin@${DOMAIN}`);
+    }
+  }
+
   const server = http.createServer(app);
   initSockets(server);
   server.listen(env.PORT, () => console.log(`BachelorMate API listening on http://localhost:${env.PORT}`));
