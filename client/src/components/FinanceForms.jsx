@@ -7,6 +7,16 @@ import { useHome } from "../context/HomeContext";
 import { useAction } from "../lib/hooks";
 import { Alert, Field, FormModal, Input, Select, Textarea, Segmented } from "./ui";
 import { CATEGORY_LABEL, MEAL_CATEGORIES, localDay } from "../lib/format";
+import { parseMinor, minorToInput } from "../lib/money";
+import SplitEditor, { emptySplit, splitError, splitToAllocation } from "./SplitEditor";
+
+/** Saved expense allocation → split editor state. */
+function expenseToSplit(a) {
+  if (a.mode === "custom") return { ...emptySplit(), mode: "custom", shares: Object.fromEntries((a.shares || []).map((s) => [String(s.membership), minorToInput(s.amount)])) };
+  if (a.mode === "selected") return { ...emptySplit(), allMembers: false, memberships: (a.memberships || []).map(String) };
+  if (a.mode === "none") return { ...emptySplit(), mode: "none" };
+  return emptySplit();
+}
 
 export function useActiveMembers() {
   const { homeId } = useHome();
@@ -103,8 +113,8 @@ function ExpenseForm({ open, onClose, expense }) {
   const categories = Object.keys(CATEGORY_LABEL).filter((c) => canAll || MEAL_CATEGORIES.includes(c));
   const [f, setF] = useState(() =>
     expense
-      ? ({ title: expense.title, category: expense.category, amount: (expense.amount / 100).toFixed(2), day: expense.day, paidBy: expense.paidBy?._id || "", allocationMode: expense.allocation.mode === "meal_pool" ? "equal" : expense.allocation.mode, memberships: expense.allocation.memberships || [], notes: expense.notes || "", file: null })
-      : { title: "", category: categories[0], amount: "", day: localDay(), paidBy: "", allocationMode: "equal", memberships: [], notes: "", file: null }
+      ? ({ title: expense.title, category: expense.category, amount: (expense.amount / 100).toFixed(2), day: expense.day, paidBy: expense.paidBy?._id || "", split: expenseToSplit(expense.allocation), notes: expense.notes || "", file: null })
+      : { title: "", category: categories[0], amount: "", day: localDay(), paidBy: "", split: emptySplit(), notes: "", file: null }
   );
   const isMeal = MEAL_CATEGORIES.includes(f.category);
   const submit = useAction(
@@ -112,15 +122,18 @@ function ExpenseForm({ open, onClose, expense }) {
       const fd = new FormData();
       ["title", "category", "amount", "day", "notes"].forEach((k) => f[k] !== undefined && fd.append(k, f[k]));
       fd.append("paidBy", f.paidBy || "");
-      fd.append("allocationMode", isMeal ? "meal_pool" : f.allocationMode);
-      fd.append("memberships", JSON.stringify(f.allocationMode === "selected" ? f.memberships : []));
+      const s = f.split;
+      const mode = isMeal ? "meal_pool" : s.mode === "none" ? "none" : s.mode === "custom" ? "custom" : s.allMembers ? "equal" : "selected";
+      fd.append("allocationMode", mode);
+      fd.append("memberships", JSON.stringify(mode === "selected" ? s.memberships : []));
+      if (mode === "custom") fd.append("shares", JSON.stringify(splitToAllocation(s, members).shares));
       if (f.file) fd.append("receipt", f.file);
       return expense ? api.patch(`/homes/${homeId}/expenses/${expense._id}`, fd) : api.post(`/homes/${homeId}/expenses`, fd);
     },
     { invalidate: INVALIDATE(homeId), success: expense ? "Expense updated" : "Expense added", onSuccess: onClose }
   );
-  const valid = f.title?.trim() && /^\d+(\.\d{1,2})?$/.test(String(f.amount).trim()) && Number(f.amount) > 0 && (isMeal || f.allocationMode !== "selected" || f.memberships.length);
-  const perHead = !isMeal && f.allocationMode !== "none" && Number(f.amount) > 0 ? Number(f.amount) / (f.allocationMode === "selected" ? f.memberships.length || 1 : members.length || 1) : 0;
+  const total = parseMinor(f.amount);
+  const valid = f.title?.trim() && total > 0 && (isMeal || !splitError(f.split, members, total));
 
   return (
     <FormModal open={open} onClose={onClose} title={expense ? "Edit expense" : "Add expense"} size="lg" submitLabel={expense ? "Save changes" : "Add expense"} loading={submit.isPending} disabled={!valid} onSubmit={() => submit.mutate()}>
@@ -140,21 +153,8 @@ function ExpenseForm({ open, onClose, expense }) {
       {isMeal ? (
         <Alert tone="info">Meal expenses go into the meal pool. They're shared by meals eaten when the meal period is closed.</Alert>
       ) : (
-        <Field label="Split between">
-          <div className="stack" style={{ gap: 10 }}>
-            <Segmented label="Split" value={f.allocationMode} onChange={(m) => setF({ ...f, allocationMode: m })} items={[{ value: "equal", label: "All members equally" }, { value: "selected", label: "Selected members" }, { value: "none", label: "No one (fund only)" }]} />
-            {f.allocationMode === "selected" && (
-              <div className="grid-3" style={{ gap: 8 }}>
-                {members.map((m) => (
-                  <label key={m._id} className="checkbox">
-                    <input type="checkbox" checked={f.memberships.includes(m._id)} onChange={(e) => setF({ ...f, memberships: e.target.checked ? [...f.memberships, m._id] : f.memberships.filter((x) => x !== m._id) })} />
-                    {m.user.name}
-                  </label>
-                ))}
-              </div>
-            )}
-            {perHead > 0 && <span className="hint">≈ {perHead.toFixed(2)} {currency} each (rounded so shares add up exactly).</span>}
-          </div>
+        <Field label="Who pays what">
+          <SplitEditor value={f.split} onChange={(split) => setF({ ...f, split })} members={members} totalMinor={total} currency={currency} />
         </Field>
       )}
       <Field label="Notes" optional><Textarea value={f.notes || ""} maxLength={1000} onChange={(e) => setF({ ...f, notes: e.target.value })} /></Field>

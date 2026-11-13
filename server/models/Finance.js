@@ -69,8 +69,15 @@ const expenseSchema = new mongoose.Schema(
     // Who paid. null means it was paid from the home fund.
     paidBy: { type: mongoose.Schema.Types.ObjectId, ref: "Membership", default: null },
     allocation: {
-      mode: { type: String, enum: ["meal_pool", "equal", "selected", "none"], required: true },
+      mode: { type: String, enum: ["meal_pool", "equal", "selected", "custom", "none"], required: true },
       memberships: [{ type: mongoose.Schema.Types.ObjectId, ref: "Membership" }],
+      // custom mode: an exact amount (minor units) per member; sums to the total.
+      shares: [{ membership: { type: mongoose.Schema.Types.ObjectId, ref: "Membership" }, amount: { type: Number, min: 0 }, _id: false }],
+    },
+    // Set when the expense was posted automatically from a recurring cost.
+    recurring: {
+      template: { type: mongoose.Schema.Types.ObjectId, ref: "RecurringExpense" },
+      day: { type: String },
     },
     notes: { type: String, trim: true, maxlength: 1000 },
     receipt: { type: String },
@@ -90,10 +97,51 @@ const expenseSchema = new mongoose.Schema(
 );
 expenseSchema.index({ home: 1, day: -1 });
 expenseSchema.index({ home: 1, category: 1, status: 1 });
+// One posted expense per recurring occurrence, which makes auto-posting idempotent.
+expenseSchema.index(
+  { "recurring.template": 1, "recurring.day": 1 },
+  { unique: true, partialFilterExpression: { "recurring.template": { $exists: true } } }
+);
+
+// A cost that repeats (rent, internet, cleaner…) and how it is divided.
+const shareSchema = new mongoose.Schema(
+  { membership: { type: mongoose.Schema.Types.ObjectId, ref: "Membership", required: true }, amount: { type: Number, min: 0, required: true } },
+  { _id: false }
+);
+const recurringSchema = new mongoose.Schema(
+  {
+    home: { type: mongoose.Schema.Types.ObjectId, ref: "Home", required: true, index: true },
+    title: { type: String, required: true, trim: true, maxlength: 120 },
+    category: { type: String, enum: EXPENSE_CATEGORIES, required: true },
+    amount: { type: Number, required: true, min: 1, validate: Number.isInteger },
+    frequency: { type: String, enum: ["monthly", "weekly"], default: "monthly" },
+    dayOfMonth: { type: Number, min: 1, max: 28, default: 1 },
+    weekday: { type: Number, min: 0, max: 6, default: 0 }, // 0 = Sunday
+    startDay: { type: String, required: true },
+    endDay: { type: String },
+    // Who pays the provider. null = home fund; a member gets credited the full amount.
+    paidBy: { type: mongoose.Schema.Types.ObjectId, ref: "Membership", default: null },
+    allocation: {
+      // equal  → split equally between everyone (allMembers) or the chosen members
+      // custom → a fixed amount per member (0 = doesn't pay), must sum to the total
+      // none   → nobody is charged (paid from the fund)
+      mode: { type: String, enum: ["equal", "custom", "none"], required: true },
+      allMembers: { type: Boolean, default: true },
+      memberships: [{ type: mongoose.Schema.Types.ObjectId, ref: "Membership" }],
+      shares: { type: [shareSchema], default: [] },
+    },
+    notes: { type: String, trim: true, maxlength: 500 },
+    active: { type: Boolean, default: true },
+    lastPostedDay: { type: String },
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  },
+  { timestamps: true }
+);
 
 module.exports = {
   LedgerEntry: mongoose.model("LedgerEntry", ledgerSchema, "ledger_entries"),
   Expense: mongoose.model("Expense", expenseSchema, "home_expenses"),
+  RecurringExpense: mongoose.model("RecurringExpense", recurringSchema, "recurring_expenses"),
   ENTRY_TYPES,
   EXPENSE_CATEGORIES,
   MEAL_CATEGORIES,

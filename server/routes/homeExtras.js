@@ -81,6 +81,7 @@ router.get("/dashboard", async (req, res) => {
     },
     finance: {
       myBalance: myBalance.balance,
+      myPayable: Math.max(0, -myBalance.balance),
       outstandingDues: req.can("finance.view_all") ? dues : undefined,
       advances: req.can("finance.view_all") ? advances : undefined,
     },

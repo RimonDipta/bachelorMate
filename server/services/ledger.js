@@ -86,6 +86,7 @@ async function reverseByRef(refKind, refId, userId, reason, session) {
  * Posts the ledger effect of an expense:
  *  - paidBy member gets a reimbursement credit (they fronted the money)
  *  - equal / selected allocation debits each member's share
+ *  - custom allocation debits each member's fixed amount (0 = not charged)
  *  - meal_pool expenses are charged later when the meal period closes
  */
 async function postExpense(expense, userId, session) {
@@ -121,6 +122,23 @@ async function postExpense(expense, userId, session) {
         description: `Share of: ${expense.title}`,
       })
     );
+  }
+  if (mode === "custom") {
+    const shares = expense.allocation.shares || [];
+    const total = shares.reduce((a, s) => a + s.amount, 0);
+    if (total !== expense.amount) throw badRequest("Custom amounts must add up to the total");
+    shares
+      .filter((s) => s.amount > 0)
+      .forEach((s) =>
+        entries.push({
+          ...base,
+          membership: s.membership,
+          type: "expense_share",
+          direction: "debit",
+          amount: s.amount,
+          description: `Share of: ${expense.title}`,
+        })
+      );
   }
   return postEntries(entries, session);
 }

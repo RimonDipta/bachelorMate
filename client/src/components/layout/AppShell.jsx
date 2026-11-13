@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard, UtensilsCrossed, CalendarDays, ClipboardList, Wallet, Receipt, ArrowLeftRight, MessagesSquare,
   Megaphone, ShoppingBasket, Users, UserPlus, BarChart3, History, Settings, Bell, Menu as MenuIcon, ChevronsUpDown,
-  Plus, LogIn, House, UserRound, Palette, LogOut, Moon, Sun, MessageCircle, Mail, Check, CircleUserRound, Soup,
+  Plus, LogIn, House, UserRound, Palette, LogOut, Moon, Sun, MessageCircle, Mail, Check, CircleUserRound, Soup, Repeat, X,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../context/AuthContext";
@@ -49,6 +49,37 @@ function HomeSwitcher({ homes, current, onNavigate }) {
   );
 }
 
+/** Account menu (profile, settings, personal pages, sign out), shown at the top of the sidebar and in the topbar. */
+function AccountMenu({ user, trigger, align = "start", counts = {} }) {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+  const theme = useTheme();
+  const dark = theme.resolved === "dark";
+  return (
+    <Menu align={align} width={248} trigger={trigger}>
+      <div className="row-3" style={{ padding: "8px 10px 10px" }}>
+        <Avatar user={user} size={34} />
+        <div style={{ minWidth: 0 }}>
+          <div className="strong text-sm truncate">{user.name}</div>
+          <div className="text-xs muted truncate">{user.email}</div>
+        </div>
+      </div>
+      <div className="menu-sep" />
+      <MenuItem icon={UserRound} onClick={() => navigate("/settings/profile")}>Profile</MenuItem>
+      <MenuItem icon={MessageCircle} onClick={() => navigate("/messages")}>Messages {counts.dm > 0 && <span className="count" style={{ marginLeft: "auto" }}>{counts.dm}</span>}</MenuItem>
+      <MenuItem icon={Users} onClick={() => navigate("/friends")}>Friends</MenuItem>
+      {counts.invites > 0 && <MenuItem icon={Mail} onClick={() => navigate("/invitations")}>Invitations <span className="count" style={{ marginLeft: "auto" }}>{counts.invites}</span></MenuItem>}
+      <MenuItem icon={House} onClick={() => navigate("/homes")}>All homes</MenuItem>
+      <div className="menu-sep" />
+      <MenuItem icon={Palette} onClick={() => navigate("/settings/appearance")}>Appearance</MenuItem>
+      <MenuItem icon={dark ? Sun : Moon} onClick={() => theme.update({ mode: dark ? "light" : "dark" })}>{dark ? "Light mode" : "Dark mode"}</MenuItem>
+      <MenuItem icon={Settings} onClick={() => navigate("/settings/security")}>Account settings</MenuItem>
+      <div className="menu-sep" />
+      <MenuItem icon={LogOut} danger onClick={async () => { await logout(); navigate("/login"); }}>Sign out</MenuItem>
+    </Menu>
+  );
+}
+
 function NavItem({ to, icon: Icon, children, end, count }) {
   return (
     <NavLink to={to} end={end} className="nav-link">
@@ -60,9 +91,8 @@ function NavItem({ to, icon: Icon, children, end, count }) {
 }
 
 export default function AppShell() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const theme = useTheme();
-  const navigate = useNavigate();
   const location = useLocation();
   const [open, setOpen] = useState(false);
   const match = useMatch("/h/:homeId/*");
@@ -86,69 +116,79 @@ export default function AppShell() {
   const pendingRequests = (dash?.pendingReview || 0);
   const base = `/h/${homeId}`;
 
+  const counts = { dm: dmUnread, invites: invites?.invitations?.length || 0 };
+
   const sidebar = (
     <aside className={`sidebar ${open ? "open" : ""}`} aria-label="Main navigation" onClick={(e) => e.target.closest("a, .menu-item") && setOpen(false)}>
-      <Link to="/app" className="sidebar-brand" style={{ color: "var(--text)", textDecoration: "none" }}>
-        <span className="brand-mark"><Soup size={15} /></span>
-        BachelorMate
-      </Link>
-      <HomeSwitcher homes={homes} current={home} onNavigate={() => setOpen(false)} />
+      {/* Top: account (with sign out) + home switcher — always visible */}
+      <div className="sidebar-top">
+        <div className="row" style={{ gap: 6 }}>
+          <AccountMenu
+            user={user}
+            counts={counts}
+            trigger={
+              <button className="sidebar-account" aria-label="Account menu">
+                <Avatar user={user} size={28} />
+                <span className="grow truncate" style={{ textAlign: "left" }}>
+                  <span className="strong text-sm truncate" style={{ display: "block", color: "var(--text)" }}>{user.name}</span>
+                </span>
+                <ChevronsUpDown size={14} className="subtle" />
+              </button>
+            }
+          />
+          <Button variant="ghost" size="sm" icon={X} className="show-sm" onClick={() => setOpen(false)} aria-label="Close menu" />
+        </div>
+        <HomeSwitcher homes={homes} current={home} onNavigate={() => setOpen(false)} />
+      </div>
 
-      {home && (
-        <>
-          <div className="nav-section">Home</div>
-          <NavItem to={base} end icon={LayoutDashboard}>Overview</NavItem>
-          <NavItem to={`${base}/meals`} end icon={UtensilsCrossed}>Meals</NavItem>
-          <NavItem to={`${base}/meals/daily`} icon={ClipboardList}>Daily meal list</NavItem>
-          <NavItem to={`${base}/requests`} icon={Mail} count={pendingRequests}>Requests</NavItem>
-          <NavItem to={`${base}/chat`} icon={MessagesSquare} count={homeChatUnread}>Home chat</NavItem>
-          <NavItem to={`${base}/announcements`} icon={Megaphone}>Announcements</NavItem>
-          <NavItem to={`${base}/grocery`} icon={ShoppingBasket}>Grocery list</NavItem>
-          <NavItem to={`${base}/calendar`} icon={CalendarDays}>Calendar</NavItem>
+      {/* Middle: navigation scrolls on its own */}
+      <nav className="sidebar-scroll" aria-label="Home navigation">
+        {home ? (
+          <>
+            <NavItem to={base} end icon={LayoutDashboard}>Overview</NavItem>
+            <NavItem to={`${base}/meals`} icon={UtensilsCrossed}>Meals</NavItem>
+            <NavItem to={`${base}/requests`} icon={ClipboardList} count={pendingRequests}>Requests</NavItem>
+            <NavItem to={`${base}/chat`} icon={MessagesSquare} count={homeChatUnread}>Home chat</NavItem>
+            <NavItem to={`${base}/calendar`} icon={CalendarDays}>Calendar</NavItem>
 
-          <div className="nav-section">Money</div>
-          <NavItem to={`${base}/finance`} end icon={Wallet}>Finance</NavItem>
-          <NavItem to={`${base}/finance/me`} icon={CircleUserRound}>My account</NavItem>
-          {can("expenses.view", "expenses.manage", "expenses.meal") && <NavItem to={`${base}/finance/expenses`} icon={Receipt}>Expenses</NavItem>}
-          <NavItem to={`${base}/finance/transactions`} icon={ArrowLeftRight} count={dash?.pendingPayments}>Transactions</NavItem>
+            <div className="nav-section">Money</div>
+            <NavItem to={`${base}/finance`} end icon={Wallet}>Finance</NavItem>
+            <NavItem to={`${base}/finance/me`} icon={CircleUserRound}>My account</NavItem>
+            {can("expenses.view", "expenses.manage", "expenses.meal") && <NavItem to={`${base}/finance/expenses`} icon={Receipt}>Expenses</NavItem>}
+            {can("expenses.view", "expenses.manage", "finance.view_all") && <NavItem to={`${base}/finance/recurring`} icon={Repeat}>Recurring costs</NavItem>}
+            <NavItem to={`${base}/finance/transactions`} icon={ArrowLeftRight} count={dash?.pendingPayments}>Transactions</NavItem>
 
-          {can("members.view", "invites.manage", "reports.view", "activity.view", "home.manage", "settings.manage", "meals.configure") && <div className="nav-section">Manage</div>}
-          {can("members.view") && <NavItem to={`${base}/members`} icon={Users} count={dash?.pendingJoins}>Members</NavItem>}
-          {(can("invites.manage") || home.settings?.allowMemberInvites) && <NavItem to={`${base}/invites`} icon={UserPlus}>Invitations</NavItem>}
-          {can("reports.view") && <NavItem to={`${base}/reports`} icon={BarChart3}>Reports</NavItem>}
-          {can("activity.view") && <NavItem to={`${base}/activity`} icon={History}>Activity log</NavItem>}
-          <NavItem to={`${base}/settings`} icon={Settings}>Home settings</NavItem>
-        </>
-      )}
+            <div className="nav-section">House</div>
+            <NavItem to={`${base}/announcements`} icon={Megaphone}>Announcements</NavItem>
+            <NavItem to={`${base}/grocery`} icon={ShoppingBasket}>Grocery list</NavItem>
+            {can("members.view") && <NavItem to={`${base}/members`} icon={Users} count={dash?.pendingJoins}>Members</NavItem>}
+            {(can("invites.manage") || home.settings?.allowMemberInvites) && <NavItem to={`${base}/invites`} icon={UserPlus}>Invitations</NavItem>}
+            {can("reports.view") && <NavItem to={`${base}/reports`} icon={BarChart3}>Reports</NavItem>}
+            {can("activity.view") && <NavItem to={`${base}/activity`} icon={History}>Activity log</NavItem>}
+            <NavItem to={`${base}/settings`} icon={Settings}>Home settings</NavItem>
+          </>
+        ) : (
+          <>
+            <NavItem to="/homes" icon={House}>Homes</NavItem>
+            <NavItem to="/friends" icon={UserRound}>Friends</NavItem>
+            <NavItem to="/messages" icon={MessageCircle} count={dmUnread}>Messages</NavItem>
+            <NavItem to="/notifications" icon={Bell} count={notif?.unread}>Notifications</NavItem>
+            {counts.invites > 0 && <NavItem to="/invitations" icon={Mail} count={counts.invites}>Invitations</NavItem>}
+          </>
+        )}
+      </nav>
 
-      <div className="nav-section">You</div>
-      {!home && <NavItem to="/homes" icon={House}>Homes</NavItem>}
-      <NavItem to="/friends" icon={UserRound}>Friends</NavItem>
-      <NavItem to="/messages" icon={MessageCircle} count={dmUnread}>Messages</NavItem>
-      <NavItem to="/notifications" icon={Bell} count={notif?.unread}>Notifications</NavItem>
-      {invites?.invitations?.length > 0 && <NavItem to="/invitations" icon={Mail} count={invites.invitations.length}>Invitations</NavItem>}
-
-      <div className="sidebar-foot">
-        <Menu
-          align="start"
-          width={232}
-          trigger={
-            <button className="nav-link" style={{ width: "100%", border: 0, background: "none", cursor: "pointer" }}>
-              <Avatar user={user} size={26} />
-              <span className="grow truncate" style={{ textAlign: "left" }}>
-                <span style={{ color: "var(--text)", display: "block" }} className="truncate">{user.name}</span>
-              </span>
-              <ChevronsUpDown size={14} />
-            </button>
-          }
-        >
-          <div className="menu-label truncate" style={{ textTransform: "none", letterSpacing: 0 }}>{user.email}</div>
-          <MenuItem icon={UserRound} onClick={() => navigate("/settings/profile")}>Profile</MenuItem>
-          <MenuItem icon={Palette} onClick={() => navigate("/settings/appearance")}>Appearance</MenuItem>
-          <MenuItem icon={Settings} onClick={() => navigate("/settings/security")}>Account settings</MenuItem>
-          <div className="menu-sep" />
-          <MenuItem icon={LogOut} danger onClick={async () => { await logout(); navigate("/login"); }}>Sign out</MenuItem>
-        </Menu>
+      {/* Bottom: personal shortcuts, always visible */}
+      <div className="sidebar-bottom">
+        <Link to="/" className="sidebar-brand-mini" aria-label="BachelorMate" title="BachelorMate"><span className="brand-mark"><Soup size={13} /></span></Link>
+        <div className="row" style={{ gap: 2, marginLeft: "auto" }}>
+          {[["/messages", MessageCircle, "Messages", dmUnread], ["/friends", UserRound, "Friends", 0], ["/notifications", Bell, "Notifications", notif?.unread]].map(([to, I, label, n]) => (
+            <NavLink key={to} to={to} className="sidebar-iconlink" aria-label={`${label}${n ? ` (${n})` : ""}`} title={label}>
+              <I />
+              {n > 0 && <span className="count">{n > 9 ? "9+" : n}</span>}
+            </NavLink>
+          ))}
+        </div>
       </div>
     </aside>
   );
@@ -172,7 +212,7 @@ export default function AppShell() {
             <Bell />
             {notif?.unread > 0 && <span className="count" style={{ position: "absolute", top: 2, right: 0, transform: "scale(.85)" }}>{notif.unread > 9 ? "9+" : notif.unread}</span>}
           </Link>
-          <Link to="/settings/profile" aria-label="Profile"><Avatar user={user} size={30} /></Link>
+          <AccountMenu user={user} counts={counts} align="end" trigger={<button className="btn btn-ghost btn-icon" style={{ padding: 0 }} aria-label="Account menu"><Avatar user={user} size={30} /></button>} />
         </header>
         <ErrorBoundary resetKey={location.pathname}>
           <Suspense fallback={<main className="content"><PageSkeleton /></main>}>

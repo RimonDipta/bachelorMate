@@ -54,7 +54,7 @@ export default function Dashboard() {
       )}
 
       <div className="grid-4">
-        <Stat icon={Wallet} label="My balance" value={<Money value={bal} currency={currency} colored />} hint={bal < 0 ? "Outstanding dues" : bal > 0 ? "Advance credit" : "All settled"} />
+        <Stat icon={Wallet} label="You need to pay" value={<Link to={`${base}/finance/me`} style={{ color: "inherit" }}>{money(d.finance.myPayable ?? Math.max(0, -bal), currency)}</Link>} hint={bal > 0 ? `${money(bal, currency)} advance credit` : bal < 0 ? "Your share + any dues" : "All settled"} />
         <Stat icon={CalendarRange} label="Spent this month" value={money(d.month.total, currency)} hint={`${money(d.month.meal, currency)} on meals`} />
         <Stat icon={Utensils} label={`Meal rate · ${d.mealPeriod.name}`} value={money(d.mealPeriod.rate, currency)} hint={`${d.mealPeriod.chargeableMeals} meals so far`} />
         <Stat icon={Users} label="Members" value={d.memberCount} hint={d.pendingJoins ? `${d.pendingJoins} waiting for approval` : "Active in this home"} />

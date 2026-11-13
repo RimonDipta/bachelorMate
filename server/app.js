@@ -96,6 +96,7 @@ app.use("/api", require("./routes/chat"));
 homesRouter.scoped.use(require("./routes/meals"));
 homesRouter.scoped.use(require("./routes/requests"));
 homesRouter.scoped.use(require("./routes/finance"));
+homesRouter.scoped.use(require("./routes/recurring"));
 homesRouter.scoped.use(require("./routes/homeExtras"));
 app.use("/api/homes", homesRouter);
 

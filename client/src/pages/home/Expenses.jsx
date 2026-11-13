@@ -10,7 +10,7 @@ import { Avatar, Badge, Button, Card, EmptyState, ErrorState, Field, FormModal, 
 import { CATEGORY_LABEL, MEAL_CATEGORIES, fmtDate, fmtDay, money, monthKey, monthLabel, shiftMonth } from "../../lib/format";
 import { ExpenseModal } from "../../components/FinanceForms";
 
-const SPLIT = { meal_pool: "Meal pool", equal: "Split equally", selected: "Selected members", none: "Home fund" };
+const SPLIT = { meal_pool: "Meal pool", equal: "Split equally", selected: "Selected members", custom: "Custom amounts", none: "Home fund" };
 
 export default function Expenses() {
   const { homeId, can, currency } = useHome();
@@ -78,6 +78,7 @@ export default function Expenses() {
                         <Badge tone={MEAL_CATEGORIES.includes(e.category) ? "accent" : undefined}>{CATEGORY_LABEL[e.category]}</Badge>
                         {e.status === "void" && <Badge tone="danger">Void</Badge>}
                         {e.history?.length > 1 && <Badge>Edited</Badge>}
+                        {e.recurring?.template && <Badge tone="info">Recurring</Badge>}
                       </div>
                     </td>
                     <td className="hide-sm">{e.paidBy ? <div className="row"><Avatar user={e.paidBy.user} size={22} /><span className="text-sm">{e.paidBy.user?.name}</span></div> : <span className="text-sm muted">Home fund</span>}</td>

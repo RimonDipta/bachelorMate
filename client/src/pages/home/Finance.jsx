@@ -62,7 +62,7 @@ export default function Finance() {
       </div>
 
       <div className="grid-4">
-        <Stat icon={Wallet} label="My balance" value={<Money value={d.mine.balance} currency={currency} colored />} hint={<Link to={`${base}/finance/me`}>{d.mine.balance < 0 ? "Outstanding dues" : d.mine.balance > 0 ? "Advance credit" : "Settled"} · statement →</Link>} />
+        <Stat icon={Wallet} label="You need to pay" value={money(d.mine.payable, currency)} hint={<Link to={`${base}/finance/me`}>{d.mine.balance > 0 ? `${money(d.mine.balance, currency)} advance` : d.mine.balance < 0 ? "Includes dues carried over" : "All settled"} · see why →</Link>} />
         <Stat icon={Landmark} label="Home fund" value={money(t.fundBalance, currency)} hint="Payments in − expenses paid from fund" />
         <Stat icon={Receipt} label="Spent this month" value={money(t.monthTotal, currency)} hint={`${money(t.monthMeal, currency)} meals · ${money(t.monthOther, currency)} other`} />
         <Stat icon={ArrowDownToLine} label="Collected this month" value={money(t.monthCollected, currency)} hint={`${money(t.collected, currency)} all time`} />
@@ -126,21 +126,22 @@ export default function Finance() {
           <Card className="span-12" title="Member accounts" actions={can("finance.record") && <Button size="sm" variant="ghost" icon={BellRing} loading={remind.isPending} onClick={() => remind.mutate()}>Remind members with dues</Button>}>
             <div className="table-wrap">
               <table className="table">
-                <thead><tr><th>Member</th><th className="r hide-sm">Credits</th><th className="r hide-sm">Charges</th><th className="r">Balance</th><th className="hide-sm">Position</th></tr></thead>
+                <thead><tr><th>Member</th><th className="r hide-sm">Credits</th><th className="r hide-sm">Charges</th><th className="r">Balance</th><th className="r">To pay</th><th className="hide-sm">Position</th></tr></thead>
                 <tbody>
                   {d.accounts.map((a) => (
                     <tr key={a.membership}>
                       <td><Link to={a.membership === membershipId ? `${base}/finance/me` : `${base}/finance/accounts/${a.membership}`} className="row" style={{ color: "inherit" }}><Avatar user={a.user} size={26} /><span className="text-sm">{a.user?.name}</span>{a.status !== "active" && <span className="badge">{a.status}</span>}</Link></td>
                       <td className="r num hide-sm">{money(a.credits, currency)}</td>
                       <td className="r num hide-sm">{money(a.debits, currency)}</td>
-                      <td className="r strong"><Money value={a.balance} currency={currency} colored /></td>
+                      <td className="r"><Money value={a.balance} currency={currency} colored /></td>
+                      <td className="r strong num">{a.payable > 0 ? money(a.payable, currency) : <span className="subtle">—</span>}</td>
                       <td className="hide-sm">{a.balance < 0 ? <span className="badge badge-danger">Due</span> : a.balance > 0 ? <span className="badge badge-success">Advance</span> : <span className="badge">Settled</span>}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            <div className="card-foot hint">Balance = payments & credits − allocated charges. Positive means advance credit; negative means dues.</div>
+            <div className="card-foot hint">Balance = payments & credits − charges. To pay = the amount below zero (an advance already covers new charges).</div>
           </Card>
         )}
       </div>

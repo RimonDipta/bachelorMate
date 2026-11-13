@@ -5,7 +5,7 @@ import { ArrowLeft, HandCoins, SlidersHorizontal, FileText } from "lucide-react"
 import { api } from "../../lib/api";
 import { useHome } from "../../context/HomeContext";
 import { Avatar, Button, Card, EmptyState, ErrorState, Money, PageHeader, PageSkeleton, Badge } from "../../components/ui";
-import { ENTRY_LABEL, money, rolesLabel } from "../../lib/format";
+import { ENTRY_LABEL, money, monthLabel, rolesLabel } from "../../lib/format";
 import { AdjustmentModal, PaymentModal } from "../../components/FinanceForms";
 import { EntryRow, useEntryActions } from "./Transactions";
 
@@ -24,9 +24,9 @@ export default function MemberAccount({ self }) {
 
   if (isLoading) return <PageSkeleton />;
   if (error) return <Card><ErrorState error={error} retry={refetch} /></Card>;
-  const { member, balance: b, entries } = data;
+  const { member, statement: st, entries } = data;
   const order = ["payment", "reimbursement", "opening_balance", "adjustment", "meal_charge", "expense_share", "reversal"];
-  const breakdown = order.filter((t) => b.byType[t]).map((t) => [t, b.byType[t]]);
+  const monthRows = order.filter((t) => st.thisMonth[t]).map((t) => [t, st.thisMonth[t]]);
   const pending = entries.filter((e) => e.status === "pending");
 
   return (
@@ -47,24 +47,33 @@ export default function MemberAccount({ self }) {
           <div className="row-3">
             <Avatar user={member.user} size={44} />
             <div>
-              <div className="text-xs muted">Current balance</div>
-              <div className="stat-value"><Money value={b.balance} currency={currency} colored /></div>
+              <div className="text-xs muted">{self ? "You need to pay" : "Needs to pay"}</div>
+              <div className="stat-value" style={{ fontSize: "var(--text-3xl)" }}>{money(st.payable, currency)}</div>
             </div>
           </div>
           <p className="text-sm muted" style={{ marginTop: 12 }}>
-            {b.balance < 0 ? `${self ? "You owe" : "Owes"} ${money(-b.balance, currency)} to the home.` : b.balance > 0 ? `${money(b.balance, currency)} paid in advance.` : "Fully settled."}
+            {st.payable > 0
+              ? `${self ? "Your" : "Their"} share of this month's costs plus anything still owed, minus any advance.`
+              : st.advance > 0
+                ? `Nothing to pay — ${money(st.advance, currency)} advance will cover upcoming charges.`
+                : "All settled. Nothing to pay right now."}
           </p>
-          {pending.length > 0 && <Badge tone="warning" style={{ marginTop: 8 }}>{pending.length} payment(s) awaiting confirmation</Badge>}
+          {pending.length > 0 && <Badge tone="warning" style={{ marginTop: 8 }}>{pending.length} payment(s) awaiting confirmation — not counted yet</Badge>}
         </Card>
-        <Card className="span-7" title="How the balance is calculated">
+        <Card className="span-7" title={`How it adds up · ${monthLabel(st.month)}`}>
           <div className="card-body stack" style={{ gap: 8 }}>
-            {breakdown.length === 0 && <p className="text-sm muted">No posted entries yet.</p>}
-            {breakdown.map(([t, v]) => (
-              <div key={t} className="row between text-sm"><span>{ENTRY_LABEL[t]}</span><Money value={v} currency={currency} sign colored /></div>
+            <div className="row between text-sm">
+              <span>{st.opening < 0 ? "Dues carried from before" : st.opening > 0 ? "Advance carried from before" : "Carried from before"}</span>
+              <Money value={st.opening} currency={currency} sign colored />
+            </div>
+            {monthRows.map(([t, v]) => (
+              <div key={t} className="row between text-sm"><span>{ENTRY_LABEL[t]}{t === "expense_share" ? " (rent, bills…)" : t === "meal_charge" ? "s" : ""} this month</span><Money value={v} currency={currency} sign colored /></div>
             ))}
+            {monthRows.length === 0 && <p className="text-sm muted">No charges or payments yet this month.</p>}
             <hr className="divider" />
-            <div className="row between strong"><span>Balance</span><Money value={b.balance} currency={currency} colored /></div>
-            <p className="hint">Credits (payments, reimbursements) − charges (meals, shared expenses). Reversals cancel the entry they reverse.</p>
+            <div className="row between text-sm"><span>Balance now</span><Money value={st.balance} currency={currency} sign colored /></div>
+            <div className="row between strong"><span>{self ? "You need to pay" : "To pay"}</span><span className="num">{money(st.payable, currency)}</span></div>
+            <p className="hint">Payments and credits count +, charges count −. If the balance is below zero, that's the amount to pay; above zero is advance credit.</p>
           </div>
         </Card>
       </div>

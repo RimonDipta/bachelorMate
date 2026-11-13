@@ -53,7 +53,7 @@ router.get("/finance/overview", validate({ query: z.object({ month: z.string().r
       const b = bal[String(m._id)] || emptyBalance();
       if (b.balance < 0) dues += -b.balance;
       else advances += b.balance;
-      return { membership: m._id, user: m.user, status: m.status, ...b };
+      return { membership: m._id, user: m.user, status: m.status, ...b, payable: Math.max(0, -b.balance) };
     })
     .filter((a) => a.status === "active" || a.balance !== 0);
 
@@ -89,7 +89,7 @@ router.get("/finance/overview", validate({ query: z.object({ month: z.string().r
     month,
     currency: home.currency,
     full,
-    mine,
+    mine: { ...mine, payable: Math.max(0, -mine.balance) },
     pendingPayments,
     totals: {
       totalExpenses,
@@ -109,6 +109,28 @@ router.get("/finance/overview", validate({ query: z.object({ month: z.string().r
 });
 
 // ---------- member accounts ----------
+/**
+ * What a member owes right now and why: the balance carried in from before
+ * this month, plus this month's charges and credits.
+ *   payable = max(0, -balance)   (advance credit already offsets new charges)
+ */
+async function monthStatement(home, membershipId, b) {
+  const month = todayIn(home.timezone).slice(0, 7);
+  const { from } = monthRange(month);
+  const rows = await LedgerEntry.aggregate([
+    { $match: { home: home._id, membership: membershipId, status: "posted" } },
+    { $group: { _id: { before: { $lt: ["$day", from] }, type: "$type", dir: "$direction" }, total: { $sum: "$amount" } } },
+  ]);
+  let opening = 0;
+  const thisMonth = {};
+  for (const r of rows) {
+    const signed = r._id.dir === "credit" ? r.total : -r.total;
+    if (r._id.before) opening += signed;
+    else thisMonth[r._id.type] = (thisMonth[r._id.type] || 0) + signed;
+  }
+  return { month, opening, thisMonth, balance: b.balance, payable: Math.max(0, -b.balance), advance: Math.max(0, b.balance) };
+}
+
 router.get("/finance/accounts/:mid", validate({ params: z.object({ mid: objectId }).passthrough() }), async (req, res) => {
   const self = String(req.params.mid) === String(req.membership._id);
   if (!self && !req.can("finance.view_all")) throw forbidden();
@@ -122,7 +144,7 @@ router.get("/finance/accounts/:mid", validate({ params: z.object({ mid: objectId
     if (e.status === "posted") running += e.direction === "credit" ? e.amount : -e.amount;
     return { ...e.toObject(), runningBalance: running };
   });
-  res.json({ member: { _id: m._id, user: m.user, status: m.status, roles: m.roles, room: m.room }, balance: b, entries: withRunning.reverse() });
+  res.json({ member: { _id: m._id, user: m.user, status: m.status, roles: m.roles, room: m.room }, balance: b, statement: await monthStatement(req.home, m._id, b), entries: withRunning.reverse() });
 });
 
 // ---------- transactions ----------
@@ -320,8 +342,19 @@ const expenseFields = z.object({
   amount: moneyInput,
   day: day,
   paidBy: z.union([objectId, z.literal(""), z.null()]).optional(),
-  allocationMode: z.enum(["meal_pool", "equal", "selected", "none"]).optional(),
+  allocationMode: z.enum(["meal_pool", "equal", "selected", "custom", "none"]).optional(),
   memberships: listField.optional(),
+  // custom mode: [{ membershipId, amount }] (JSON string when sent as multipart)
+  shares: z
+    .preprocess((v) => {
+      if (typeof v !== "string") return v;
+      try {
+        return v ? JSON.parse(v) : [];
+      } catch {
+        return null;
+      }
+    }, z.array(z.object({ membershipId: objectId, amount: moneyInput })).max(100))
+    .optional(),
   notes: z.string().trim().max(1000).optional(),
 });
 
@@ -337,10 +370,21 @@ async function buildExpense(req, b, current) {
     if (count !== new Set(b.memberships).size) throw badRequest("Split members must be active members of this home");
     memberships = [...new Set(b.memberships)];
   }
+  const amount = toMinor(b.amount);
+  let shares = [];
+  if (mode === "custom") {
+    shares = (b.shares || []).map((s) => ({ membership: s.membershipId, amount: toMinor(s.amount, { allowZero: true }) }));
+    const ids = shares.map((s) => String(s.membership));
+    if (new Set(ids).size !== ids.length) throw badRequest("Each member can appear only once");
+    const count = await Membership.countDocuments({ _id: { $in: ids }, home: req.home._id, status: "active" });
+    if (count !== ids.length) throw badRequest("Split members must be active members of this home");
+    const total = shares.reduce((a, s) => a + s.amount, 0);
+    if (total !== amount) throw badRequest(`Custom amounts add up to ${fmt(total, req.home.currency)}, but the expense is ${fmt(amount, req.home.currency)}`);
+  }
   let paidBy = null;
   if (b.paidBy) paidBy = (await memberInHome(req.home, b.paidBy, ["active", "left", "removed"]))._id;
   if (isMeal) await assertDaysEditable(req.home, [b.day, ...(current && MEAL_CATEGORIES.includes(current.category) ? [current.day] : [])]);
-  return { title: b.title, category: b.category, amount: toMinor(b.amount), day: b.day, paidBy, allocation: { mode, memberships }, notes: b.notes };
+  return { title: b.title, category: b.category, amount, day: b.day, paidBy, allocation: { mode, memberships, shares }, notes: b.notes };
 }
 
 router.post("/expenses", ...receiptUpload("receipt"), validate({ body: expenseFields }), async (req, res) => {
@@ -372,7 +416,11 @@ router.patch("/expenses/:xid", ...receiptUpload("receipt"), validate({ params: x
   const changes = {};
   for (const f of fields) if (String(expense[f] ?? "") !== String(data[f] ?? "")) changes[f] = { from: expense[f], to: data[f] };
   if (String(expense.paidBy || "") !== String(data.paidBy || "")) changes.paidBy = { from: expense.paidBy, to: data.paidBy };
-  const allocChanged = expense.allocation.mode !== data.allocation.mode || (data.allocation.mode === "selected" && [...expense.allocation.memberships].map(String).sort().join() !== data.allocation.memberships.map(String).sort().join());
+  const sharesKey = (list) => (list || []).map((s) => `${s.membership}:${s.amount}`).sort().join();
+  const allocChanged =
+    expense.allocation.mode !== data.allocation.mode ||
+    (data.allocation.mode === "selected" && [...expense.allocation.memberships].map(String).sort().join() !== data.allocation.memberships.map(String).sort().join()) ||
+    (data.allocation.mode === "custom" && sharesKey(expense.allocation.shares) !== sharesKey(data.allocation.shares));
   if (allocChanged) changes.allocation = { from: expense.allocation.mode, to: data.allocation.mode };
   if (req.file) changes.receipt = { to: "updated" };
   if (!Object.keys(changes).length) return res.json({ expense });

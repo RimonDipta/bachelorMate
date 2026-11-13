@@ -33,6 +33,7 @@ const Requests = lazy(() => import("./pages/home/Requests"));
 const Finance = lazy(() => import("./pages/home/Finance"));
 const Transactions = lazy(() => import("./pages/home/Transactions"));
 const Expenses = lazy(() => import("./pages/home/Expenses"));
+const Recurring = lazy(() => import("./pages/home/Recurring"));
 const MemberAccount = lazy(() => import("./pages/home/MemberAccount"));
 const HomeChat = lazy(() => import("./pages/home/HomeChat"));
 const Announcements = lazy(() => import("./pages/home/Announcements"));
@@ -111,6 +112,7 @@ export default function App() {
             <Route path="finance" element={<Finance />} />
             <Route path="finance/transactions" element={<Transactions />} />
             <Route path="finance/expenses" element={<Expenses />} />
+            <Route path="finance/recurring" element={<Recurring />} />
             <Route path="finance/me" element={<MemberAccount self />} />
             <Route path="finance/accounts/:mid" element={<MemberAccount />} />
             <Route path="chat" element={<HomeChat />} />

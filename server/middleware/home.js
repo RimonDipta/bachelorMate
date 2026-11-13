@@ -7,6 +7,7 @@ const Membership = require("../models/Membership");
 const { permissionsFor } = require("../lib/permissions");
 const { forbidden, notFound } = require("../lib/http");
 const { finalizeDueDepartures } = require("../services/membership");
+const { syncHome } = require("../services/recurring");
 
 const loadHome = async (req, _res, next) => {
   const { homeId } = req.params;
@@ -14,6 +15,8 @@ const loadHome = async (req, _res, next) => {
   const home = await Home.findById(homeId);
   if (!home) throw notFound("Home not found");
   await finalizeDueDepartures(home);
+  // Post any recurring costs that fell due (throttled per home; never blocks the request on failure).
+  await syncHome(home).catch((err) => console.error("Recurring sync failed:", err.message));
   const membership = await Membership.findOne({ home: home._id, user: req.user._id, status: "active" });
   if (!membership) throw notFound("Home not found");
   req.home = home;

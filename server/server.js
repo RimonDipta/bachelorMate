@@ -18,6 +18,12 @@ async function start() {
     }
   }
 
+  // Post due recurring costs now and then hourly, even for homes nobody opens.
+  const { syncAllHomes } = require("./services/recurring");
+  const sweep = () => syncAllHomes().catch((err) => console.error("Recurring sweep failed:", err.message));
+  sweep();
+  setInterval(sweep, 60 * 60 * 1000).unref();
+
   const server = http.createServer(app);
   initSockets(server);
   server.listen(env.PORT, () => console.log(`BachelorMate API listening on http://localhost:${env.PORT}`));
