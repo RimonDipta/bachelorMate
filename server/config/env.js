@@ -36,6 +36,7 @@ const env = {
   UPLOAD_DIR: process.env.UPLOAD_DIR || require("path").join(__dirname, "..", "uploads"),
   MAX_UPLOAD_MB: Number(process.env.MAX_UPLOAD_MB) || 5,
   SERVE_CLIENT: bool(process.env.SERVE_CLIENT, false),
+  BREVO_API_KEY: process.env.BREVO_API_KEY,
   RESEND_API_KEY: process.env.RESEND_API_KEY,
   MAIL_REPLY_TO: process.env.MAIL_REPLY_TO,
   // When on, unverified accounts can browse but can't create/join homes,

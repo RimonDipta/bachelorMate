@@ -6,7 +6,7 @@ BachelorMate is a shared-living platform for bachelor messes, shared flats and h
 
 | Area | What you get |
 | --- | --- |
-| **Accounts** | Email/password sign-up and login, httpOnly refresh-token sessions with rotation and reuse detection, email verification by **6-digit code or link** (hashed, 5 attempts, 60 s resend cooldown, optional "verify before creating/joining homes, posting or reviewing" rule), branded HTML emails via **Resend or SMTP**, forgot/reset password (time-limited, single-use, hashed tokens), change password (signs out other devices), "sign out everywhere", profile and avatar upload (auto-cropped to 512 px), optional Google sign-in (Firebase ID token verified server-side) |
+| **Accounts** | Email/password sign-up and login, httpOnly refresh-token sessions with rotation and reuse detection, email verification by **6-digit code or link** (hashed, 5 attempts, 60 s resend cooldown, optional "verify before creating/joining homes, posting or reviewing" rule), branded HTML emails via **Brevo, Resend or SMTP**, forgot/reset password (time-limited, single-use, hashed tokens), change password (signs out other devices), "sign out everywhere", profile and avatar upload (auto-cropped to 512 px), optional Google sign-in (Firebase ID token verified server-side) |
 | **Multi-home** | Create, join, switch and leave any number of homes. Every home's data is isolated, and every home-scoped API call checks active membership first |
 | **Onboarding** | Guided wizard (home → rules → meals → invite → done) with skippable steps. The join flow shows the home's rules and policies, collects member info and requires accepting the rules |
 | **Invitations** | Invitation links (hashed token shown once, expiry, usage limit, revoke), 8-character home codes (regenerate, enable/disable), in-app invitations and email invitations, optional approval by Admin or Manager, duplicate-membership protection |
@@ -117,6 +117,8 @@ Without SMTP settings, emails (verification, reset, invitations) are printed to 
 | `COOKIE_SECURE`, `COOKIE_SAMESITE` | | Use `true` / `none` when the API and frontend are on different domains |
 | `TRUST_PROXY` | | `true` behind Render, Railway, Nginx and similar |
 | `ACCESS_TOKEN_TTL`, `REFRESH_TOKEN_DAYS` | | Session lifetimes (defaults: 15m / 30) |
+| `BREVO_API_KEY` | | Brevo transactional email. Works **without a domain**: verify a single sender address (e.g. your Gmail) in Brevo and use it as `MAIL_FROM` |
+| `RESEND_API_KEY` | | Resend transactional email (needs a domain verified in Resend to email anyone) |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` | | Outgoing email (any SMTP provider: Resend, SendGrid, Mailgun, Gmail app password…) |
 | `FIREBASE_PROJECT_ID` | | Enables Google sign-in. Tokens are verified against Google's public keys, so no service account is needed |
 | `UPLOAD_DIR`, `MAX_UPLOAD_MB` | | Where avatars and receipts are stored, and the size limit |
@@ -179,9 +181,9 @@ Setting `SEED_DEMO=true` seeds the demo automatically on server start, once.
 
 ## Deployment
 
-**→ Step-by-step guide: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** (MongoDB Atlas + Render, one-click via [`render.yaml`](render.yaml)).
+Recommended: **MongoDB Atlas** (free cluster) + **Render**, set up in one step from [`render.yaml`](render.yaml) (Render → New → Blueprint). Fill in `MONGO_URI`, `CLIENT_URL` and `CORS_ORIGINS`, then add an email provider (see Environment variables).
 
-Socket.IO needs a long-running Node process, so the API can't run on Vercel serverless functions. The recommended setup is a single Render service where the API also serves the built client (`SERVE_CLIENT=true`): one URL, first-party cookies and native WebSockets. Hosting the frontend on Vercel with the API on Render is also supported (see Option B in the guide). `server/vercel.json` and `server/api/` are legacy and not used by either setup.
+Socket.IO needs a long-running Node process, so the API can't run on Vercel serverless functions. The recommended setup is a single Render service where the API also serves the built client (`SERVE_CLIENT=true`): one URL, first-party cookies and native WebSockets. Hosting the frontend on Vercel with the API on Render is also supported: set `SERVE_CLIENT=false`, point the rewrites in `client/vercel.json` at the API, and set `VITE_SOCKET_URL` to the API origin. `server/vercel.json` and `server/api/` are legacy and not used by either setup.
 
 ## Known limitations
 

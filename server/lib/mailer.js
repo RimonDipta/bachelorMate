@@ -1,13 +1,14 @@
-// Email delivery.
-//   RESEND_API_KEY set → Resend HTTP API (recommended: no SMTP ports needed)
-//   SMTP_HOST set      → any SMTP provider via nodemailer
-//   neither            → logged to the console (dev) / stored in `outbox` (tests)
+// Email delivery (first match wins):
+//   BREVO_API_KEY  → Brevo HTTP API — works WITHOUT owning a domain (verify a single sender address)
+//   RESEND_API_KEY → Resend HTTP API — needs a verified domain to email anyone
+//   SMTP_HOST      → any SMTP provider via nodemailer (e.g. Gmail with an app password)
+//   none           → logged to the console (dev) / stored in `outbox` (tests)
 // Sending never throws into the request that triggered it.
 const nodemailer = require("nodemailer");
 const env = require("../config/env");
 
 let transporter = null;
-if (!env.RESEND_API_KEY && env.SMTP_HOST) {
+if (!env.BREVO_API_KEY && !env.RESEND_API_KEY && env.SMTP_HOST) {
   transporter = nodemailer.createTransport({
     host: env.SMTP_HOST,
     port: env.SMTP_PORT,
@@ -16,8 +17,21 @@ if (!env.RESEND_API_KEY && env.SMTP_HOST) {
   });
 }
 
-const provider = () => (env.RESEND_API_KEY ? "resend" : transporter ? "smtp" : env.isTest ? "test" : "console");
+const provider = () => (env.BREVO_API_KEY ? "brevo" : env.RESEND_API_KEY ? "resend" : transporter ? "smtp" : env.isTest ? "test" : "console");
 const outbox = [];
+
+/** "BachelorMate <me@gmail.com>" → { name: "BachelorMate", email: "me@gmail.com" } */
+function parseAddress(value) {
+  const m = /^\s*"?([^"<]*?)"?\s*<([^>]+)>\s*$/.exec(value || "");
+  if (m) return { name: m[1].trim() || undefined, email: m[2].trim() };
+  return { email: String(value || "").trim() };
+}
+
+/** Builds the Brevo transactional-email request body (exported for tests). */
+function brevoPayload({ to, subject, html, text }) {
+  const replyTo = env.MAIL_REPLY_TO ? parseAddress(env.MAIL_REPLY_TO) : undefined;
+  return { sender: parseAddress(env.MAIL_FROM), to: [{ email: to }], subject, htmlContent: html, textContent: text, ...(replyTo ? { replyTo } : {}) };
+}
 
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 
@@ -64,6 +78,17 @@ async function sendMail(msg) {
       console.log(`[mail:dev] To: ${msg.to} | ${msg.subject}${msg.code ? ` | code ${msg.code}` : ""}${msg.cta ? ` | ${msg.cta.url}` : ""}`);
       return { ok: true, provider: p };
     }
+    if (p === "brevo") {
+      const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+        method: "POST",
+        headers: { "api-key": env.BREVO_API_KEY, "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(brevoPayload({ to: msg.to, subject: msg.subject, html, text })),
+        signal: AbortSignal.timeout(10000),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || `Brevo responded ${res.status}`);
+      return { ok: true, provider: p, id: data.messageId };
+    }
     if (p === "resend") {
       const res = await fetch("https://api.resend.com/emails", {
         method: "POST",
@@ -83,4 +108,4 @@ async function sendMail(msg) {
   }
 }
 
-module.exports = { sendMail, outbox, layout, provider, esc };
+module.exports = { sendMail, outbox, layout, provider, esc, parseAddress, brevoPayload };

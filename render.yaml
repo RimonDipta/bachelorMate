@@ -33,10 +33,10 @@ services:
         sync: false # same as CLIENT_URL
       - key: SEED_DEMO
         value: "true" # loads the demo home once; set to false to disable
-      - key: RESEND_API_KEY
-        sync: false # from resend.com → API Keys (emails are only logged until set)
+      - key: BREVO_API_KEY
+        sync: false # brevo.com → SMTP & API → API keys. Works without a domain (leave empty if using Resend/SMTP)
       - key: MAIL_FROM
-        sync: false # e.g. BachelorMate <hello@yourdomain.com> — a domain verified in Resend
+        sync: false # e.g. BachelorMate <you@gmail.com> — must be a sender verified in Brevo
       - key: REQUIRE_EMAIL_VERIFICATION
         value: "true"
       - key: REVIEW_MIN_STAY_DAYS
