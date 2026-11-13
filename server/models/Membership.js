@@ -1,50 +1,38 @@
-// models/Membership.js
 const mongoose = require("mongoose");
 
 const membershipSchema = new mongoose.Schema(
   {
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
-    family: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Family",
-      required: true,
-    },
+    home: { type: mongoose.Schema.Types.ObjectId, ref: "Home", required: true },
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     roles: {
-      type: [String],
-      enum: ["admin", "manager", "member"],
+      type: [{ type: String, enum: ["admin", "manager", "meal_manager", "member"] }],
       default: ["member"],
     },
     status: {
       type: String,
-      enum: ["pending", "approved", "kicked"],
+      enum: ["pending", "active", "rejected", "left", "removed"],
       default: "pending",
+      index: true,
     },
-    joinDate: {
-      type: Date,
-      default: Date.now,
-    },
-    leaveDate: {
-      type: Date,
-    },
-    // Bill participation flags
-    paysRent: { type: Boolean, default: true },
-    paysWifi: { type: Boolean, default: true },
-    paysWater: { type: Boolean, default: true },
-    paysDust: { type: Boolean, default: true },
-    paysElectricity: { type: Boolean, default: true },
-
-    isGuest: { type: Boolean, default: false },
+    joinedVia: { type: String, enum: ["creator", "link", "code", "direct"], default: "code" },
+    invitedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    joinedAt: { type: Date },
+    leftAt: { type: Date },
+    scheduledLeaveDay: { type: String }, // YYYY-MM-DD from an approved departure
+    rulesAcceptedAt: { type: Date },
+    // Member information collected at join time.
+    room: { type: String, trim: true, maxlength: 40 },
+    phone: { type: String, trim: true, maxlength: 30 },
+    emergencyContact: { type: String, trim: true, maxlength: 120 },
+    note: { type: String, trim: true, maxlength: 500 },
+    // Default number of each meal type per day, e.g. { lunch: 1, dinner: 1 }.
+    defaultMeals: { type: Map, of: Number, default: undefined },
+    mealsEnabled: { type: Boolean, default: true },
   },
   { timestamps: true }
 );
 
-// Ensure one membership per user per family
-membershipSchema.index({ user: 1, family: 1 }, { unique: true });
+membershipSchema.index({ home: 1, user: 1 }, { unique: true });
+membershipSchema.index({ user: 1, status: 1 });
 
-const Membership = mongoose.model("Membership", membershipSchema);
-
-module.exports = Membership;
+module.exports = mongoose.model("Membership", membershipSchema, "home_memberships");

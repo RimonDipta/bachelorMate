@@ -1,13 +1,20 @@
-# ============================
-# GLOBAL / ROOT IGNORE
-# ============================
-
-# Node
+# Dependencies
 node_modules/
 
-# Environment files
+# Environment files (never commit secrets)
 .env
-.env.*    # .env.production, .env.local, etc.
+.env.*
+!.env.example
+
+# Build output
+dist/
+build/
+coverage/
+.vite/
+
+# Runtime uploads (avatars, receipts)
+server/uploads/
+uploads/
 
 # Logs
 npm-debug.log*
@@ -15,60 +22,19 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 debug.log
+*.log
 
-# OS files
+# OS / editor
 .DS_Store
 Thumbs.db
-
-# Editor folders
 .vscode/
 .idea/
 
-# ============================
-# BACKEND (server folder)
-# ============================
-
-server/node_modules/
-server/.env
-server/.env.*
-server/dist/
-server/build/
-server/coverage/
-
-# PM2 logs (if ever used)
-.pids
-*.pid
-*.seed
-*.pid.lock
-
-# ============================
-# FRONTEND (vite + react)
-# ============================
-
-frontend/node_modules/
-frontend/.env
-frontend/.env.*
-frontend/dist/
-frontend/build/
-
-# If your frontend folder name is different:
-client/node_modules/
-client/.env
-client/.env.*
-client/dist/
-client/build/
-
-# Vite cache
-frontend/.vite/
-bclient.vite/
-
-# ============================
-# OPTIONAL / SAFE
-# ============================
-
-# Firebase cache
+# Misc
 .firebase/
-
-# Local tooling
 *.local
 *.tmp
+*.pid
+
+# Local dev database (npm run dev:local)
+server/.dev-db/

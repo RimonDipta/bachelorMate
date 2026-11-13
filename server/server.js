@@ -1,11 +1,22 @@
-// server/server.js
-const dotenv = require("dotenv");
-dotenv.config();
-
+// HTTP + Socket.IO server entry point.
+const http = require("http");
+const env = require("./config/env");
+const { connectDB } = require("./config/db");
 const app = require("./app");
+const { initSockets } = require("./sockets");
 
-const PORT = process.env.PORT || 5000;
+async function start() {
+  await connectDB();
+  const server = http.createServer(app);
+  initSockets(server);
+  server.listen(env.PORT, () => console.log(`BachelorMate API listening on http://localhost:${env.PORT}`));
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  const shutdown = () => server.close(() => process.exit(0));
+  process.on("SIGTERM", shutdown);
+  process.on("SIGINT", shutdown);
+}
+
+start().catch((err) => {
+  console.error("Failed to start server:", err.message);
+  process.exit(1);
 });
