@@ -22,7 +22,8 @@ async function accessConversation(userId, conversationId, { write = false } = {}
     }
   } else {
     if (!conv.participants.some((p) => String(p) === String(userId))) throw notFound("Conversation not found");
-    if (write) {
+    // Listing inquiries are open between the poster and the inquirer (no friendship needed).
+    if (write && conv.kind === "direct") {
       const other = conv.participants.find((p) => String(p) !== String(userId));
       const f = await Friendship.exists({ pairKey: pairKey(userId, other), status: "accepted" });
       if (!f) throw forbidden("You can only message friends");

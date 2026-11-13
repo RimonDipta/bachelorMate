@@ -23,7 +23,7 @@ function MemberName({ m }) {
     <div className="row-3">
       <Avatar user={m.user} size={32} online={online} />
       <div style={{ minWidth: 0 }}>
-        <div className="strong text-sm truncate">{m.user?.name}</div>
+        <Link to={`/people/${m.user?._id}`} className="strong text-sm truncate" style={{ color: "var(--text)", display: "block" }}>{m.user?.name}</Link>
         <div className="text-xs muted truncate">{m.user?.email || (m.room ? `Room ${m.room}` : online ? "Online" : "")}</div>
       </div>
     </div>

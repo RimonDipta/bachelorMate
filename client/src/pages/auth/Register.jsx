@@ -52,7 +52,7 @@ export default function Register() {
     setLoading(true);
     try {
       await register({ name: form.name.trim(), email: form.email.trim(), password: form.password });
-      navigate(dest, { replace: true });
+      navigate(`/verify-email?next=${encodeURIComponent(dest)}`, { replace: true });
     } catch (err) {
       setError(err.message);
     } finally {

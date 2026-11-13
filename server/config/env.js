@@ -36,6 +36,12 @@ const env = {
   UPLOAD_DIR: process.env.UPLOAD_DIR || require("path").join(__dirname, "..", "uploads"),
   MAX_UPLOAD_MB: Number(process.env.MAX_UPLOAD_MB) || 5,
   SERVE_CLIENT: bool(process.env.SERVE_CLIENT, false),
+  RESEND_API_KEY: process.env.RESEND_API_KEY,
+  MAIL_REPLY_TO: process.env.MAIL_REPLY_TO,
+  // When on, unverified accounts can browse but can't create/join homes,
+  // post listings or write reviews. Defaults on in production.
+  REQUIRE_EMAIL_VERIFICATION: bool(process.env.REQUIRE_EMAIL_VERIFICATION, isProd),
+  REVIEW_MIN_STAY_DAYS: process.env.REVIEW_MIN_STAY_DAYS !== undefined ? Number(process.env.REVIEW_MIN_STAY_DAYS) : isTest ? 0 : 7,
 };
 
 if (!env.JWT_ACCESS_SECRET) {

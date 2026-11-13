@@ -33,6 +33,12 @@ services:
         sync: false # same as CLIENT_URL
       - key: SEED_DEMO
         value: "true" # loads the demo home once; set to false to disable
+      - key: RESEND_API_KEY
+        sync: false # from resend.com → API Keys (emails are only logged until set)
       - key: MAIL_FROM
-        value: BachelorMate <no-reply@example.com>
-      # Optional: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, FIREBASE_PROJECT_ID
+        sync: false # e.g. BachelorMate <hello@yourdomain.com> — a domain verified in Resend
+      - key: REQUIRE_EMAIL_VERIFICATION
+        value: "true"
+      - key: REVIEW_MIN_STAY_DAYS
+        value: "7"
+      # Optional: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS (instead of Resend), FIREBASE_PROJECT_ID

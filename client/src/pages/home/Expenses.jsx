@@ -72,7 +72,7 @@ export default function Expenses() {
                     <td>
                       <div className="row" style={{ gap: 6 }}>
                         <span className="text-sm strong truncate" style={e.status === "void" ? { textDecoration: "line-through" } : undefined}>{e.title}</span>
-                        {e.receipt && <button className="btn btn-ghost btn-sm" style={{ height: 22, padding: "0 4px" }} aria-label="View receipt" onClick={() => api.open(`/homes/${homeId}/files/${e.receipt}`).catch((err) => toast.error(err))}><Paperclip size={13} /></button>}
+                        {e.receipt && <button className="btn btn-ghost btn-sm" style={{ height: 22, padding: "0 4px" }} aria-label="View receipt" onClick={() => api.openFile(e.receipt, homeId).catch((err) => toast.error(err))}><Paperclip size={13} /></button>}
                       </div>
                       <div className="row" style={{ gap: 6 }}>
                         <Badge tone={MEAL_CATEGORIES.includes(e.category) ? "accent" : undefined}>{CATEGORY_LABEL[e.category]}</Badge>

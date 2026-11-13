@@ -10,11 +10,13 @@ const errorHandler = (err, req, res, _next) => {
   let status = 500;
   let message = "Something went wrong";
   let details;
+  let code;
 
   if (err instanceof HttpError) {
     status = err.status;
     message = err.message;
     details = err.details;
+    code = err.code;
   } else if (err.name === "ValidationError") {
     status = 400;
     message = Object.values(err.errors)[0]?.message || "Invalid data";
@@ -37,7 +39,7 @@ const errorHandler = (err, req, res, _next) => {
 
   if (status >= 500 && !env.isTest) console.error(`[${req.method} ${req.originalUrl}]`, err);
   // Internal error details are never leaked to clients.
-  res.status(status).json({ message, ...(details ? { details } : {}) });
+  res.status(status).json({ message, ...(code ? { code } : {}), ...(details ? { details } : {}) });
 };
 
 module.exports = { notFound, errorHandler };

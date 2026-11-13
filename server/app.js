@@ -10,6 +10,8 @@ const env = require("./config/env");
 const { connectDB } = require("./config/db");
 const { protect } = require("./middleware/auth");
 const { notFound, errorHandler } = require("./middleware/errors");
+const { provider: mailProvider } = require("./lib/mailer");
+const compression = require("compression");
 
 const homesRouter = require("./routes/homes");
 
@@ -61,6 +63,7 @@ app.use(
     credentials: true,
   })
 );
+app.use(compression());
 app.use(express.json({ limit: "200kb" }));
 app.use(express.urlencoded({ extended: false, limit: "200kb" }));
 app.use(cookieParser());
@@ -72,7 +75,7 @@ app.use(async (_req, _res, next) => {
   next();
 });
 
-app.get(["/health", "/api/health"], (_req, res) => res.json({ status: "ok" }));
+app.get(["/health", "/api/health"], (_req, res) => res.json({ status: "ok", mail: mailProvider() }));
 
 // Avatars are public; receipts are served through an authorised route.
 app.use(
@@ -85,18 +88,24 @@ app.use(
 
 app.use("/api", rateLimit({ windowMs: 60 * 1000, limit: env.isTest ? 10000 : 300, standardHeaders: "draft-7", legacyHeaders: false, message: { message: "Too many requests, slow down." } }));
 app.use("/api/auth", require("./routes/auth"));
+// Stored files (public avatars/photos; private receipts check membership inside).
+app.use("/api", require("./routes/files"));
+// Public seat listings can be browsed without an account.
+app.use("/api/public", require("./routes/publicListings"));
 
 // Everything below requires authentication.
 app.use("/api", protect);
 app.use("/api/users", require("./routes/users"));
 app.use("/api", require("./routes/join"));
 app.use("/api", require("./routes/chat"));
+app.use("/api", require("./routes/community"));
 
 // Home-scoped modules hang off the loadHome-protected router.
 homesRouter.scoped.use(require("./routes/meals"));
 homesRouter.scoped.use(require("./routes/requests"));
 homesRouter.scoped.use(require("./routes/finance"));
 homesRouter.scoped.use(require("./routes/recurring"));
+homesRouter.scoped.use(require("./routes/listings"));
 homesRouter.scoped.use(require("./routes/homeExtras"));
 app.use("/api/homes", homesRouter);
 

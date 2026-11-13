@@ -21,6 +21,8 @@ const Request = require("../models/Request");
 const Invitation = require("../models/Invitation");
 const { Conversation, Message, ConversationRead, Friendship, pairKey } = require("../models/Chat");
 const { Announcement, GroceryItem, CalendarEvent, ActivityLog, Notification } = require("../models/Misc");
+const { Listing, HomeReview, RoommateReview } = require("../models/Community");
+const { RecurringExpense } = require("../models/Finance");
 const { postEntries, postExpense } = require("../services/ledger");
 const { uniqueHomeCode, ensureHomeConversation } = require("../services/homes");
 const { todayIn, addDays, monthRange } = require("../lib/dates");
@@ -50,7 +52,8 @@ async function wipeDemo() {
     Friendship.deleteMany({ $or: [{ requester: { $in: userIds } }, { recipient: { $in: userIds } }] }),
     Notification.deleteMany({ $or: [{ user: { $in: userIds } }, { home: { $in: homeIds } }] }),
     Session.deleteMany({ user: { $in: userIds } }),
-    ...[Membership, Invitation, MealEntry, MealPeriod, Request, LedgerEntry, Expense, Announcement, GroceryItem, CalendarEvent, ActivityLog].map((M) => M.deleteMany({ home: { $in: homeIds } })),
+    ...[Membership, Invitation, MealEntry, MealPeriod, Request, LedgerEntry, Expense, Announcement, GroceryItem, CalendarEvent, ActivityLog, Listing, HomeReview, RecurringExpense].map((M) => M.deleteMany({ home: { $in: homeIds } })),
+    RoommateReview.deleteMany({ $or: [{ reviewer: { $in: userIds } }, { subject: { $in: userIds } }] }),
   ]);
   // Memberships of demo users in non-demo homes are removed too.
   await Membership.deleteMany({ user: { $in: userIds } });
@@ -102,7 +105,7 @@ async function seedDemo({ password = process.env.DEMO_PASSWORD || "Demo@1234" } 
       roles: p.roles,
       status: "active",
       joinedVia: p.key === "admin" ? "creator" : "code",
-      joinedAt: new Date(`${month.from}T09:00:00Z`),
+      joinedAt: new Date(Date.now() - 60 * 86400000), // long enough to review
       rulesAcceptedAt: new Date(),
       room: p.room,
       phone: p.phone,
@@ -211,6 +214,24 @@ async function seedDemo({ password = process.env.DEMO_PASSWORD || "Demo@1234" } 
   const key = pairKey(users.admin._id, users.manager._id);
   const dm = await Conversation.create({ kind: "direct", directKey: key, participants: [users.admin._id, users.manager._id], lastMessageAt: new Date(), lastMessage: { body: "Let's close the month on the 30th.", sender: users.manager._id } });
   await Message.create({ conversation: dm._id, sender: users.manager._id, body: "Let's close the month on the 30th." });
+
+  // ---- seat listing + reviews ----
+  await Listing.create({
+    home: home._id, postedBy: users.admin._id, title: "1 seat in a friendly 5-person mess", seats: 1, roomType: "shared_room",
+    rent: 450000, deposit: 450000, mealCostEstimate: 300000, availableFrom: addDays(today, 10), gender: "male", occupation: "any",
+    city: "Dhaka", area: "Dhanmondi", amenities: ["wifi", "meals", "generator", "gas", "water_filter", "cleaner"],
+    description: "Tanvir is moving out at the end of the month. Shared room with one other member, two meals a day, fast Wi-Fi and a cleaner twice a week. 5 minutes walk from Dhanmondi 27. Bills and the meal rate are tracked transparently in BachelorMate.",
+  });
+  const stayedFrom = new Date(Date.now() - 60 * 86400000);
+  await HomeReview.create([
+    { home: home._id, user: users.meal._id, rating: 5, body: "Food is genuinely good and the meal rate is always clear — no more arguments at the end of the month.", scores: { cleanliness: 4, food: 5, management: 5, value: 5 }, stayedFrom },
+    { home: home._id, user: users.member._id, rating: 4, body: "Friendly people and fair bills. Water pressure on the top floor could be better.", scores: { cleanliness: 4, food: 4, management: 4, value: 4 }, stayedFrom, reply: { body: "Thanks Tanvir! We have asked the landlord about a booster pump.", by: users.admin._id, at: new Date() } },
+    { home: home._id, user: users.member2._id, rating: 4, body: "Good location near Dhanmondi 27 and the managers respond quickly to requests.", scores: { cleanliness: 3, food: 4, management: 5, value: 4 }, stayedFrom },
+  ]);
+  await RoommateReview.create([
+    { reviewer: users.member._id, subject: users.admin._id, home: home._id, rating: 5, body: "Runs the mess fairly and always shares the numbers with everyone.", tags: ["respectful", "pays_on_time", "helpful"] },
+    { reviewer: users.meal._id, subject: users.member._id, rating: 4, home: home._id, body: "Easy to live with and keeps the room clean. Sometimes late with dues.", tags: ["clean", "friendly", "late_payments"] },
+  ]);
 
   await ActivityLog.create({ home: home._id, actor: users.admin._id, action: "home.created", summary: "Demo data loaded for Green Villa Mess" });
   await Notification.create({ user: users.admin._id, home: home._id, type: "join_request", title: "Welcome to the BachelorMate demo", body: "Explore meals, finance, requests and chat. Every role has its own demo login.", link: `/h/${home._id}` });

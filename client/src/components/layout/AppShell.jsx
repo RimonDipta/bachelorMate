@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard, UtensilsCrossed, CalendarDays, ClipboardList, Wallet, Receipt, ArrowLeftRight, MessagesSquare,
   Megaphone, ShoppingBasket, Users, UserPlus, BarChart3, History, Settings, Bell, Menu as MenuIcon, ChevronsUpDown,
-  Plus, LogIn, House, UserRound, Palette, LogOut, Moon, Sun, MessageCircle, Mail, Check, CircleUserRound, Soup, Repeat, X,
+  Plus, LogIn, House, UserRound, Palette, LogOut, Moon, Sun, MessageCircle, Mail, Check, CircleUserRound, Soup, Repeat, X, DoorOpen, Star, Search,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../context/AuthContext";
@@ -65,11 +65,13 @@ function AccountMenu({ user, trigger, align = "start", counts = {} }) {
         </div>
       </div>
       <div className="menu-sep" />
-      <MenuItem icon={UserRound} onClick={() => navigate("/settings/profile")}>Profile</MenuItem>
+      <MenuItem icon={UserRound} onClick={() => navigate(`/people/${user._id}`)}>My profile</MenuItem>
       <MenuItem icon={MessageCircle} onClick={() => navigate("/messages")}>Messages {counts.dm > 0 && <span className="count" style={{ marginLeft: "auto" }}>{counts.dm}</span>}</MenuItem>
       <MenuItem icon={Users} onClick={() => navigate("/friends")}>Friends</MenuItem>
       {counts.invites > 0 && <MenuItem icon={Mail} onClick={() => navigate("/invitations")}>Invitations <span className="count" style={{ marginLeft: "auto" }}>{counts.invites}</span></MenuItem>}
       <MenuItem icon={House} onClick={() => navigate("/homes")}>All homes</MenuItem>
+      <MenuItem icon={Star} onClick={() => navigate("/reviews")}>My reviews</MenuItem>
+      <MenuItem icon={Search} onClick={() => navigate("/seats")}>Find a seat</MenuItem>
       <div className="menu-sep" />
       <MenuItem icon={Palette} onClick={() => navigate("/settings/appearance")}>Appearance</MenuItem>
       <MenuItem icon={dark ? Sun : Moon} onClick={() => theme.update({ mode: dark ? "light" : "dark" })}>{dark ? "Light mode" : "Dark mode"}</MenuItem>
@@ -161,6 +163,8 @@ export default function AppShell() {
             <div className="nav-section">House</div>
             <NavItem to={`${base}/announcements`} icon={Megaphone}>Announcements</NavItem>
             <NavItem to={`${base}/grocery`} icon={ShoppingBasket}>Grocery list</NavItem>
+            <NavItem to={`${base}/listings`} icon={DoorOpen}>Seat listings</NavItem>
+            <NavItem to={`${base}/reviews`} icon={Star}>Reviews</NavItem>
             {can("members.view") && <NavItem to={`${base}/members`} icon={Users} count={dash?.pendingJoins}>Members</NavItem>}
             {(can("invites.manage") || home.settings?.allowMemberInvites) && <NavItem to={`${base}/invites`} icon={UserPlus}>Invitations</NavItem>}
             {can("reports.view") && <NavItem to={`${base}/reports`} icon={BarChart3}>Reports</NavItem>}

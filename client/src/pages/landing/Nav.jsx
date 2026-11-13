@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Menu, X, Sun, Moon, ArrowRight, ArrowUpRight, Soup } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
+import { useAuth } from "../../context/AuthContext";
 import { scrollToId } from "./motion";
 
 export function Logo() {
@@ -40,6 +41,7 @@ export function ThemeToggle() {
 }
 
 export default function Nav() {
+  const { user } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -70,11 +72,18 @@ export default function Nav() {
             {LINKS.map(([id, label]) => (
               <a key={id} href={`/#${id}`} className="lp-navlink" onClick={(e) => scrollToId(e, id)}>{label}</a>
             ))}
+            <Link to="/seats" className="lp-navlink">Find a seat</Link>
           </nav>
           <div className="lp-navright">
             <ThemeToggle />
-            <Link to="/login" className="lp-navlink lp-hide-m">Log in</Link>
-            <Link to="/register" className="lp-btn lp-btn-primary lp-btn-sm lp-hide-m">Get started</Link>
+            {user ? (
+              <Link to="/app" className="lp-btn lp-btn-primary lp-btn-sm lp-hide-m">Open app</Link>
+            ) : (
+              <>
+                <Link to="/login" className="lp-navlink lp-hide-m">Log in</Link>
+                <Link to="/register" className="lp-btn lp-btn-primary lp-btn-sm lp-hide-m">Get started</Link>
+              </>
+            )}
             <button type="button" className="lp-iconbtn lp-burger" aria-label="Open menu" aria-expanded={open} onClick={() => setOpen(true)}><Menu /></button>
           </div>
         </div>
@@ -95,10 +104,17 @@ export default function Nav() {
                 {label} <ArrowUpRight />
               </a>
             ))}
+            <Link to="/seats" onClick={() => setOpen(false)}>Find a seat <ArrowUpRight /></Link>
           </nav>
           <div className="lp-drawer-cta">
-            <Link to="/register" className="lp-btn lp-btn-primary">Get started <ArrowRight /></Link>
-            <Link to="/login" className="lp-btn lp-btn-ghost">Log in</Link>
+            {user ? (
+              <Link to="/app" className="lp-btn lp-btn-primary">Open app <ArrowRight /></Link>
+            ) : (
+              <>
+                <Link to="/register" className="lp-btn lp-btn-primary">Get started <ArrowRight /></Link>
+                <Link to="/login" className="lp-btn lp-btn-ghost">Log in</Link>
+              </>
+            )}
           </div>
         </div>
       )}

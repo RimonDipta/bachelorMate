@@ -6,10 +6,18 @@ const { Friendship, pairKey } = require("../models/Chat");
 const { validate, z, badRequest, notFound, objectId } = require("../lib/http");
 const { escapeRegex } = require("../lib/security");
 const { makeUploader, removeUpload } = require("../middleware/upload");
+const { deleteByUrl } = require("../services/storage");
 const realtime = require("../services/realtime");
 
 const router = express.Router();
-const avatarUpload = makeUploader("avatars");
+const avatarUpload = makeUploader("avatar");
+
+// Deletes the previous avatar whether it lives in GridFS or on legacy disk storage.
+const dropAvatar = async (url) => {
+  if (!url) return;
+  if (url.startsWith("/api/files/")) await deleteByUrl(url);
+  else if (url.startsWith("/uploads/")) await removeUpload(url.replace("/uploads/", ""));
+};
 
 router.patch(
   "/me",
@@ -31,14 +39,14 @@ router.patch(
 router.post("/me/avatar", ...avatarUpload("avatar"), async (req, res) => {
   if (!req.file) throw badRequest("Choose an image to upload");
   const previous = req.user.avatarUrl;
-  req.user.avatarUrl = `/uploads/${req.file.storedPath}`;
+  req.user.avatarUrl = req.file.url;
   await req.user.save();
-  if (previous?.startsWith("/uploads/")) await removeUpload(previous.replace("/uploads/", ""));
+  await dropAvatar(previous);
   res.json({ user: req.user });
 });
 
 router.delete("/me/avatar", async (req, res) => {
-  if (req.user.avatarUrl?.startsWith("/uploads/")) await removeUpload(req.user.avatarUrl.replace("/uploads/", ""));
+  await dropAvatar(req.user.avatarUrl);
   req.user.avatarUrl = undefined;
   await req.user.save();
   res.json({ user: req.user });

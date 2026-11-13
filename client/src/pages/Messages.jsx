@@ -15,6 +15,7 @@ function ConvItem({ c, active }) {
       <Avatar user={c.other} size={36} online={online} />
       <div className="grow" style={{ minWidth: 0 }}>
         <div className="row between"><span className={`text-sm truncate ${c.unread ? "strong" : ""}`}>{c.other?.name}</span><span className="text-xs subtle">{timeAgo(c.lastMessageAt)}</span></div>
+        {c.kind === "listing" && <div className="text-xs truncate" style={{ color: "var(--accent-text)" }}>Seat: {c.listing?.title || "listing"}</div>}
         <div className="row between"><span className="text-xs muted truncate">{c.lastMessage?.body}</span>{c.unread > 0 && <span className="count">{c.unread}</span>}</div>
       </div>
     </Link>
@@ -47,7 +48,7 @@ export default function Messages() {
   const navigate = useNavigate();
   const { data, isLoading } = useQuery({ queryKey: ["conversations"], queryFn: () => api.get("/chat/conversations") });
   const { data: friends } = useQuery({ queryKey: ["friends"], queryFn: () => api.get("/friends") });
-  const dms = (data?.conversations || []).filter((c) => c.kind === "direct");
+  const dms = (data?.conversations || []).filter((c) => c.kind === "direct" || c.kind === "listing");
   const active = dms.find((c) => c._id === cid);
   const withoutChat = (friends?.friends || []).filter((f) => !dms.some((c) => c.other?._id === f._id));
   const otherOnline = useOnline(active?.other?._id, active?.other?.online);
@@ -73,7 +74,7 @@ export default function Messages() {
             showMembers={false}
             onBack={() => navigate("/messages")}
             title={active?.other?.name || "Conversation"}
-            subtitle={active?.other ? (otherOnline ? "Online" : active.other.lastSeenAt ? `Last seen ${timeAgo(active.other.lastSeenAt)}` : "Offline") : ""}
+            subtitle={active?.kind === "listing" ? `About your seat listing: ${active.listing?.title || ""}` : active?.other ? (otherOnline ? "Online" : active.other.lastSeenAt ? `Last seen ${timeAgo(active.other.lastSeenAt)}` : "Offline") : ""}
             avatar={active?.other && <Avatar user={active.other} size={32} online={otherOnline} />}
           />
         ) : (

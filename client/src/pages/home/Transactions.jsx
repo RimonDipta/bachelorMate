@@ -52,7 +52,7 @@ export function useEntryActions(homeId) {
   const approve = useAction((e) => api.post(`/homes/${homeId}/finance/entries/${e._id}/approve`), { invalidate: inv, success: "Payment confirmed" });
   const reject = useAction((e) => api.post(`/homes/${homeId}/finance/entries/${e._id}/reject`, {}), { invalidate: inv, success: "Payment rejected" });
   const reverse = useAction(() => api.post(`/homes/${homeId}/finance/entries/${reversing._id}/reverse`, { reason }), { invalidate: inv, success: "Entry reversed", onSuccess: () => setReversing(null) });
-  const openAttachment = (path) => api.open(`/homes/${homeId}/files/${path}`).catch((e) => toast.error(e));
+  const openAttachment = (path) => api.openFile(path, homeId).catch((e) => toast.error(e));
   const modal = (
     <FormModal open={Boolean(reversing)} onClose={() => setReversing(null)} title="Reverse this entry?" submitLabel="Reverse" danger loading={reverse.isPending} disabled={reason.trim().length < 3} onSubmit={() => reverse.mutate()}>
       <p className="text-sm muted">A matching opposite entry is added; the original stays visible in the history.</p>

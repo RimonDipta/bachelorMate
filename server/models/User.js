@@ -16,6 +16,10 @@ const userSchema = new mongoose.Schema(
     emailVerified: { type: Boolean, default: false },
     emailVerifyTokenHash: { type: String, select: false },
     emailVerifyExpires: { type: Date, select: false },
+    // 6-digit code alternative to the link (hashed, limited attempts).
+    emailVerifyCodeHash: { type: String, select: false },
+    emailVerifyAttempts: { type: Number, default: 0, select: false },
+    emailVerifySentAt: { type: Date, select: false },
     resetTokenHash: { type: String, select: false },
     resetTokenExpires: { type: Date, select: false },
     // Incrementing this invalidates every outstanding access token.
@@ -58,6 +62,9 @@ userSchema.set("toJSON", {
     delete ret.passwordHash;
     delete ret.emailVerifyTokenHash;
     delete ret.emailVerifyExpires;
+    delete ret.emailVerifyCodeHash;
+    delete ret.emailVerifyAttempts;
+    delete ret.emailVerifySentAt;
     delete ret.resetTokenHash;
     delete ret.resetTokenExpires;
     delete ret.tokenVersion;

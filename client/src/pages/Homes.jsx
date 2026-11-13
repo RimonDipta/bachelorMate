@@ -5,7 +5,6 @@ import { api } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 import { Badge, Card, EmptyState, ErrorState, LoadingBlock, PageHeader, StatusBadge } from "../components/ui";
 import { HOME_TYPES, initials, rolesLabel, pluralize } from "../lib/format";
-import { useAction } from "../lib/hooks";
 
 export default function Homes() {
   const { user } = useAuth();
@@ -15,7 +14,6 @@ export default function Homes() {
   const homes = data?.homes || [];
   const active = homes.filter((h) => h.myMembership.status === "active");
   const pending = homes.filter((h) => h.myMembership.status === "pending");
-  const resend = useAction(() => api.post("/auth/resend-verification"), { success: "Verification email sent" });
 
   return (
     <main className="content">
@@ -33,8 +31,8 @@ export default function Homes() {
         {!user.emailVerified && (
           <div className="alert alert-neutral">
             <Mail />
-            <div className="grow">Please verify your email address to keep your account secure.</div>
-            <button className="btn btn-sm btn-secondary" onClick={() => resend.mutate()} disabled={resend.isPending}>Resend email</button>
+            <div className="grow">Verify your email to create or join homes, post seats and write reviews.</div>
+            <Link to="/verify-email?next=/homes" className="btn btn-sm btn-primary">Enter code</Link>
           </div>
         )}
         {inv?.invitations?.length > 0 && (

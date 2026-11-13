@@ -3,14 +3,15 @@ const { z } = require("zod");
 const mongoose = require("mongoose");
 
 class HttpError extends Error {
-  constructor(status, message, details) {
+  constructor(status, message, details, code) {
     super(message);
     this.status = status;
     this.details = details;
+    this.code = code; // machine-readable reason, e.g. EMAIL_NOT_VERIFIED
   }
 }
 
-const badRequest = (msg, details) => new HttpError(400, msg, details);
+const badRequest = (msg, details, code) => new HttpError(400, msg, details, code);
 const unauthorized = (msg = "Authentication required") => new HttpError(401, msg);
 const forbidden = (msg = "You do not have permission to do this") => new HttpError(403, msg);
 const notFound = (msg = "Not found") => new HttpError(404, msg);

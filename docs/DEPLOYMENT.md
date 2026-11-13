@@ -70,17 +70,43 @@ The demo home includes two weeks of meals, bazar and bills, payments (one pendin
   Run it locally with `MONGO_URI` pointing at Atlas, or from Render's *Shell* tab (paid plans).
 * **Turn the demo off** for a real launch: set `SEED_DEMO=false`. The demo users can stay or be removed by an Admin; they never touch other homes.
 
-## Step 5: Recommended production settings
+## Step 5: Set up email (verification codes, password resets, invitations)
+
+Until this is done, emails are only printed to Render's **Logs**, and the "verify your email first" rule stays off so nobody gets locked out.
+
+**Recommended: Resend** (free tier: 3,000 emails/month, 100/day).
+
+1. Sign up at https://resend.com.
+2. **To send to anyone, you need a domain.** Resend → **Domains → Add domain** (e.g. `yourdomain.com`, or a subdomain like `mail.yourdomain.com`). Add the DNS records it shows (SPF/DKIM `TXT` + `MX`) at your domain registrar or Cloudflare. Wait for **Verified** (usually minutes).
+   *No domain yet?* You can test right away with `MAIL_FROM=BachelorMate <onboarding@resend.dev>`, but Resend then only delivers to **your own** Resend account email.
+3. Resend → **API Keys → Create** (permission: *Sending access*) → copy the key (`re_…`).
+4. Render → your service → **Environment**:
+   | Key | Value |
+   | --- | --- |
+   | `RESEND_API_KEY` | `re_…` |
+   | `MAIL_FROM` | `BachelorMate <hello@yourdomain.com>` (an address on your verified domain) |
+   | `MAIL_REPLY_TO` | optional, e.g. your Gmail, for replies |
+   | `REQUIRE_EMAIL_VERIFICATION` | `true` (already set by the blueprint) |
+5. Save; Render redeploys. Check `https://YOUR-APP/health` → it should show `"mail":"resend"`.
+6. Send a test (locally, with the same two variables set in `server/.env`):
+   ```bash
+   npm --prefix server run mail:test -- you@example.com
+   ```
+7. Sign up with a real address on the live site → you should receive a **6-digit code** (and a link). Check spam the first time; after a few emails, delivery to inboxes improves.
+
+**Using SMTP instead** (Gmail app password, Brevo, Mailgun, SendGrid): leave `RESEND_API_KEY` empty and set `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS` and `MAIL_FROM`. Some hosting plans restrict outbound SMTP ports; the Resend HTTP API (port 443) avoids that entirely.
+
+## Step 6: Recommended production settings
 
 | Setting | Why |
 | --- | --- |
-| **Email:** `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` | Verification, password reset and invitation emails. Without it, emails are only written to the Render logs. Any SMTP works: Resend (`smtp.resend.com`, port 465, `SMTP_SECURE=true`, user `resend`, password = API key), Brevo, Mailgun, SendGrid, or a Gmail app password |
 | **Google sign-in:** `FIREBASE_PROJECT_ID` on Render, plus the `VITE_FIREBASE_*` vars at build time | Create a Firebase project → Authentication → enable Google → add your Render domain under *Authorized domains*. Put the web config values as `VITE_FIREBASE_*` env vars on Render (Vite reads them during the build) |
-| **Persistent uploads:** add a Render *Disk* (paid) mounted at e.g. `/var/data` and set `UPLOAD_DIR=/var/data/uploads` | On the free plan, avatars and receipts are lost on each redeploy |
+| **Images:** nothing to do | Uploads are resized, compressed to WebP and stored **in MongoDB (GridFS)**, so they survive redeploys on the free plan. A 1600px photo is typically 30–150 KB. The Atlas free tier (512 MB) holds thousands of photos; upgrade Atlas if you outgrow it |
+| **Review rules:** `REVIEW_MIN_STAY_DAYS` (default `7`) | How long someone must have lived in a home before reviewing it or its members |
 | **Always on:** Starter plan | Free instances sleep after 15 minutes; the first request then takes ~30 s and chat reconnects automatically |
 | **Custom domain:** Render → Settings → Custom Domains | Then update `CLIENT_URL` and `CORS_ORIGINS` |
 
-## Step 6: Moving existing data (optional)
+## Step 7: Moving existing data (optional)
 
 If your old Vercel deployment's MongoDB has real data from the original *family* version, preview the migration first (a dry run that writes nothing):
 ```bash
@@ -108,6 +134,8 @@ Old collections are only read, never changed.
 | `MongoServerSelectionError` | Atlas Network Access must allow `0.0.0.0/0`; check the user and password in `MONGO_URI` (URL-encode special characters) |
 | Logged out on every refresh | `CLIENT_URL`/`CORS_ORIGINS` don't match the URL you're using, or `COOKIE_SECURE=true` on plain http |
 | Email links point to localhost | Set `CLIENT_URL` to the public URL |
+| No verification email arrives | `/health` must show `"mail":"resend"` or `"smtp"`; check Render logs for `Email to … failed`; with `onboarding@resend.dev` only your own address receives mail; check spam |
+| Resend says the domain is not verified | `MAIL_FROM` must use the exact domain verified in Resend |
 
 ---
 

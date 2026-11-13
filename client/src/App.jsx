@@ -8,6 +8,12 @@ import { PageSkeleton } from "./components/ui";
 
 const Landing = lazy(() => import("./pages/Landing"));
 const Legal = lazy(() => import("./pages/Legal"));
+const SeatSearch = lazy(() => import("./pages/seats/SeatSearch"));
+const SeatDetail = lazy(() => import("./pages/seats/SeatDetail"));
+const MyReviews = lazy(() => import("./pages/MyReviews"));
+const Profile = lazy(() => import("./pages/Profile"));
+const HomeListings = lazy(() => import("./pages/home/HomeListings"));
+const HomeReviews = lazy(() => import("./pages/home/HomeReviews"));
 const Login = lazy(() => import("./pages/auth/Login"));
 const Register = lazy(() => import("./pages/auth/Register"));
 const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
@@ -77,6 +83,8 @@ export default function App() {
     <Suspense fallback={<Spinner />}>
       <Routes>
         <Route path="/" element={<PublicOnly><Landing /></PublicOnly>} />
+        <Route path="/seats" element={<SeatSearch />} />
+        <Route path="/seats/:id" element={<SeatDetail />} />
         <Route path="/privacy" element={<Legal page="privacy" />} />
         <Route path="/terms" element={<Legal page="terms" />} />
         <Route path="/login" element={<PublicOnly><Login /></PublicOnly>} />
@@ -96,6 +104,8 @@ export default function App() {
           <Route path="/messages" element={<Messages />} />
           <Route path="/friends/chat/:cid" element={<Messages />} />
           <Route path="/notifications" element={<Notifications />} />
+          <Route path="/reviews" element={<MyReviews />} />
+          <Route path="/people/:userId" element={<Profile />} />
           <Route path="/settings" element={<Navigate to="/settings/profile" replace />} />
           <Route path="/settings/:tab" element={<AccountSettings />} />
 
@@ -117,6 +127,8 @@ export default function App() {
             <Route path="finance/accounts/:mid" element={<MemberAccount />} />
             <Route path="chat" element={<HomeChat />} />
             <Route path="announcements" element={<Announcements />} />
+            <Route path="listings" element={<HomeListings />} />
+            <Route path="reviews" element={<HomeReviews />} />
             <Route path="grocery" element={<Grocery />} />
             <Route path="calendar" element={<Calendar />} />
             <Route path="reports" element={<Reports />} />

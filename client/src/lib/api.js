@@ -7,17 +7,18 @@ let refreshing = null;
 let authLostHandler = () => {};
 
 export class ApiError extends Error {
-  constructor(status, message, details) {
+  constructor(status, message, details, code) {
     super(message);
     this.status = status;
     this.details = details;
+    this.code = code;
   }
 }
 
 export const getAccessToken = () => accessToken;
 export const setAccessToken = (t) => (accessToken = t);
 export const onAuthLost = (fn) => (authLostHandler = fn);
-export const assetUrl = (p) => (p && p.startsWith("/uploads") ? `${BASE}${p}` : p);
+export const assetUrl = (p) => (p && (p.startsWith("/uploads") || p.startsWith("/api/files/")) ? `${BASE}${p}` : p);
 export const apiBase = BASE;
 
 export function refreshSession() {
@@ -75,7 +76,7 @@ async function request(path, { method = "GET", body, query, raw = false, retry =
     return res;
   }
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new ApiError(res.status, data.message || "Something went wrong", data.details);
+  if (!res.ok) throw new ApiError(res.status, data.message || "Something went wrong", data.details, data.code);
   return data;
 }
 
@@ -97,6 +98,10 @@ export const api = {
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
+  },
+  /** Open a stored file: new uploads live at /api/files/<id>, older ones under the home. */
+  openFile(stored, homeId) {
+    return this.open(stored.startsWith("/api/") ? stored.slice(4) : `/homes/${homeId}/files/${stored}`);
   },
   /** Open an authenticated file (e.g. a receipt) in a new tab. */
   async open(p) {

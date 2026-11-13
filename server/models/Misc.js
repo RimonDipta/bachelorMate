@@ -22,6 +22,8 @@ const NOTIFICATION_TYPES = [
   "role_change",
   "meal_period_closed",
   "member_removed",
+  "listing_inquiry",
+  "review",
 ];
 
 const notificationSchema = new mongoose.Schema(

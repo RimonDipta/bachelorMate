@@ -3,10 +3,11 @@ const { ObjectId } = mongoose.Schema.Types;
 
 const conversationSchema = new mongoose.Schema(
   {
-    kind: { type: String, enum: ["home", "direct"], required: true },
+    kind: { type: String, enum: ["home", "direct", "listing"], required: true },
     home: { type: ObjectId, ref: "Home" },
-    participants: [{ type: ObjectId, ref: "User" }], // direct chats only
-    directKey: { type: String, unique: true, sparse: true }, // "<minId>:<maxId>"
+    listing: { type: ObjectId, ref: "Listing" }, // listing inquiries: poster + inquirer
+    participants: [{ type: ObjectId, ref: "User" }], // direct + listing chats
+    directKey: { type: String, unique: true, sparse: true }, // "<minId>:<maxId>" or "listing:<id>:<userId>"
     lastMessageAt: { type: Date },
     lastMessage: { body: String, sender: { type: ObjectId, ref: "User" } },
   },

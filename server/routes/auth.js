@@ -1,12 +1,13 @@
+const crypto = require("crypto");
 const express = require("express");
 const rateLimit = require("express-rate-limit");
 const User = require("../models/User");
 const Session = require("../models/Session");
 const env = require("../config/env");
 const { protect } = require("../middleware/auth");
-const { validate, z, badRequest, unauthorized } = require("../lib/http");
+const { validate, z, badRequest, unauthorized, HttpError } = require("../lib/http");
 const { randomToken, sha256, signAccessToken } = require("../lib/security");
-const { sendMail } = require("../lib/mailer");
+const { sendMail, esc } = require("../lib/mailer");
 
 const router = express.Router();
 
@@ -48,18 +49,38 @@ async function issueSession(req, res, user) {
   return { user, accessToken: signAccessToken(user) };
 }
 
+const VERIFY_TTL_MS = 24 * 3600 * 1000;
+const RESEND_COOLDOWN_MS = 60 * 1000;
+const MAX_CODE_ATTEMPTS = 5;
+
+/** Emails a verification link AND a 6-digit code (either works). Only hashes are stored. */
 async function sendVerification(user) {
   const token = randomToken(32);
+  const code = String(crypto.randomInt(0, 1000000)).padStart(6, "0");
   user.emailVerifyTokenHash = sha256(token);
-  user.emailVerifyExpires = new Date(Date.now() + 24 * 3600 * 1000);
+  user.emailVerifyCodeHash = sha256(`${user._id}:${code}`);
+  user.emailVerifyAttempts = 0;
+  user.emailVerifySentAt = new Date();
+  user.emailVerifyExpires = new Date(Date.now() + VERIFY_TTL_MS);
   await user.save();
-  await sendMail({
+  return sendMail({
     to: user.email,
-    subject: "Verify your email",
-    body: "Confirm your email address to secure your BachelorMate account. This link expires in 24 hours.",
+    subject: `${code} is your BachelorMate verification code`,
+    title: "Confirm your email",
+    body: `Hi ${esc(user.name)}, enter this code in BachelorMate to verify your email address — or use the button below. Both expire in 24 hours.`,
+    code,
     cta: { label: "Verify email", url: `${env.CLIENT_URL}/verify-email?token=${token}` },
+    footer: "If you didn't create a BachelorMate account, you can safely ignore this email.",
   });
 }
+
+const markVerified = (user) => {
+  user.emailVerified = true;
+  user.emailVerifyTokenHash = undefined;
+  user.emailVerifyCodeHash = undefined;
+  user.emailVerifyExpires = undefined;
+  user.emailVerifyAttempts = 0;
+};
 
 router.post(
   "/register",
@@ -181,9 +202,34 @@ router.post(
       emailVerifyExpires: { $gt: new Date() },
     });
     if (!user) throw badRequest("This verification link is invalid or has expired");
-    user.emailVerified = true;
-    user.emailVerifyTokenHash = undefined;
-    user.emailVerifyExpires = undefined;
+    markVerified(user);
+    await user.save();
+    res.json({ message: "Email verified", user });
+  }
+);
+
+// Signed-in users can type the 6-digit code instead of clicking the link.
+router.post(
+  "/verify-email-code",
+  authLimiter,
+  protect,
+  validate({ body: z.object({ code: z.string().trim().regex(/^\d{6}$/, "Enter the 6-digit code") }) }),
+  async (req, res) => {
+    const user = await User.findById(req.user._id).select("+emailVerifyCodeHash +emailVerifyExpires +emailVerifyAttempts");
+    if (user.emailVerified) return res.json({ message: "Email already verified", user });
+    if (!user.emailVerifyCodeHash || !user.emailVerifyExpires || user.emailVerifyExpires < new Date()) {
+      throw badRequest("This code has expired. Send a new one.", undefined, "CODE_EXPIRED");
+    }
+    if ((user.emailVerifyAttempts || 0) >= MAX_CODE_ATTEMPTS) {
+      throw badRequest("Too many wrong attempts. Send a new code.", undefined, "CODE_LOCKED");
+    }
+    if (sha256(`${user._id}:${req.v.body.code}`) !== user.emailVerifyCodeHash) {
+      user.emailVerifyAttempts = (user.emailVerifyAttempts || 0) + 1;
+      await user.save();
+      const left = MAX_CODE_ATTEMPTS - user.emailVerifyAttempts;
+      throw badRequest(left > 0 ? `That code isn't right. ${left} attempt${left === 1 ? "" : "s"} left.` : "Too many wrong attempts. Send a new code.");
+    }
+    markVerified(user);
     await user.save();
     res.json({ message: "Email verified", user });
   }
@@ -191,8 +237,12 @@ router.post(
 
 router.post("/resend-verification", authLimiter, protect, async (req, res) => {
   if (req.user.emailVerified) return res.json({ message: "Email already verified" });
-  await sendVerification(req.user);
-  res.json({ message: "Verification email sent" });
+  const user = await User.findById(req.user._id).select("+emailVerifySentAt");
+  const wait = user.emailVerifySentAt ? RESEND_COOLDOWN_MS - (Date.now() - user.emailVerifySentAt.getTime()) : 0;
+  if (wait > 0) throw new HttpError(429, `Please wait ${Math.ceil(wait / 1000)}s before requesting another code`, undefined, "RESEND_COOLDOWN");
+  const result = await sendVerification(user);
+  if (!result.ok) throw new HttpError(502, "We couldn't send the email right now. Please try again in a minute.");
+  res.json({ message: `Verification code sent to ${user.email}` });
 });
 
 router.post(

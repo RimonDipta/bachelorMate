@@ -25,18 +25,20 @@ async function unreadFor(convId, userId) {
 router.get("/chat/conversations", async (req, res) => {
   const homeIds = await Membership.find({ user: req.user._id, status: "active" }).distinct("home");
   for (const h of homeIds) await ensureHomeConversation(h);
-  const convs = await Conversation.find({ $or: [{ kind: "home", home: { $in: homeIds } }, { kind: "direct", participants: req.user._id }] })
+  const convs = await Conversation.find({ $or: [{ kind: "home", home: { $in: homeIds } }, { kind: { $in: ["direct", "listing"] }, participants: req.user._id }] })
     .populate("home", "name")
+    .populate("listing", "title home")
     .populate("participants", "name avatarUrl lastSeenAt")
     .sort({ lastMessageAt: -1 });
   const out = [];
   for (const c of convs) {
-    if (c.kind === "direct" && !c.lastMessageAt) continue;
-    const other = c.kind === "direct" ? c.participants.find((p) => String(p._id) !== String(req.user._id)) : null;
+    if (c.kind !== "home" && !c.lastMessageAt) continue;
+    const other = c.kind !== "home" ? c.participants.find((p) => String(p._id) !== String(req.user._id)) : null;
     out.push({
       _id: c._id,
       kind: c.kind,
       home: c.home,
+      listing: c.listing && { _id: c.listing._id, title: c.listing.title, home: c.listing.home },
       other: other && { ...other.toPublic(), lastSeenAt: other.lastSeenAt, online: realtime.isOnline(other._id) },
       lastMessage: c.lastMessage,
       lastMessageAt: c.lastMessageAt,
@@ -83,7 +85,8 @@ router.get(
       members = users.map((u) => ({ ...u.toPublic(), online: realtime.isOnline(u._id), lastSeenAt: u.lastSeenAt }));
     }
     const home = conv.kind === "home" ? await Home.findById(conv.home).select("name") : null;
-    res.json({ conversation: { _id: conv._id, kind: conv.kind, home }, messages: messages.reverse().map(messageView), reads, members, hasMore: messages.length === req.v.query.limit });
+    if (conv.kind === "listing") await conv.populate("listing", "title home status");
+    res.json({ conversation: { _id: conv._id, kind: conv.kind, home, listing: conv.kind === "listing" ? conv.listing : undefined }, messages: messages.reverse().map(messageView), reads, members, hasMore: messages.length === req.v.query.limit });
   }
 );
 
@@ -97,9 +100,9 @@ router.post("/chat/:cid/messages", sendLimiter, validate({ params: cidParam, bod
   await msg.populate("sender", "name avatarUrl");
   const payload = { conversationId: conv._id, kind: conv.kind, home: conv.home, message: messageView(msg) };
   emitToConversation(conv, "chat:message", payload);
-  if (conv.kind === "direct") {
+  if (conv.kind !== "home") {
     const other = conv.participants.find((p) => String(p) !== String(req.user._id));
-    if (!realtime.isOnline(other)) {
+    if (other && !realtime.isOnline(other)) {
       await notify([other], { type: "message", title: `New message from ${req.user.name}`, body: msg.body.slice(0, 120), link: `/friends/chat/${conv._id}`, actor: req.user._id, email: false });
     }
   }

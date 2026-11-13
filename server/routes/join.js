@@ -7,6 +7,7 @@ const Invitation = require("../models/Invitation");
 const { validate, z, objectId, badRequest, notFound } = require("../lib/http");
 const { sha256 } = require("../lib/security");
 const { joinHome } = require("../services/homes");
+const { requireVerified } = require("../middleware/auth");
 const { notify } = require("../services/notify");
 const env = require("../config/env");
 
@@ -71,6 +72,7 @@ const profileInput = {
 router.post(
   "/join",
   joinLimiter,
+  requireVerified,
   validate({ body: z.object({ token: z.string().min(10).max(100).optional(), code: z.string().trim().toUpperCase().optional(), ...profileInput }) }),
   async (req, res) => {
     const { token, code, rulesAccepted: _r, ...profile } = req.v.body;
@@ -111,6 +113,7 @@ const findMine = async (req) => {
 
 router.post(
   "/invitations/:id/accept",
+  requireVerified,
   validate({ params: z.object({ id: objectId }), body: z.object(profileInput) }),
   async (req, res) => {
     const inv = await findMine(req);

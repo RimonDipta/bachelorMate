@@ -6,7 +6,7 @@ BachelorMate is a shared-living platform for bachelor messes, shared flats and h
 
 | Area | What you get |
 | --- | --- |
-| **Accounts** | Email/password sign-up and login, httpOnly refresh-token sessions with rotation and reuse detection, email verification, forgot/reset password (time-limited, single-use, hashed tokens), change password (signs out other devices), "sign out everywhere", profile and avatar upload, optional Google sign-in (Firebase ID token verified server-side) |
+| **Accounts** | Email/password sign-up and login, httpOnly refresh-token sessions with rotation and reuse detection, email verification by **6-digit code or link** (hashed, 5 attempts, 60 s resend cooldown, optional "verify before creating/joining homes, posting or reviewing" rule), branded HTML emails via **Resend or SMTP**, forgot/reset password (time-limited, single-use, hashed tokens), change password (signs out other devices), "sign out everywhere", profile and avatar upload (auto-cropped to 512 px), optional Google sign-in (Firebase ID token verified server-side) |
 | **Multi-home** | Create, join, switch and leave any number of homes. Every home's data is isolated, and every home-scoped API call checks active membership first |
 | **Onboarding** | Guided wizard (home → rules → meals → invite → done) with skippable steps. The join flow shows the home's rules and policies, collects member info and requires accepting the rules |
 | **Invitations** | Invitation links (hashed token shown once, expiry, usage limit, revoke), 8-character home codes (regenerate, enable/disable), in-app invitations and email invitations, optional approval by Admin or Manager, duplicate-membership protection |
@@ -15,6 +15,9 @@ BachelorMate is a shared-living platform for bachelor messes, shared flats and h
 | **Requests** | Meal-off with a configurable cut-off time, guest meals, temporary absence, departure with a configurable notice period and Admin-only exceptions, duplicate prevention, and approve/decline/cancel with notes |
 | **Finance** | Integer minor-unit money (no float errors), an append-only ledger (`balance = credits − charges`), payments recorded by managers or submitted by members for confirmation, adjustments and opening balances, reversals instead of deletes, expenses split into the meal pool / equally / between selected members / from the home fund, receipts, edit history, voiding, CSV export, payment reminders and charts |
 | **Recurring costs** | Rent, internet, cleaner and other bills posted automatically every month or week. Split them equally between everyone or chosen members, or set a custom amount per person (৳0 = doesn't pay). The server does the maths with paisa-exact rounding and never charges an occurrence twice. Every member sees **what they need to pay**: their share plus any dues carried over, minus any advance |
+| **Seat listings** | Admins and managers post an empty seat (rent, deposit, meal estimate, move-in date, who it suits, amenities, up to 8 photos). Anyone can browse and filter them on **Find a seat** without an account. Only area and city are shown, never the address. Signed-in users message the poster through a private chat, and the poster can invite them into the home with one click |
+| **Reviews** | Members and former members rate their home (overall plus cleanliness, food, management and value), and the home can reply publicly. People who lived together can review each other with tags like "pays on time". Reviews only come from people who actually lived there (configurable minimum stay) and show on listings and profiles |
+| **Images** | Uploads are verified by their file contents (not just the extension), auto-rotated, resized, converted to WebP and stripped of EXIF/GPS data, then stored in MongoDB GridFS, so they survive redeploys. Receipts are private to the home |
 | **Chat** | Private real-time chat per home (Socket.IO) with typing indicators, read receipts, presence, unread counts, edit and delete (previous versions kept for audit) and emoji. A separate friend system with one-to-one messages |
 | **Notifications** | In-app notification centre (live over sockets), unread counts, mark one or all as read, and per-type mute and email preferences. Important types are also emailed |
 | **More** | Announcements with acknowledgement, a grocery list (assign a buyer, record the purchase as an expense), a shared calendar (events, meal periods, payment deadlines, departures, absences), six reports with CSV export, an activity/audit log, and archiving or permanently deleting a home |
@@ -147,7 +150,7 @@ The legacy collections are only read, never modified. Re-running skips families 
 ```bash
 npm --prefix server test
 ```
-The suite runs 47 tests (43 API integration, 1 demo-seed and 3 unit) against an in-memory MongoDB replica set. They cover registration, login, email verification, password reset and change, refresh rotation and reuse detection, multiple homes, link/code/in-app joining, approvals, usage limits, revocation, IDOR isolation, role and permission escalation attempts, meal grids and defaults, meal-rate maths, period close/reopen with ledger reversal, payments, expenses with exact splits, edit audit, voiding, reversals, CSV reports, meal-off, guest and departure requests with notice exceptions, home chat access control, editing and deleting messages, friends and DMs, notifications, announcements, grocery-to-expense, dashboard, calendar, member removal, ownership transfer, archiving and deletion.
+The suite runs 67 tests (API integration, recurring costs, email codes, uploads, listings, reviews, demo seed and unit) against an in-memory MongoDB replica set. They cover registration, login, email verification, password reset and change, refresh rotation and reuse detection, multiple homes, link/code/in-app joining, approvals, usage limits, revocation, IDOR isolation, role and permission escalation attempts, meal grids and defaults, meal-rate maths, period close/reopen with ledger reversal, payments, expenses with exact splits, edit audit, voiding, reversals, CSV reports, meal-off, guest and departure requests with notice exceptions, home chat access control, editing and deleting messages, friends and DMs, notifications, announcements, grocery-to-expense, dashboard, calendar, member removal, ownership transfer, archiving and deletion.
 
 Client checks:
 ```bash
@@ -183,6 +186,6 @@ Socket.IO needs a long-running Node process, so the API can't run on Vercel serv
 ## Known limitations
 
 * Presence and socket rooms are in-memory, so run one API instance (or add the Socket.IO Redis adapter for several).
-* Uploads are stored on local disk.
+* Images live in MongoDB (GridFS). That is fine for thousands of photos; for very large volumes, move them to S3/R2 storage.
 * Amounts assume 2 decimal places for every currency.
 * Payment reminders are sent manually from the Finance page; no scheduled job runs them.

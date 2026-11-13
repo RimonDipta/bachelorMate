@@ -19,7 +19,7 @@ const { assertDaysEditable } = require("./meals");
 const realtime = require("../services/realtime");
 
 const router = express.Router({ mergeParams: true });
-const receiptUpload = makeUploader("receipts", { allowPdf: true });
+const receiptUpload = makeUploader("receipt", { allowPdf: true });
 
 const METHODS = ["cash", "bkash", "nagad", "rocket", "bank", "card", "other"];
 const fmt = (minor, cur) => `${(minor / 100).toFixed(2)} ${cur}`;

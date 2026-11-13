@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "../context/ToastContext";
 
 /**
@@ -9,6 +10,7 @@ import { useToast } from "../context/ToastContext";
 export function useAction(fn, { success, invalidate = [], onSuccess, onError } = {}) {
   const qc = useQueryClient();
   const toast = useToast();
+  const navigate = useNavigate();
   return useMutation({
     mutationFn: fn,
     onSuccess: async (data, vars) => {
@@ -17,7 +19,10 @@ export function useAction(fn, { success, invalidate = [], onSuccess, onError } =
       onSuccess?.(data, vars);
     },
     onError: (err) => {
-      toast.error(err);
+      if (err?.code === "EMAIL_NOT_VERIFIED") {
+        toast.info("Enter the code we emailed you to continue.", { title: "Verify your email first" });
+        navigate(`/verify-email?next=${encodeURIComponent(window.location.pathname)}`);
+      } else toast.error(err);
       onError?.(err);
     },
   });

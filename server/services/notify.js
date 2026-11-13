@@ -5,7 +5,7 @@ const User = require("../models/User");
 const Membership = require("../models/Membership");
 const { permissionsFor } = require("../lib/permissions");
 const realtime = require("./realtime");
-const { sendMail } = require("../lib/mailer");
+const { sendMail, esc } = require("../lib/mailer");
 const env = require("../config/env");
 
 const EMAIL_TYPES = new Set([
@@ -49,7 +49,7 @@ async function notify(userIds, payload) {
       sendMail({
         to: u.email,
         subject: payload.title,
-        body: `Hi ${u.name},<br/><br/>${payload.body || payload.title}`,
+        body: `Hi ${esc(u.name)},<br/><br/>${esc(payload.body || payload.title).split("\n").join("<br/>")}`,
         cta: payload.link ? { label: "Open BachelorMate", url: `${env.CLIENT_URL}${payload.link}` } : undefined,
       });
     }

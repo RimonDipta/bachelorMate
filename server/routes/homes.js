@@ -13,6 +13,7 @@ const { isValidTimeZone } = require("../lib/dates");
 const { randomToken, sha256 } = require("../lib/security");
 const { withTransaction } = require("../lib/transaction");
 const { loadHome, requirePerm, requireAdmin } = require("../middleware/home");
+const { requireVerified } = require("../middleware/auth");
 const { uniqueHomeCode, ensureHomeConversation, activateMembership } = require("../services/homes");
 const { notify } = require("../services/notify");
 const { logActivity } = require("../services/activity");
@@ -110,6 +111,7 @@ router.get("/", async (req, res) => {
 
 router.post(
   "/",
+  requireVerified,
   validate({ body: homeInput.extend({ settings: settingsInput.optional() }) }),
   async (req, res) => {
     const { settings, ...data } = req.v.body;
@@ -204,13 +206,14 @@ scoped.delete("/", requireAdmin, validate({ body: z.object({ confirmName: z.stri
   const homeId = req.home._id;
   const memberUsers = await Membership.find({ home: homeId, status: "active" }).distinct("user");
   const { Conversation, Message, ConversationRead } = require("../models/Chat");
+  require("../models/Community"); // registers Listing / HomeReview for the cleanup below
   const conv = await Conversation.findOne({ kind: "home", home: homeId });
   if (conv) {
     await Message.deleteMany({ conversation: conv._id });
     await ConversationRead.deleteMany({ conversation: conv._id });
     await conv.deleteOne();
   }
-  const models = ["Membership", "Invitation", "MealEntry", "MealPeriod", "Request", "LedgerEntry", "Expense", "Notification", "Announcement", "GroceryItem", "CalendarEvent", "ActivityLog"];
+  const models = ["Membership", "Invitation", "MealEntry", "MealPeriod", "Request", "LedgerEntry", "Expense", "Notification", "Announcement", "GroceryItem", "CalendarEvent", "ActivityLog", "RecurringExpense", "Listing", "HomeReview"];
   for (const name of models) await mongoose.model(name).deleteMany({ home: homeId });
   await req.home.deleteOne();
   memberUsers.forEach((u) => realtime.leaveHome(u, homeId));
