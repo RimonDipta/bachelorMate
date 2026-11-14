@@ -7,6 +7,7 @@ const { permissionsFor } = require("../lib/permissions");
 const realtime = require("./realtime");
 const { pushToUsers } = require("./push");
 const { sendMail, esc } = require("../lib/mailer");
+const { translate, languageOf } = require("../lib/i18n");
 const env = require("../config/env");
 
 const EMAIL_TYPES = new Set([
@@ -26,7 +27,7 @@ const EMAIL_TYPES = new Set([
 async function notify(userIds, payload) {
   const ids = [...new Set(userIds.filter(Boolean).map((u) => String(u._id ?? u)))].filter((id) => id !== String(payload.actor || ""));
   if (!ids.length) return;
-  const users = await User.find({ _id: { $in: ids } }).select("email name notificationPrefs");
+  const users = await User.find({ _id: { $in: ids } }).select("email name notificationPrefs appearance.language");
   const docs = [];
   for (const u of users) {
     if (u.notificationPrefs?.muted?.includes(payload.type)) continue;
@@ -43,18 +44,27 @@ async function notify(userIds, payload) {
   const created = docs.length ? await Notification.insertMany(docs) : [];
   for (const n of created) realtime.toUser(n.user, "notification:new", n);
   // Phone/desktop push for installed apps (no-op unless push keys are configured).
+  // In-app notifications are stored in English and shown in each viewer's language;
+  // push goes out already translated, one batch per language.
   if (created.length) {
-    pushToUsers(created.map((n) => n.user), { title: payload.title, body: payload.body?.slice(0, 180), url: payload.link || "/notifications", tag: payload.type }).catch(() => {});
+    const langOf = new Map(users.map((u) => [String(u._id), languageOf(u)]));
+    for (const lang of ["en", "bn"]) {
+      const to = created.map((n) => n.user).filter((id) => (langOf.get(String(id)) || "en") === lang);
+      if (!to.length) continue;
+      pushToUsers(to, { title: translate(lang, payload.title), body: translate(lang, payload.body)?.slice(0, 180), url: payload.link || "/notifications", tag: payload.type }).catch(() => {});
+    }
   }
 
   const wantsEmail = payload.email ?? EMAIL_TYPES.has(payload.type);
   if (wantsEmail) {
     for (const u of users) {
       if (u.notificationPrefs?.email === false || u.notificationPrefs?.muted?.includes(payload.type)) continue;
+      const lang = languageOf(u);
       sendMail({
         to: u.email,
+        lang,
         subject: payload.title,
-        body: `Hi ${esc(u.name)},<br/><br/>${esc(payload.body || payload.title).split("\n").join("<br/>")}`,
+        body: `${esc(translate(lang, `Hi ${u.name},`))}<br/><br/>${esc(translate(lang, payload.body || payload.title)).split("\n").join("<br/>")}`,
         cta: payload.link ? { label: "Open BachelorMate", url: `${env.CLIENT_URL}${payload.link}` } : undefined,
       });
     }

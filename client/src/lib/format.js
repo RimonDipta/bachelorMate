@@ -1,13 +1,15 @@
+import { formatNumber, getLanguage, labelMap, localeTag, translate } from "../i18n";
+
 const moneyFormatters = new Map();
 
 /** Format integer minor units as currency, e.g. 120050 → ৳1,200.50 */
 export function money(minor, currency = "BDT", { sign = false, compact = false } = {}) {
-  const key = `${currency}|${compact}`;
+  const key = `${getLanguage()}|${currency}|${compact}`;
   if (!moneyFormatters.has(key)) {
     try {
       moneyFormatters.set(
         key,
-        new Intl.NumberFormat("en-US", {
+        new Intl.NumberFormat(localeTag(), {
           style: "currency",
           currency,
           currencyDisplay: "narrowSymbol",
@@ -17,7 +19,7 @@ export function money(minor, currency = "BDT", { sign = false, compact = false }
         })
       );
     } catch {
-      moneyFormatters.set(key, new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+      moneyFormatters.set(key, new Intl.NumberFormat(localeTag(), { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
     }
   }
   const value = (minor || 0) / 100;
@@ -25,6 +27,9 @@ export function money(minor, currency = "BDT", { sign = false, compact = false }
   if (value < 0) return `−${s}`;
   return sign && value > 0 ? `+${s}` : s;
 }
+
+/** A plain count in the active locale (Bangla digits in bn). */
+export const num = (n) => (typeof n === "number" ? formatNumber(n) : n);
 
 export const toMajorString = (minor) => (minor ? (minor / 100).toFixed(2) : "");
 
@@ -46,28 +51,28 @@ export const shiftMonth = (key, n) => {
 };
 export const monthLabel = (key) => {
   const [y, m] = key.split("-").map(Number);
-  return new Date(y, m - 1, 1).toLocaleDateString(undefined, { month: "long", year: "numeric" });
+  return new Date(y, m - 1, 1).toLocaleDateString(localeTag(), { month: "long", year: "numeric" });
 };
 export const monthBounds = (key) => {
   const [y, m] = key.split("-").map(Number);
   return { from: `${key}-01`, to: `${key}-${pad(new Date(y, m, 0).getDate())}` };
 };
 
-export const fmtDay = (day, opts = { month: "short", day: "numeric" }) => (day ? parseDay(day).toLocaleDateString(undefined, opts) : "");
+export const fmtDay = (day, opts = { month: "short", day: "numeric" }) => (day ? parseDay(day).toLocaleDateString(localeTag(), opts) : "");
 export const fmtDayLong = (day) => fmtDay(day, { weekday: "short", month: "short", day: "numeric", year: "numeric" });
-export const fmtDate = (iso, opts = { month: "short", day: "numeric", year: "numeric" }) => (iso ? new Date(iso).toLocaleDateString(undefined, opts) : "");
-export const fmtTime = (iso) => new Date(iso).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+export const fmtDate = (iso, opts = { month: "short", day: "numeric", year: "numeric" }) => (iso ? new Date(iso).toLocaleDateString(localeTag(), opts) : "");
+export const fmtTime = (iso) => new Date(iso).toLocaleTimeString(localeTag(), { hour: "numeric", minute: "2-digit" });
 
 export function timeAgo(iso) {
   if (!iso) return "";
   const s = Math.round((Date.now() - new Date(iso).getTime()) / 1000);
-  if (s < 45) return "just now";
+  if (s < 45) return translate("time.justNow");
   const m = Math.round(s / 60);
-  if (m < 60) return `${m}m ago`;
+  if (m < 60) return translate("time.minutesAgo", { n: m });
   const h = Math.round(m / 60);
-  if (h < 24) return `${h}h ago`;
+  if (h < 24) return translate("time.hoursAgo", { n: h });
   const d = Math.round(h / 24);
-  if (d < 7) return `${d}d ago`;
+  if (d < 7) return translate("time.daysAgo", { n: d });
   return fmtDate(iso, { month: "short", day: "numeric" });
 }
 
@@ -79,38 +84,15 @@ export const initials = (name = "") =>
     .map((w) => w[0].toUpperCase())
     .join("") || "?";
 
-export const ROLE_LABEL = { admin: "Admin", manager: "Manager", meal_manager: "Meal manager", member: "Member" };
+export const ROLE_LABEL = labelMap("roles", ["admin", "manager", "meal_manager", "member"]);
 export const rolesLabel = (roles = []) => roles.map((r) => ROLE_LABEL[r] || r).join(" · ");
 
-export const CATEGORY_LABEL = {
-  groceries: "Groceries",
-  meal_other: "Other meal costs",
-  utilities: "Utilities",
-  rent: "Rent",
-  internet: "Internet",
-  cleaning: "Cleaning",
-  maintenance: "Maintenance",
-  other: "Other",
-};
+export const CATEGORY_LABEL = labelMap("categories", ["groceries", "meal_other", "utilities", "rent", "internet", "cleaning", "maintenance", "other"]);
 export const MEAL_CATEGORIES = ["groceries", "meal_other"];
 
-export const ENTRY_LABEL = {
-  opening_balance: "Opening balance",
-  payment: "Payment",
-  reimbursement: "Reimbursement",
-  expense_share: "Expense share",
-  meal_charge: "Meal charge",
-  adjustment: "Adjustment",
-  reversal: "Reversal",
-};
+export const ENTRY_LABEL = labelMap("entries", ["opening_balance", "payment", "reimbursement", "expense_share", "meal_charge", "adjustment", "reversal"]);
 
-export const HOME_TYPES = {
-  bachelor_mess: "Bachelor mess",
-  shared_apartment: "Shared apartment",
-  hostel: "Hostel",
-  family: "Family home",
-  other: "Other",
-};
+export const HOME_TYPES = labelMap("homeTypes", ["bachelor_mess", "shared_apartment", "hostel", "family", "other"]);
 
 export const CURRENCIES = ["BDT", "INR", "PKR", "NPR", "LKR", "USD", "EUR", "GBP", "AED", "SAR", "MYR", "SGD", "CAD", "AUD"];
 
@@ -118,3 +100,7 @@ export const mealTotal = (counts = {}, types = []) =>
   types.reduce((a, t) => a + (Number(counts[t.key]) || 0) * (t.weight ?? 1), 0);
 
 export const pluralize = (n, word, plural = `${word}s`) => `${n} ${n === 1 ? word : plural}`;
+
+// Homes start with these meal types; a label the admin hasn't renamed is shown in the chosen language.
+const DEFAULT_MEAL_LABELS = { breakfast: "Breakfast", lunch: "Lunch", dinner: "Dinner" };
+export const mealTypeLabel = (t) => (t && DEFAULT_MEAL_LABELS[t.key] === t.label ? translate(`mealTypes.${t.key}`) : t?.label);

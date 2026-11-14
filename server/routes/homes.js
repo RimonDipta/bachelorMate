@@ -1,4 +1,5 @@
 // Home CRUD, settings, ownership, members and invitations.
+const { languageOf } = require("../lib/i18n");
 const express = require("express");
 const mongoose = require("mongoose");
 const Home = require("../models/Home");
@@ -465,6 +466,8 @@ scoped.post(
     const inv = await Invitation.create({ ...base, kind: "link", tokenHash: sha256(token), tokenHint: token.slice(0, 4), label: `Email: ${body.email}`, maxUses: 1, expiresAt: new Date(Date.now() + 14 * 86400000) });
     await sendMail({
       to: body.email,
+      // The invitee has no account yet; use the language of the person inviting them.
+      lang: languageOf(req.user),
       subject: `${req.user.name} invited you to ${req.home.name} on BachelorMate`,
       body: `${req.user.name} invited you to join <b>${req.home.name}</b> — manage meals, expenses and chat together.${body.message ? `<br/><br/>"${body.message.replace(/</g, "&lt;")}"` : ""}`,
       cta: { label: "Accept invitation", url: `${env.CLIENT_URL}/join/${token}` },

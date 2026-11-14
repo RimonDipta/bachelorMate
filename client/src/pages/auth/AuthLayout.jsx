@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import { UtensilsCrossed, Wallet, MessagesSquare } from "lucide-react";
 import BrandMark, { Wordmark } from "../../components/BrandMark";
+import { useT } from "../../i18n/I18nProvider";
+import { LanguageSwitch } from "../../components/LanguageSwitch";
 
 export function Brand() {
   return (
@@ -12,28 +14,32 @@ export function Brand() {
 }
 
 const points = [
-  { icon: UtensilsCrossed, title: "Meals without the notebook", text: "Daily meal lists, meal-off requests and a fair, automatic meal rate." },
-  { icon: Wallet, title: "Money everyone can trust", text: "Every taka is on a ledger — dues, advances and receipts, never silently edited." },
-  { icon: MessagesSquare, title: "One place to talk", text: "Private home chat, announcements and friends — all in real time." },
+  { icon: UtensilsCrossed, key: "meals" },
+  { icon: Wallet, key: "money" },
+  { icon: MessagesSquare, key: "talk" },
 ];
 
 export default function AuthLayout({ children }) {
+  const t = useT();
   return (
     <div className="auth-wrap">
       <div className="auth-panel">
         <div className="auth-card">
-          <Brand />
+          <div className="row between">
+            <Brand />
+            <LanguageSwitch />
+          </div>
           {children}
         </div>
       </div>
       <aside className="auth-aside" aria-hidden>
         <div className="stack-lg" style={{ maxWidth: 400 }}>
           {points.map((p) => (
-            <div key={p.title} className="row-3" style={{ alignItems: "flex-start" }}>
+            <div key={p.key} className="row-3" style={{ alignItems: "flex-start" }}>
               <div className="feature-icon" style={{ marginBottom: 0 }}><p.icon /></div>
               <div>
-                <div className="strong">{p.title}</div>
-                <div className="muted text-sm" style={{ marginTop: 2 }}>{p.text}</div>
+                <div className="strong">{t(`auth.points.${p.key}.title`)}</div>
+                <div className="muted text-sm" style={{ marginTop: 2 }}>{t(`auth.points.${p.key}.text`)}</div>
               </div>
             </div>
           ))}

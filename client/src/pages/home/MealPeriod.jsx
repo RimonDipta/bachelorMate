@@ -6,21 +6,23 @@ import { api } from "../../lib/api";
 import { useHome } from "../../context/HomeContext";
 import { useAction } from "../../lib/hooks";
 import { Alert, Button, Card, ConfirmDialog, ErrorState, Field, FormModal, Input, PageHeader, PageSkeleton, StatusBadge } from "../../components/ui";
-import { fmtDate, fmtDay, money } from "../../lib/format";
+import { fmtDate, fmtDay, mealTypeLabel, money, num } from "../../lib/format";
+import { useT } from "../../i18n/I18nProvider";
 import { MealStats, MealSummaryTable } from "./Meals";
 
 export default function MealPeriod() {
   const { pid } = useParams();
   const { homeId, can, isAdmin, currency, membershipId } = useHome();
   const navigate = useNavigate();
+  const t = useT();
   const [modal, setModal] = useState(null);
   const [form, setForm] = useState({});
   const { data, isLoading, error, refetch } = useQuery({ queryKey: ["meals", homeId, "period", pid], queryFn: () => api.get(`/homes/${homeId}/meals/periods/${pid}`) });
   const inv = [["meals", homeId], ["finance"], ["dashboard", homeId]];
-  const close = useAction(() => api.post(`/homes/${homeId}/meals/periods/${pid}/close`), { invalidate: inv, success: "Period closed — meal charges posted to every account", onSuccess: () => setModal(null) });
-  const reopen = useAction(() => api.post(`/homes/${homeId}/meals/periods/${pid}/reopen`, { reason: form.reason }), { invalidate: inv, success: "Period reopened — charges reversed", onSuccess: () => setModal(null) });
-  const edit = useAction(() => api.patch(`/homes/${homeId}/meals/periods/${pid}`, form), { invalidate: inv, success: "Period updated", onSuccess: () => setModal(null) });
-  const del = useAction(() => api.del(`/homes/${homeId}/meals/periods/${pid}`), { invalidate: inv, success: "Period deleted", onSuccess: () => navigate(`/h/${homeId}/meals`) });
+  const close = useAction(() => api.post(`/homes/${homeId}/meals/periods/${pid}/close`), { invalidate: inv, success: t("period.closedToast"), onSuccess: () => setModal(null) });
+  const reopen = useAction(() => api.post(`/homes/${homeId}/meals/periods/${pid}/reopen`, { reason: form.reason }), { invalidate: inv, success: t("period.reopenedToast"), onSuccess: () => setModal(null) });
+  const edit = useAction(() => api.patch(`/homes/${homeId}/meals/periods/${pid}`, form), { invalidate: inv, success: t("period.updated"), onSuccess: () => setModal(null) });
+  const del = useAction(() => api.del(`/homes/${homeId}/meals/periods/${pid}`), { invalidate: inv, success: t("period.deleted"), onSuccess: () => navigate(`/h/${homeId}/meals`) });
 
   if (isLoading) return <PageSkeleton />;
   if (error) return <Card><ErrorState error={error} retry={refetch} /></Card>;
@@ -31,48 +33,48 @@ export default function MealPeriod() {
   return (
     <div className="stack-lg">
       <PageHeader
-        back={<Link to={`/h/${homeId}/meals`} className="row text-sm muted" style={{ gap: 4 }}><ArrowLeft size={14} /> Meals</Link>}
+        back={<Link to={`/h/${homeId}/meals`} className="row text-sm muted" style={{ gap: 4 }}><ArrowLeft size={14} /> {t("nav.meals")}</Link>}
         title={<span className="row">{p.name} <StatusBadge status={p.status} /></span>}
-        description={`${fmtDay(p.startDay, { month: "short", day: "numeric", year: "numeric" })} – ${fmtDay(p.endDay, { month: "short", day: "numeric", year: "numeric" })}${closed ? ` · closed ${fmtDate(p.closedAt)}${p.closedBy ? ` by ${p.closedBy.name || ""}` : ""}` : ""}`}
+        description={`${fmtDay(p.startDay, { month: "short", day: "numeric", year: "numeric" })} – ${fmtDay(p.endDay, { month: "short", day: "numeric", year: "numeric" })}${closed ? ` · ${t("period.closedOn", { day: fmtDate(p.closedAt) })}${p.closedBy ? ` ${t("period.by", { name: p.closedBy.name || "" })}` : ""}` : ""}`}
         actions={
           can("meals.configure") && (
             closed ? (
-              isAdmin && <Button icon={LockOpen} onClick={() => { setForm({ reason: "" }); setModal("reopen"); }}>Reopen</Button>
+              isAdmin && <Button icon={LockOpen} onClick={() => { setForm({ reason: "" }); setModal("reopen"); }}>{t("period.reopen")}</Button>
             ) : (
               <>
-                <Button variant="ghost" icon={Trash2} onClick={() => setModal("delete")} aria-label="Delete period" />
-                <Button icon={Pencil} onClick={() => { setForm({ name: p.name, startDay: p.startDay, endDay: p.endDay }); setModal("edit"); }}>Edit</Button>
-                <Button variant="primary" icon={Lock} onClick={() => setModal("close")}>Close period</Button>
+                <Button variant="ghost" icon={Trash2} onClick={() => setModal("delete")} aria-label={t("period.deleteLabel")} />
+                <Button icon={Pencil} onClick={() => { setForm({ name: p.name, startDay: p.startDay, endDay: p.endDay }); setModal("edit"); }}>{t("common.edit")}</Button>
+                <Button variant="primary" icon={Lock} onClick={() => setModal("close")}>{t("period.close")}</Button>
               </>
             )
           )
         }
       />
-      {!closed && <Alert tone="info">Live numbers — they change as meals and meal expenses are recorded. Closing freezes them and posts each member's meal cost to their account.</Alert>}
-      {s.unallocated > 0 && <Alert tone="warning" icon={AlertTriangle}>{money(s.unallocated, currency)} of meal expenses can't be shared because no meals are recorded yet.</Alert>}
+      {!closed && <Alert tone="info">{t("period.liveNote")}</Alert>}
+      {s.unallocated > 0 && <Alert tone="warning" icon={AlertTriangle}>{t("period.unallocated", { amount: money(s.unallocated, currency) })}</Alert>}
       <MealStats s={s} currency={currency} mine={mine} />
-      <Card title="Per member">
+      <Card title={t("period.perMember")}>
         <MealSummaryTable summary={s} currency={currency} highlight={membershipId} />
         <div className="card-foot hint">
-          Meal rate = {money(s.totalExpense - (s.guestRevenue || 0), currency)} ÷ {s.guestPricing === "fixed" ? s.memberMeals : s.chargeableMeals} meals = <b>{money(s.rate, currency)}</b> per meal.
-          {" "}Weights: {s.mealTypes.map((t) => `${t.label} ${t.weight}`).join(", ")}. Costs are rounded so they add up exactly to the total.
+          {t("period.formulaBefore", { expense: money(s.totalExpense - (s.guestRevenue || 0), currency), meals: s.guestPricing === "fixed" ? s.memberMeals : s.chargeableMeals })}<b>{money(s.rate, currency)}</b>{t("period.formulaAfter")}
+          {" "}{t("period.weights", { list: s.mealTypes.map((mt) => `${mealTypeLabel(mt)} ${num(mt.weight)}`).join(", ") })}
         </div>
       </Card>
 
-      <ConfirmDialog open={modal === "close"} onClose={() => setModal(null)} onConfirm={() => close.mutate()} loading={close.isPending} title={`Close ${p.name}?`} confirmLabel="Close & post charges"
-        description={`Each member will be charged their meal cost at ${money(s.rate, currency)} per meal (total ${money(s.totalExpense, currency)}). Meals and meal expenses in this period are then locked.`} />
-      <FormModal open={modal === "reopen"} onClose={() => setModal(null)} title="Reopen this period?" submitLabel="Reopen" loading={reopen.isPending} disabled={(form.reason || "").trim().length < 3} onSubmit={() => reopen.mutate()}>
-        <Alert tone="warning">All meal charges from this period are reversed on members' ledgers (nothing is deleted). Close it again after making corrections.</Alert>
-        <Field label="Reason"><Input value={form.reason || ""} maxLength={300} onChange={(e) => setForm({ reason: e.target.value })} placeholder="e.g. Missing bazar receipt" /></Field>
+      <ConfirmDialog open={modal === "close"} onClose={() => setModal(null)} onConfirm={() => close.mutate()} loading={close.isPending} title={t("period.closeTitle", { name: p.name })} confirmLabel={t("period.closeSubmit")}
+        description={t("period.closeDesc", { rate: money(s.rate, currency), total: money(s.totalExpense, currency) })} />
+      <FormModal open={modal === "reopen"} onClose={() => setModal(null)} title={t("period.reopenTitle")} submitLabel={t("period.reopen")} loading={reopen.isPending} disabled={(form.reason || "").trim().length < 3} onSubmit={() => reopen.mutate()}>
+        <Alert tone="warning">{t("period.reopenWarning")}</Alert>
+        <Field label={t("common.reason")}><Input value={form.reason || ""} maxLength={300} onChange={(e) => setForm({ reason: e.target.value })} placeholder={t("period.reasonPlaceholder")} /></Field>
       </FormModal>
-      <FormModal open={modal === "edit"} onClose={() => setModal(null)} title="Edit period" loading={edit.isPending} onSubmit={() => edit.mutate()}>
-        <Field label="Name"><Input value={form.name || ""} onChange={(e) => setForm({ ...form, name: e.target.value })} /></Field>
+      <FormModal open={modal === "edit"} onClose={() => setModal(null)} title={t("period.editTitle")} loading={edit.isPending} onSubmit={() => edit.mutate()}>
+        <Field label={t("common.name")}><Input value={form.name || ""} onChange={(e) => setForm({ ...form, name: e.target.value })} /></Field>
         <div className="form-grid">
-          <Field label="Starts"><Input type="date" value={form.startDay || ""} onChange={(e) => setForm({ ...form, startDay: e.target.value })} /></Field>
-          <Field label="Ends"><Input type="date" value={form.endDay || ""} onChange={(e) => setForm({ ...form, endDay: e.target.value })} /></Field>
+          <Field label={t("common.starts")}><Input type="date" value={form.startDay || ""} onChange={(e) => setForm({ ...form, startDay: e.target.value })} /></Field>
+          <Field label={t("common.ends")}><Input type="date" value={form.endDay || ""} onChange={(e) => setForm({ ...form, endDay: e.target.value })} /></Field>
         </div>
       </FormModal>
-      <ConfirmDialog open={modal === "delete"} onClose={() => setModal(null)} onConfirm={() => del.mutate()} loading={del.isPending} danger title="Delete this period?" confirmLabel="Delete" description="Only the period is removed. Recorded meals and expenses stay as they are." />
+      <ConfirmDialog open={modal === "delete"} onClose={() => setModal(null)} onConfirm={() => del.mutate()} loading={del.isPending} danger title={t("period.deleteTitle")} confirmLabel={t("common.delete")} description={t("period.deleteHint")} />
     </div>
   );
 }

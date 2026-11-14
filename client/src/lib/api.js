@@ -1,3 +1,6 @@
+import { translate } from "../i18n";
+import { translateServer } from "../i18n/serverText";
+
 // API client. The short-lived access token lives only in memory; the
 // refresh token is an httpOnly cookie, so a page reload silently refreshes.
 const BASE = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
@@ -8,7 +11,8 @@ let authLostHandler = () => {};
 
 export class ApiError extends Error {
   constructor(status, message, details, code) {
-    super(message);
+    // Server and network messages are English; show them in the chosen language.
+    super(translateServer(message));
     this.status = status;
     this.details = details;
     this.code = code;
@@ -66,8 +70,8 @@ async function request(path, { method = "GET", body, query, raw = false, retry =
     const timeout = AbortSignal.timeout(body instanceof FormData ? 180_000 : 90_000);
     res = await fetch(`${BASE}/api${path}${qs(query)}`, { method, headers, body: payload, credentials: "include", signal: timeout });
   } catch (err) {
-    if (err?.name === "TimeoutError") throw new ApiError(0, "The server took too long to respond. Please try again.", undefined, "TIMEOUT");
-    throw new ApiError(0, navigator.onLine === false ? "You're offline. Check your connection." : "Can't reach the server. Check your connection.", undefined, "NETWORK");
+    if (err?.name === "TimeoutError") throw new ApiError(0, translate("apiErrors.timeout"), undefined, "TIMEOUT");
+    throw new ApiError(0, navigator.onLine === false ? translate("apiErrors.offline") : translate("apiErrors.unreachable"), undefined, "NETWORK");
   } finally {
     clearTimeout(slowTimer);
     if (slow) setSlow(-1);
@@ -80,7 +84,7 @@ async function request(path, { method = "GET", body, query, raw = false, retry =
     } catch {
       accessToken = null;
       authLostHandler();
-      throw new ApiError(401, "Your session has expired. Please sign in again.");
+      throw new ApiError(401, translate("apiErrors.sessionExpired"));
     }
   }
   if (raw) {

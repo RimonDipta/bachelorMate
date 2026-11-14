@@ -1,6 +1,7 @@
 import { Component } from "react";
 import { AlertTriangle } from "lucide-react";
 import { reportError } from "../lib/errorReporting";
+import { translate } from "../i18n";
 
 /** Contains render errors to one page so the rest of the app keeps working. */
 export default class ErrorBoundary extends Component {
@@ -25,11 +26,11 @@ export default class ErrorBoundary extends Component {
       <div className="card" role="alert">
         <div className="empty">
           <div className="empty-icon"><AlertTriangle /></div>
-          <h3>Something went wrong on this page</h3>
-          <p>The rest of BachelorMate still works. Try reloading, or go back. We've been notified.</p>
+          <h3>{translate("errorPage.title")}</h3>
+          <p>{translate("errorPage.text")}</p>
           <div className="row" style={{ marginTop: 8 }}>
-            <button className="btn btn-secondary" onClick={() => window.history.back()}>Go back</button>
-            <button className="btn btn-primary" onClick={() => window.location.reload()}>Reload</button>
+            <button className="btn btn-secondary" onClick={() => window.history.back()}>{translate("errorPage.back")}</button>
+            <button className="btn btn-primary" onClick={() => window.location.reload()}>{translate("errorPage.reload")}</button>
           </div>
         </div>
       </div>

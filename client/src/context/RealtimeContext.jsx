@@ -1,4 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
+import { translateServer } from "../i18n/serverText";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { connectSocket, disconnectSocket, getSocket } from "../lib/socket";
@@ -27,7 +28,7 @@ export function RealtimeProvider({ children }) {
       },
       "notification:new": (n) => {
         inv(["notifications"]);
-        if (n.type !== "message") toast.info(n.body || "", { title: n.title });
+        if (n.type !== "message") toast.info(translateServer(n.body) || "", { title: translateServer(n.title) });
       },
       "chat:message": ({ conversationId, message }) => {
         qc.setQueryData(["messages", String(conversationId)], (old) => {

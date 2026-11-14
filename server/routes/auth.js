@@ -1,3 +1,4 @@
+const { languageOf } = require("../lib/i18n");
 const crypto = require("crypto");
 const express = require("express");
 const rateLimit = require("express-rate-limit");
@@ -13,7 +14,8 @@ const router = express.Router();
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: env.isTest ? 1000 : 20,
+  // AUTH_RATE_LIMIT lets the browser tests (many sign-ups from one IP) raise it; production keeps 20.
+  limit: env.isTest ? 1000 : Number(process.env.AUTH_RATE_LIMIT) || 20,
   standardHeaders: "draft-7",
   legacyHeaders: false,
   message: { message: "Too many attempts. Please try again in a few minutes." },
@@ -65,6 +67,7 @@ async function sendVerification(user) {
   await user.save();
   return sendMail({
     to: user.email,
+    lang: languageOf(user),
     subject: `${code} is your BachelorMate verification code`,
     title: "Confirm your email",
     body: `Hi ${esc(user.name)}, enter this code in BachelorMate to verify your email address — or use the button below. Both expire in 24 hours.`,
@@ -162,6 +165,7 @@ router.post(
       await user.save();
       await sendMail({
         to: user.email,
+        lang: languageOf(user),
         subject: "Reset your password",
         body: "We received a request to reset your BachelorMate password. This link expires in 30 minutes and can be used once. If you didn't request it, you can ignore this email.",
         cta: { label: "Reset password", url: `${env.CLIENT_URL}/reset-password?token=${token}` },

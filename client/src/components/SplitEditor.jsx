@@ -3,6 +3,8 @@ import { Wand2, Users, UserCheck, SlidersHorizontal, Landmark } from "lucide-rea
 import { Avatar, Badge, Input, Segmented } from "./ui";
 import { money } from "../lib/format";
 import { allocate, minorToInput, parseMinor } from "../lib/money";
+import { useT } from "../i18n/I18nProvider";
+import { translate } from "../i18n";
 
 /**
  * Split state shape:
@@ -24,9 +26,9 @@ export function computeShares(split, members, totalMinor) {
 /** Problems that would make the server reject the split (shown inline). */
 export function splitError(split, members, totalMinor) {
   if (!totalMinor || split.mode === "none") return "";
-  if (split.mode === "equal" && !split.allMembers && !split.memberships.length) return "Choose at least one member";
+  if (split.mode === "equal" && !split.allMembers && !split.memberships.length) return translate("split.chooseOne");
   if (split.mode === "custom") {
-    if (members.some((m) => split.shares[m._id] && parseMinor(split.shares[m._id]) === null)) return "Amounts must be numbers with up to 2 decimals";
+    if (members.some((m) => split.shares[m._id] && parseMinor(split.shares[m._id]) === null)) return translate("split.badAmount");
     const sum = Object.values(computeShares(split, members, totalMinor)).reduce((a, b) => a + b, 0);
     if (sum !== totalMinor) return sum < totalMinor ? "remaining" : "over";
   }
@@ -34,6 +36,7 @@ export function splitError(split, members, totalMinor) {
 }
 
 export default function SplitEditor({ value: split, onChange, members, totalMinor, currency, allowNone = true, showPayable = true }) {
+  const t = useT();
   const set = (patch) => onChange({ ...split, ...patch });
   const shares = computeShares(split, members, totalMinor);
   const assigned = Object.values(shares).reduce((a, b) => a + b, 0);
@@ -55,37 +58,37 @@ export default function SplitEditor({ value: split, onChange, members, totalMino
   return (
     <div className="stack" style={{ gap: 12 }}>
       <Segmented
-        label="How to divide it"
+        label={t("split.how")}
         value={split.mode}
         onChange={(mode) => set({ mode })}
         items={[
-          { value: "equal", label: "Split equally", icon: Users },
-          { value: "custom", label: "Custom amounts", icon: SlidersHorizontal },
-          ...(allowNone ? [{ value: "none", label: "Nobody (home fund)", icon: Landmark }] : []),
+          { value: "equal", label: t("expenses.splitMode.equal"), icon: Users },
+          { value: "custom", label: t("expenses.splitMode.custom"), icon: SlidersHorizontal },
+          ...(allowNone ? [{ value: "none", label: t("split.nobody"), icon: Landmark }] : []),
         ]}
       />
 
       {split.mode === "equal" && (
         <div className="stack" style={{ gap: 8 }}>
           <div className="row wrap" style={{ gap: 16 }}>
-            <label className="checkbox"><input type="radio" name="split-who" checked={split.allMembers} onChange={() => set({ allMembers: true })} /> Everyone in the home</label>
-            <label className="checkbox"><input type="radio" name="split-who" checked={!split.allMembers} onChange={() => set({ allMembers: false })} /> Only some members</label>
+            <label className="checkbox"><input type="radio" name="split-who" checked={split.allMembers} onChange={() => set({ allMembers: true })} /> {t("split.everyone")}</label>
+            <label className="checkbox"><input type="radio" name="split-who" checked={!split.allMembers} onChange={() => set({ allMembers: false })} /> {t("split.some")}</label>
           </div>
-          {split.allMembers && <p className="hint">Includes members who join later; people who leave stop being charged.</p>}
+          {split.allMembers && <p className="hint">{t("split.everyoneHint")}</p>}
         </div>
       )}
 
-      {split.mode === "none" && <p className="hint">Paid from money already in the home fund — nobody is charged.</p>}
+      {split.mode === "none" && <p className="hint">{t("split.noneHint")}</p>}
 
       {split.mode !== "none" && (
         <div className="card table-wrap">
           <table className="table">
             <thead>
               <tr>
-                <th>Member</th>
-                <th className="r" style={{ width: 150 }}>{split.mode === "custom" ? `Pays (${currency})` : "Share"}</th>
-                {hasBalances && <th className="r hide-sm">Balance now</th>}
-                {hasBalances && <th className="r">Will need to pay</th>}
+                <th>{t("common.member")}</th>
+                <th className="r" style={{ width: 150 }}>{split.mode === "custom" ? t("split.pays", { currency }) : t("split.share")}</th>
+                {hasBalances && <th className="r hide-sm">{t("account.balanceNow")}</th>}
+                {hasBalances && <th className="r">{t("split.willPay")}</th>}
               </tr>
             </thead>
             <tbody>
@@ -100,7 +103,7 @@ export default function SplitEditor({ value: split, onChange, members, totalMino
                         {split.mode === "equal" && !split.allMembers && (
                           <input type="checkbox" style={{ accentColor: "var(--accent)" }} checked={split.memberships.includes(m._id)}
                             onChange={(e) => set({ memberships: e.target.checked ? [...split.memberships, m._id] : split.memberships.filter((x) => x !== m._id) })}
-                            aria-label={`Include ${m.user.name}`} />
+                            aria-label={t("split.include", { name: m.user.name })} />
                         )}
                         <Avatar user={m.user} size={24} />
                         <span className="text-sm truncate">{m.user.name}</span>
@@ -109,7 +112,7 @@ export default function SplitEditor({ value: split, onChange, members, totalMino
                     <td className="r">
                       {split.mode === "custom" ? (
                         <Input inputMode="decimal" placeholder="0" value={split.shares[m._id] ?? ""} style={{ textAlign: "right", height: 32 }}
-                          onChange={(e) => set({ shares: { ...split.shares, [m._id]: e.target.value } })} aria-label={`${m.user.name} pays`} />
+                          onChange={(e) => set({ shares: { ...split.shares, [m._id]: e.target.value } })} aria-label={t("split.memberPays", { name: m.user.name })} />
                       ) : included && totalMinor ? (
                         <span className="num strong">{money(share, currency)}</span>
                       ) : (
@@ -131,16 +134,16 @@ export default function SplitEditor({ value: split, onChange, members, totalMino
             {split.mode === "custom" ? (
               <>
                 <span className={`text-sm ${err ? "neg" : "pos"}`}>
-                  {err === "remaining" ? `${money(remaining, currency)} left to assign` : err === "over" ? `${money(-remaining, currency)} over the total` : err || "Adds up exactly ✓"}
+                  {err === "remaining" ? t("split.left", { amount: money(remaining, currency) }) : err === "over" ? t("split.over", { amount: money(-remaining, currency) }) : err || t("split.exact")}
                 </span>
-                {remaining > 0 && <button type="button" className="btn btn-sm btn-secondary" onClick={splitRemainder}><Wand2 size={14} /> Split the rest evenly</button>}
+                {remaining > 0 && <button type="button" className="btn btn-sm btn-secondary" onClick={splitRemainder}><Wand2 size={14} /> {t("split.rest")}</button>}
               </>
             ) : (
               <span className="text-sm muted">
-                {err || (totalMinor ? <>{Object.keys(shares).length} paying · <UserCheck size={13} style={{ verticalAlign: -2 }} /> rounded so it adds up to exactly {money(totalMinor, currency)}</> : "Enter an amount to see each share")}
+                {err || (totalMinor ? <>{t("split.paying", { count: Object.keys(shares).length })} · <UserCheck size={13} style={{ verticalAlign: -2 }} /> {t("split.rounded", { amount: money(totalMinor, currency) })}</> : t("split.enterAmount"))}
               </span>
             )}
-            {hasBalances && <Badge>Will need to pay = new share − advance, + any dues</Badge>}
+            {hasBalances && <Badge style={{ height: "auto", whiteSpace: "normal" }}>{t("split.formula")}</Badge>}
           </div>
         </div>
       )}

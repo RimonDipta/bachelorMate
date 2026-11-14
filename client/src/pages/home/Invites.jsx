@@ -6,7 +6,8 @@ import { useHome } from "../../context/HomeContext";
 import { useToast } from "../../context/ToastContext";
 import { useAction, useDebounced } from "../../lib/hooks";
 import { Avatar, Badge, Button, Card, ConfirmDialog, EmptyState, Field, FormModal, Input, LoadingBlock, Modal, PageHeader, Select, StatusBadge } from "../../components/ui";
-import { fmtDate, timeAgo } from "../../lib/format";
+import { fmtDate, num, timeAgo } from "../../lib/format";
+import { useT } from "../../i18n/I18nProvider";
 
 const invStatus = (i) => {
   if (i.status !== "active") return i.status;
@@ -17,6 +18,7 @@ const invStatus = (i) => {
 
 export default function Invites() {
   const { homeId, home, can } = useHome();
+  const t = useT();
   const toast = useToast();
   const [linkModal, setLinkModal] = useState(false);
   const [linkForm, setLinkForm] = useState({ label: "", expiresInDays: "7", maxUses: "" });
@@ -28,7 +30,7 @@ export default function Invites() {
   const { data, isLoading } = useQuery({ queryKey: ["invitations", homeId], queryFn: () => api.get(`/homes/${homeId}/invitations`) });
   const { data: search } = useQuery({ queryKey: ["user-search", debounced], queryFn: () => api.get("/users/search", { q: debounced }), enabled: debounced.trim().length >= 2 });
 
-  const copy = (t) => navigator.clipboard?.writeText(t).then(() => toast.success("Copied to clipboard"));
+  const copy = (text) => navigator.clipboard?.writeText(text).then(() => toast.success(t("invites.copied")));
   const inv = [["invitations", homeId]];
   const createLink = useAction(() => api.post(`/homes/${homeId}/invitations`, { kind: "link", label: linkForm.label || undefined, expiresInDays: linkForm.expiresInDays === "never" ? null : Number(linkForm.expiresInDays), maxUses: linkForm.maxUses ? Number(linkForm.maxUses) : null }), {
     invalidate: inv,
@@ -36,49 +38,49 @@ export default function Invites() {
   });
   const direct = useAction((body) => api.post(`/homes/${homeId}/invitations`, { kind: "direct", ...body }), {
     invalidate: inv,
-    success: (r) => (r.emailed ? "Invitation emailed" : "Invitation sent"),
+    success: (r) => (r.emailed ? t("invites.emailed") : t("invites.sent")),
     onSuccess: () => { setEmail(""); setQ(""); },
   });
-  const revoke = useAction((i) => api.del(`/homes/${homeId}/invitations/${i._id}`), { invalidate: inv, success: "Invitation revoked" });
-  const regen = useAction(() => api.post(`/homes/${homeId}/code/regenerate`), { invalidate: [...inv, ["home", homeId]], success: "New code generated. The old code no longer works.", onSuccess: () => setConfirmRegen(false) });
+  const revoke = useAction((i) => api.del(`/homes/${homeId}/invitations/${i._id}`), { invalidate: inv, success: t("invites.revoked") });
+  const regen = useAction(() => api.post(`/homes/${homeId}/code/regenerate`), { invalidate: [...inv, ["home", homeId]], success: t("invites.newCode"), onSuccess: () => setConfirmRegen(false) });
 
   return (
     <>
-      <PageHeader title="Invitations" description="Bring roommates into this home." actions={<Button variant="primary" icon={Link2} onClick={() => setLinkModal(true)}>New invite link</Button>} />
+      <PageHeader title={t("nav.invitations")} description={t("invites.desc")} actions={<Button variant="primary" icon={Link2} onClick={() => setLinkModal(true)}>{t("invites.newLink")}</Button>} />
       <div className="bento">
-        <Card className="span-6" title={<h2 className="row"><KeyRound size={15} /> Home code</h2>} actions={can("invites.manage") && <Button size="sm" variant="ghost" icon={RefreshCw} onClick={() => setConfirmRegen(true)}>Regenerate</Button>}>
+        <Card className="span-6" title={<h2 className="row"><KeyRound size={15} /> {t("invites.homeCode")}</h2>} actions={can("invites.manage") && <Button size="sm" variant="ghost" icon={RefreshCw} onClick={() => setConfirmRegen(true)}>{t("invites.regenerate")}</Button>}>
           <div className="card-body stack">
-            <div className="code-box"><span className="big">{data?.code || home.code || "········"}</span><Button size="sm" icon={Copy} onClick={() => copy(data?.code || home.code)}>Copy</Button></div>
-            <p className="hint">{data?.codeJoinEnabled === false ? "Joining by code is turned off in settings." : home.settings.requireApproval ? "People who join with the code wait for approval. Invite links join directly." : "Anyone with the code or an invite link joins immediately."}</p>
+            <div className="code-box"><span className="big">{data?.code || home.code || "········"}</span><Button size="sm" icon={Copy} onClick={() => copy(data?.code || home.code)}>{t("invites.copy")}</Button></div>
+            <p className="hint">{data?.codeJoinEnabled === false ? t("invites.codeOff") : home.settings.requireApproval ? t("invites.codeApproval") : t("invites.codeDirect")}</p>
           </div>
         </Card>
-        <Card className="span-6" title={<h2 className="row"><Mail size={15} /> Invite a person</h2>}>
+        <Card className="span-6" title={<h2 className="row"><Mail size={15} /> {t("invites.invitePerson")}</h2>}>
           <div className="card-body stack">
             <form className="row" onSubmit={(e) => { e.preventDefault(); direct.mutate({ email: email.trim() }); }}>
-              <Input type="email" placeholder="Email address" value={email} onChange={(e) => setEmail(e.target.value)} />
-              <Button type="submit" icon={Send} disabled={!email.includes("@")} loading={direct.isPending && !!email}>Send</Button>
+              <Input type="email" placeholder={t("invites.emailPlaceholder")} aria-label={t("invites.emailPlaceholder")} value={email} onChange={(e) => setEmail(e.target.value)} />
+              <Button type="submit" icon={Send} disabled={!email.includes("@")} loading={direct.isPending && !!email}>{t("invites.send")}</Button>
             </form>
-            <div className="input-group"><Search /><Input placeholder="…or search BachelorMate users by name" value={q} onChange={(e) => setQ(e.target.value)} /></div>
+            <div className="input-group"><Search /><Input placeholder={t("invites.searchPlaceholder")} aria-label={t("invites.searchPlaceholder")} value={q} onChange={(e) => setQ(e.target.value)} /></div>
             {search?.users?.length > 0 && q.length >= 2 && (
               <div className="card">
                 {search.users.slice(0, 5).map((u) => (
                   <div className="list-item" key={u._id}>
                     <Avatar user={u} size={28} />
                     <span className="grow text-sm">{u.name}</span>
-                    <Button size="sm" onClick={() => direct.mutate({ userId: u._id })}>Invite</Button>
+                    <Button size="sm" onClick={() => direct.mutate({ userId: u._id })}>{t("members.invite")}</Button>
                   </div>
                 ))}
               </div>
             )}
           </div>
         </Card>
-        <Card className="span-12" title="Sent invitations">
+        <Card className="span-12" title={t("invites.sentTitle")}>
           {isLoading ? <LoadingBlock rows={3} /> : !data?.invitations?.length ? (
-            <EmptyState icon={Link2} title="No invitations yet" description="Create a link or invite someone directly." />
+            <EmptyState icon={Link2} title={t("invites.none")} description={t("invites.noneHint")} />
           ) : (
             <div className="table-wrap">
               <table className="table">
-                <thead><tr><th>Invitation</th><th>Status</th><th className="hide-sm">Uses</th><th className="hide-sm">Expires</th><th className="hide-sm">Created</th><th /></tr></thead>
+                <thead><tr><th>{t("invites.invitation")}</th><th>{t("common.status")}</th><th className="hide-sm">{t("invites.uses")}</th><th className="hide-sm">{t("invites.expires")}</th><th className="hide-sm">{t("invites.created")}</th><th /></tr></thead>
                 <tbody>
                   {data.invitations.map((i) => {
                     const st = invStatus(i);
@@ -88,14 +90,14 @@ export default function Invites() {
                           {i.kind === "direct" ? (
                             <div className="row"><Avatar user={i.invitee} size={24} /><span className="text-sm">{i.invitee?.name}</span></div>
                           ) : (
-                            <div className="row"><Link2 size={14} className="subtle" /><span className="text-sm">{i.label || "Invite link"}</span><span className="mono subtle">{i.tokenHint}…</span></div>
+                            <div className="row"><Link2 size={14} className="subtle" /><span className="text-sm">{i.label || t("invites.inviteLink")}</span><span className="mono subtle">{i.tokenHint}…</span></div>
                           )}
                         </td>
-                        <td><StatusBadge status={st === "used" ? "accepted" : st} label={st} /></td>
-                        <td className="hide-sm text-sm num">{i.uses}{i.maxUses ? ` / ${i.maxUses}` : ""}</td>
-                        <td className="hide-sm text-xs muted">{i.expiresAt ? fmtDate(i.expiresAt) : "Never"}</td>
+                        <td><StatusBadge status={st === "used" ? "accepted" : st} label={st === "used" ? t("invites.used") : undefined} /></td>
+                        <td className="hide-sm text-sm num">{num(i.uses)}{i.maxUses ? ` / ${num(i.maxUses)}` : ""}</td>
+                        <td className="hide-sm text-xs muted">{i.expiresAt ? fmtDate(i.expiresAt) : t("invites.never")}</td>
                         <td className="hide-sm text-xs muted">{i.createdBy?.name} · {timeAgo(i.createdAt)}</td>
-                        <td>{st === "active" && <Button size="sm" variant="danger-ghost" icon={Trash2} onClick={() => revoke.mutate(i)}>Revoke</Button>}</td>
+                        <td>{st === "active" && <Button size="sm" variant="danger-ghost" icon={Trash2} onClick={() => revoke.mutate(i)}>{t("invites.revoke")}</Button>}</td>
                       </tr>
                     );
                   })}
@@ -106,22 +108,22 @@ export default function Invites() {
         </Card>
       </div>
 
-      <FormModal open={linkModal} onClose={() => setLinkModal(false)} title="New invitation link" submitLabel="Create link" loading={createLink.isPending} onSubmit={() => createLink.mutate()}>
-        <Field label="Label" optional hint="Only you see this, e.g. “WhatsApp group”."><Input value={linkForm.label} maxLength={60} onChange={(e) => setLinkForm({ ...linkForm, label: e.target.value })} /></Field>
+      <FormModal open={linkModal} onClose={() => setLinkModal(false)} title={t("invites.newLinkTitle")} submitLabel={t("invites.createLink")} loading={createLink.isPending} onSubmit={() => createLink.mutate()}>
+        <Field label={t("invites.label")} optional hint={t("invites.labelHint")}><Input value={linkForm.label} maxLength={60} onChange={(e) => setLinkForm({ ...linkForm, label: e.target.value })} /></Field>
         <div className="form-grid">
-          <Field label="Expires after">
-            <Select value={linkForm.expiresInDays} onChange={(e) => setLinkForm({ ...linkForm, expiresInDays: e.target.value })} options={[["1", "1 day"], ["7", "7 days"], ["30", "30 days"], ["90", "90 days"], ["never", "Never"]].map(([value, label]) => ({ value, label }))} />
+          <Field label={t("invites.expiresAfter")}>
+            <Select value={linkForm.expiresInDays} onChange={(e) => setLinkForm({ ...linkForm, expiresInDays: e.target.value })} options={["1", "7", "30", "90", "never"].map((value) => ({ value, label: value === "never" ? t("invites.never") : t("invites.days", { count: Number(value) }) }))} />
           </Field>
-          <Field label="Max uses" optional><Input type="number" min={1} max={100} value={linkForm.maxUses} placeholder="Unlimited" onChange={(e) => setLinkForm({ ...linkForm, maxUses: e.target.value })} /></Field>
+          <Field label={t("invites.maxUses")} optional><Input type="number" min={1} max={100} value={linkForm.maxUses} placeholder={t("invites.unlimited")} onChange={(e) => setLinkForm({ ...linkForm, maxUses: e.target.value })} /></Field>
         </div>
       </FormModal>
 
-      <Modal open={Boolean(created)} onClose={() => setCreated(null)} title="Your invitation link" description="Copy it now — for security, the full link is only shown once." footer={<Button variant="primary" onClick={() => setCreated(null)}>Done</Button>}>
-        {created && <div className="code-box"><span className="truncate">{created.url}</span><Button size="sm" icon={Copy} onClick={() => copy(created.url)}>Copy</Button></div>}
-        {created && <p className="hint" style={{ marginTop: 10 }}><Badge>{created.invitation.maxUses ? `${created.invitation.maxUses} use(s)` : "Unlimited uses"}</Badge> {created.invitation.expiresAt ? `Expires ${fmtDate(created.invitation.expiresAt)}` : "Never expires"}</p>}
+      <Modal open={Boolean(created)} onClose={() => setCreated(null)} title={t("invites.yourLink")} description={t("invites.yourLinkHint")} footer={<Button variant="primary" onClick={() => setCreated(null)}>{t("setup.done")}</Button>}>
+        {created && <div className="code-box"><span className="truncate">{created.url}</span><Button size="sm" icon={Copy} onClick={() => copy(created.url)}>{t("invites.copy")}</Button></div>}
+        {created && <p className="hint" style={{ marginTop: 10 }}><Badge>{created.invitation.maxUses ? t("invites.usesCount", { count: created.invitation.maxUses }) : t("invites.unlimitedUses")}</Badge> {created.invitation.expiresAt ? t("invites.expiresOn", { day: fmtDate(created.invitation.expiresAt) }) : t("invites.neverExpires")}</p>}
       </Modal>
 
-      <ConfirmDialog open={confirmRegen} onClose={() => setConfirmRegen(false)} onConfirm={() => regen.mutate()} loading={regen.isPending} title="Generate a new home code?" description="The current code will stop working immediately. Existing members are not affected." confirmLabel="Regenerate" />
+      <ConfirmDialog open={confirmRegen} onClose={() => setConfirmRegen(false)} onConfirm={() => regen.mutate()} loading={regen.isPending} title={t("invites.regenTitle")} description={t("invites.regenHint")} confirmLabel={t("invites.regenerate")} />
     </>
   );
 }

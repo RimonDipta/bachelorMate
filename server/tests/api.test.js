@@ -101,6 +101,15 @@ describe("BachelorMate API", () => {
       assert.equal(me.body.user.appearance.accent, "emerald");
       assert.equal((await A.api.patch("/api/users/me/preferences").send({ appearance: { accent: "neon" } })).status, 400);
     });
+
+    it("stores the chosen language and leaves it unset until chosen", async () => {
+      assert.equal((await A.api.get("/api/auth/me")).body.user.appearance.language, undefined);
+      await A.api.patch("/api/users/me/preferences").send({ appearance: { language: "bn" } }).expect(200);
+      const me = await A.api.get("/api/auth/me");
+      assert.equal(me.body.user.appearance.language, "bn");
+      assert.equal(me.body.user.appearance.mode, "dark");
+      assert.equal((await A.api.patch("/api/users/me/preferences").send({ appearance: { language: "fr" } })).status, 400);
+    });
   });
 
   describe("homes, invitations and joining", () => {

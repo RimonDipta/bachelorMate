@@ -5,9 +5,11 @@ import { Statement, Features, HowItWorks } from "./landing/Story";
 import { FinanceShowcase, MealShowcase, ChatShowcase, FinalCta, Footer } from "./landing/Showcases";
 import { useRevealAll } from "./landing/motion";
 import "../styles/landing.css";
+import { useT } from "../i18n/I18nProvider";
 
 export default function Landing() {
   const root = useRef(null);
+  const t = useT();
   useRevealAll(root);
   // Arriving from another page via /#section: jump to that section.
   useEffect(() => {
@@ -16,7 +18,7 @@ export default function Landing() {
   }, []);
   return (
     <div className="lp" ref={root}>
-      <a href="#main" className="sr-only">Skip to content</a>
+      <a href="#main" className="sr-only">{t("landing.skip")}</a>
       <Nav />
       <main id="main">
         <Hero />

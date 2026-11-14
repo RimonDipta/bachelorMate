@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Button } from "../../components/ui";
 import { googleEnabled, getGoogleIdToken } from "../../lib/firebase";
 import { useAuth } from "../../context/AuthContext";
+import { useT } from "../../i18n/I18nProvider";
+
 
 const GoogleIcon = () => (
   <svg width="16" height="16" viewBox="0 0 48 48" aria-hidden>
@@ -14,6 +16,7 @@ const GoogleIcon = () => (
 
 export default function GoogleButton({ onDone, onError }) {
   const { google } = useAuth();
+  const t = useT();
   const [loading, setLoading] = useState(false);
   if (!googleEnabled) return null;
   const click = async () => {
@@ -22,15 +25,15 @@ export default function GoogleButton({ onDone, onError }) {
       await google(await getGoogleIdToken());
       onDone();
     } catch (err) {
-      if (err?.code !== "auth/popup-closed-by-user") onError(err.message || "Google sign-in failed");
+      if (err?.code !== "auth/popup-closed-by-user") onError(err.message || t("auth.googleFailed"));
     } finally {
       setLoading(false);
     }
   };
   return (
     <>
-      <div className="or">or</div>
-      <Button block onClick={click} loading={loading} icon={GoogleIcon}>Continue with Google</Button>
+      <div className="or">{t("auth.or")}</div>
+      <Button block onClick={click} loading={loading} icon={GoogleIcon}>{t("auth.google")}</Button>
     </>
   );
 }
