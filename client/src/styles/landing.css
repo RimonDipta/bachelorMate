@@ -584,3 +584,6 @@
 @media (max-width: 640px) { .lp-board { margin-bottom: 8px; } .lp-meal-grid { padding-bottom: 0; } }
 @media (max-width: 1060px) { .lp-float-rate { right: 12px; } .lp-float-pay { left: 12px; } .lp-float-chat { right: 12px; } }
 @media (max-width: 960px) and (min-width: 641px) { .lp-req { right: 12px; } .lp-receipt { left: 12px; } }
+
+.lp-brandmark { box-shadow: 0 6px 16px -8px var(--lp-brand); border-radius: 9px; }
+.lp-logo .wordmark-mate { color: var(--lp-brand-ink); }

@@ -2,6 +2,7 @@ import { Suspense, useState } from "react";
 import { NavLink, Outlet, useLocation, useMatch, useNavigate, Link } from "react-router-dom";
 import ErrorBoundary from "../ErrorBoundary";
 import NetworkStatus from "../NetworkStatus";
+import BrandMark from "../BrandMark";
 import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard, UtensilsCrossed, CalendarDays, ClipboardList, Wallet, Receipt, ArrowLeftRight, MessagesSquare,
