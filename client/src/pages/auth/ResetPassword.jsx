@@ -5,9 +5,12 @@ import AuthLayout from "./AuthLayout";
 import { Alert, Button, Field, Input } from "../../components/ui";
 import { api } from "../../lib/api";
 import { passwordChecks, PasswordHints } from "./Register";
+import { useT } from "../../i18n/I18nProvider";
+
 
 export default function ResetPassword() {
   const [params] = useSearchParams();
+  const t = useT();
   const token = params.get("token");
   const [pw, setPw] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -18,8 +21,8 @@ export default function ResetPassword() {
 
   const submit = async (e) => {
     e.preventDefault();
-    if (!strong) return setError("Choose a stronger password");
-    if (pw !== confirm) return setError("Passwords don't match");
+    if (!strong) return setError(t("auth.err.weak"));
+    if (pw !== confirm) return setError(t("auth.err.mismatch"));
     setLoading(true);
     setError("");
     try {
@@ -35,9 +38,9 @@ export default function ResetPassword() {
   if (!token) {
     return (
       <AuthLayout>
-        <h1>Invalid link</h1>
-        <p className="muted">This reset link is missing its token. Request a new one.</p>
-        <Link to="/forgot-password" className="btn btn-primary btn-block">Request a new link</Link>
+        <h1>{t("auth.reset.invalidTitle")}</h1>
+        <p className="muted">{t("auth.reset.invalidText")}</p>
+        <Link to="/forgot-password" className="btn btn-primary btn-block">{t("auth.reset.requestNew")}</Link>
       </AuthLayout>
     );
   }
@@ -46,25 +49,25 @@ export default function ResetPassword() {
     <AuthLayout>
       {done ? (
         <div className="stack">
-          <Alert tone="success" icon={CheckCircle2}>Your password was updated. All other sessions were signed out.</Alert>
-          <Link to="/login" className="btn btn-primary btn-block">Sign in</Link>
+          <Alert tone="success" icon={CheckCircle2}>{t("auth.reset.done")}</Alert>
+          <Link to="/login" className="btn btn-primary btn-block">{t("auth.signIn")}</Link>
         </div>
       ) : (
         <>
           <div className="col" style={{ gap: 6 }}>
-            <h1>Choose a new password</h1>
-            <p className="muted">This link can be used once and expires 30 minutes after it was sent.</p>
+            <h1>{t("auth.reset.title")}</h1>
+            <p className="muted">{t("auth.reset.subtitle")}</p>
           </div>
           {error && <Alert tone="danger" icon={AlertCircle}>{error}</Alert>}
           <form className="stack" onSubmit={submit}>
-            <Field label="New password">
+            <Field label={t("auth.newPassword")}>
               <Input type="password" autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} />
             </Field>
             <PasswordHints value={pw} />
-            <Field label="Confirm password" error={confirm && confirm !== pw ? "Passwords don't match" : ""}>
+            <Field label={t("auth.confirmPassword")} error={confirm && confirm !== pw ? t("auth.err.mismatch") : ""}>
               <Input type="password" autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} />
             </Field>
-            <Button type="submit" variant="primary" block loading={loading}>Update password</Button>
+            <Button type="submit" variant="primary" block loading={loading}>{t("auth.updatePassword")}</Button>
           </form>
         </>
       )}

@@ -7,10 +7,13 @@ import { useAuth } from "../../context/AuthContext";
 import { scrollToId } from "./motion";
 import InstallAppDialog from "../../components/InstallApp";
 import { useInstallPrompt } from "../../lib/pwa";
+import { useT } from "../../i18n/I18nProvider";
+import { LanguageSwitch } from "../../components/LanguageSwitch";
 
 export function Logo() {
+  const t = useT();
   return (
-    <Link to="/" className="lp-logo" aria-label="BachelorMate home">
+    <Link to="/" className="lp-logo" aria-label={t("landing.logoLabel")}>
       <BrandMark size={30} className="lp-brandmark" />
       <Wordmark />
     </Link>
@@ -26,18 +29,14 @@ export function GithubIcon(props) {
 }
 
 
-const LINKS = [
-  ["features", "Features"],
-  ["how", "How it works"],
-  ["finance", "Finance"],
-  ["about", "About"],
-];
+const LINKS = ["features", "how", "finance", "about"];
 
 export function ThemeToggle() {
   const theme = useTheme();
+  const t = useT();
   const dark = theme.resolved === "dark";
   return (
-    <button type="button" className="lp-iconbtn" onClick={() => theme.update({ mode: dark ? "light" : "dark" })} aria-label={dark ? "Switch to light theme" : "Switch to dark theme"} title={dark ? "Light theme" : "Dark theme"}>
+    <button type="button" className="lp-iconbtn" onClick={() => theme.update({ mode: dark ? "light" : "dark" })} aria-label={dark ? t("landing.toLight") : t("landing.toDark")} title={dark ? t("landing.lightTheme") : t("landing.darkTheme")}>
       {dark ? <Sun /> : <Moon />}
     </button>
   );
@@ -45,6 +44,7 @@ export function ThemeToggle() {
 
 export default function Nav() {
   const { user } = useAuth();
+  const t = useT();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const [installOpen, setInstallOpen] = useState(false);
@@ -73,56 +73,57 @@ export default function Nav() {
       <header className={`lp-nav ${scrolled ? "scrolled" : ""}`}>
         <div className="lp-nav-inner">
           <Logo />
-          <nav className="lp-navlinks" aria-label="Main">
-            {LINKS.map(([id, label]) => (
-              <a key={id} href={`/#${id}`} className="lp-navlink" onClick={(e) => scrollToId(e, id)}>{label}</a>
+          <nav className="lp-navlinks" aria-label={t("landing.mainNav")}>
+            {LINKS.map((id) => (
+              <a key={id} href={`/#${id}`} className="lp-navlink" onClick={(e) => scrollToId(e, id)}>{t(`landing.links.${id}`)}</a>
             ))}
-            <Link to="/seats" className="lp-navlink">Find a seat</Link>
+            <Link to="/seats" className="lp-navlink">{t("shell.findSeat")}</Link>
           </nav>
           <div className="lp-navright">
+            <LanguageSwitch className="lp-langbtn" />
             <ThemeToggle />
             {user ? (
-              <Link to="/app" className="lp-btn lp-btn-primary lp-btn-sm lp-hide-m">Open app</Link>
+              <Link to="/app" className="lp-btn lp-btn-primary lp-btn-sm lp-hide-m">{t("landing.openApp")}</Link>
             ) : (
               <>
-                <Link to="/login" className="lp-navlink lp-hide-m">Log in</Link>
-                <Link to="/register" className="lp-btn lp-btn-primary lp-btn-sm lp-hide-m">Get started</Link>
+                <Link to="/login" className="lp-navlink lp-hide-m">{t("landing.logIn")}</Link>
+                <Link to="/register" className="lp-btn lp-btn-primary lp-btn-sm lp-hide-m">{t("landing.getStarted")}</Link>
               </>
             )}
-            <button type="button" className="lp-iconbtn lp-burger" aria-label="Open menu" aria-expanded={open} onClick={() => setOpen(true)}><Menu /></button>
+            <button type="button" className="lp-iconbtn lp-burger" aria-label={t("shell.openMenu")} aria-expanded={open} onClick={() => setOpen(true)}><Menu /></button>
           </div>
         </div>
       </header>
 
       {open && (
-        <div className="lp-drawer" role="dialog" aria-modal="true" aria-label="Menu">
+        <div className="lp-drawer" role="dialog" aria-modal="true" aria-label={t("landing.menu")}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <Logo />
             <div style={{ display: "flex", gap: 4 }}>
               <ThemeToggle />
-              <button type="button" className="lp-iconbtn" aria-label="Close menu" onClick={() => setOpen(false)} autoFocus><X /></button>
+              <button type="button" className="lp-iconbtn" aria-label={t("shell.closeMenu")} onClick={() => setOpen(false)} autoFocus><X /></button>
             </div>
           </div>
-          <nav aria-label="Mobile">
-            {LINKS.map(([id, label]) => (
+          <nav aria-label={t("landing.mobileNav")}>
+            {LINKS.map((id) => (
               <a key={id} href={`/#${id}`} onClick={(e) => { if (!document.getElementById(id)) return; e.preventDefault(); setOpen(false); setTimeout(() => scrollToId(null, id), 50); }}>
-                {label} <ArrowUpRight />
+                {t(`landing.links.${id}`)} <ArrowUpRight />
               </a>
             ))}
-            <Link to="/seats" onClick={() => setOpen(false)}>Find a seat <ArrowUpRight /></Link>
+            <Link to="/seats" onClick={() => setOpen(false)}>{t("shell.findSeat")} <ArrowUpRight /></Link>
             {app.canInstall && (
               <button type="button" className="lp-drawer-link" onClick={() => { setOpen(false); setInstallOpen(true); }}>
-                Get the app <Smartphone />
+                {t("landing.getApp")} <Smartphone />
               </button>
             )}
           </nav>
           <div className="lp-drawer-cta">
             {user ? (
-              <Link to="/app" className="lp-btn lp-btn-primary">Open app <ArrowRight /></Link>
+              <Link to="/app" className="lp-btn lp-btn-primary">{t("landing.openApp")} <ArrowRight /></Link>
             ) : (
               <>
-                <Link to="/register" className="lp-btn lp-btn-primary">Get started <ArrowRight /></Link>
-                <Link to="/login" className="lp-btn lp-btn-ghost">Log in</Link>
+                <Link to="/register" className="lp-btn lp-btn-primary">{t("landing.getStarted")} <ArrowRight /></Link>
+                <Link to="/login" className="lp-btn lp-btn-ghost">{t("landing.logIn")}</Link>
               </>
             )}
           </div>

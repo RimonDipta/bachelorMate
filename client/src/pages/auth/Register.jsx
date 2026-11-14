@@ -6,11 +6,13 @@ import AuthLayout from "./AuthLayout";
 import { Alert, Button, Field, Input } from "../../components/ui";
 import { useAuth } from "../../context/AuthContext";
 import GoogleButton from "./GoogleButton";
+import { useT } from "../../i18n/I18nProvider";
+import { translate } from "../../i18n";
 
 export const passwordChecks = (pw) => [
-  { ok: pw.length >= 8, label: "At least 8 characters" },
-  { ok: /[A-Za-z]/.test(pw), label: "A letter" },
-  { ok: /\d/.test(pw), label: "A number" },
+  { ok: pw.length >= 8, label: translate("auth.pw.length") },
+  { ok: /[A-Za-z]/.test(pw), label: translate("auth.pw.letter") },
+  { ok: /\d/.test(pw), label: translate("auth.pw.number") },
 ];
 
 export function PasswordHints({ value }) {
@@ -29,6 +31,7 @@ export function PasswordHints({ value }) {
 export default function Register() {
   const { register } = useAuth();
   const navigate = useNavigate();
+  const t = useT();
   const [params] = useSearchParams();
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [touched, setTouched] = useState({});
@@ -38,9 +41,9 @@ export default function Register() {
   const dest = next && next.startsWith("/") && !next.startsWith("//") ? next : "/homes";
 
   const errors = {
-    name: form.name.trim().length < 2 ? "Enter your name" : "",
-    email: !/^\S+@\S+\.\S+$/.test(form.email) ? "Enter a valid email" : "",
-    password: passwordChecks(form.password).every((c) => c.ok) ? "" : "Choose a stronger password",
+    name: form.name.trim().length < 2 ? t("auth.err.name") : "",
+    email: !/^\S+@\S+\.\S+$/.test(form.email) ? t("auth.err.email") : "",
+    password: passwordChecks(form.password).every((c) => c.ok) ? "" : t("auth.err.weak"),
   };
   const valid = !Object.values(errors).some(Boolean);
 
@@ -65,26 +68,26 @@ export default function Register() {
   return (
     <AuthLayout>
       <div className="col" style={{ gap: 6 }}>
-        <h1>Create your account</h1>
-        <p className="muted">Start a home or join your roommates in a minute.</p>
+        <h1>{t("auth.register.title")}</h1>
+        <p className="muted">{t("auth.register.subtitle")}</p>
       </div>
       {error && <Alert tone="danger" icon={AlertCircle}>{error}</Alert>}
       <form className="stack" onSubmit={submit} noValidate>
-        <Field label="Full name" error={touched.name && errors.name}>
-          <Input autoComplete="name" {...bind("name")} placeholder="Rahim Uddin" />
+        <Field label={t("auth.fullName")} error={touched.name && errors.name}>
+          <Input autoComplete="name" {...bind("name")} placeholder={t("auth.namePlaceholder")} />
         </Field>
-        <Field label="Email" error={touched.email && errors.email}>
+        <Field label={t("auth.email")} error={touched.email && errors.email}>
           <Input type="email" autoComplete="email" {...bind("email")} placeholder="you@example.com" />
         </Field>
-        <Field label="Password" error={touched.password && errors.password}>
+        <Field label={t("auth.password")} error={touched.password && errors.password}>
           <Input type="password" autoComplete="new-password" {...bind("password")} />
         </Field>
         <PasswordHints value={form.password} />
-        <Button type="submit" variant="primary" block loading={loading}>Create account</Button>
+        <Button type="submit" variant="primary" block loading={loading}>{t("auth.register.submit")}</Button>
       </form>
       <GoogleButton onDone={() => navigate(dest, { replace: true })} onError={setError} />
       <p className="text-sm muted" style={{ textAlign: "center" }}>
-        Already have an account? <Link to={`/login${next ? `?next=${encodeURIComponent(next)}` : ""}`}>Sign in</Link>
+        {t("auth.register.haveAccount")} <Link to={`/login${next ? `?next=${encodeURIComponent(next)}` : ""}`}>{t("auth.signIn")}</Link>
       </p>
     </AuthLayout>
   );

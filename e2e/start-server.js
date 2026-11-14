@@ -15,6 +15,9 @@ const { MongoMemoryReplSet } = require(path.join(serverDir, "node_modules", "mon
     CLIENT_URL: `http://localhost:${process.env.E2E_PORT || 5055}`,
     CORS_ORIGINS: `http://localhost:${process.env.E2E_PORT || 5055}`,
     REQUIRE_EMAIL_VERIFICATION: "false",
+    // Every test signs up and signs in from the same IP.
+    AUTH_RATE_LIMIT: "500",
+    API_RATE_LIMIT: "5000",
   });
   const stop = async () => {
     await replSet.stop().catch(() => {});

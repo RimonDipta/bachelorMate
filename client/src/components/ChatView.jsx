@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { localeTag } from "../i18n";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Send, Smile, Pencil, Trash2, ArrowLeft, CheckCheck, MessagesSquare } from "lucide-react";
 import { api } from "../lib/api";
@@ -17,7 +18,7 @@ const dayLabel = (iso) => {
   y.setDate(today.getDate() - 1);
   if (d.toDateString() === today.toDateString()) return "Today";
   if (d.toDateString() === y.toDateString()) return "Yesterday";
-  return d.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" });
+  return d.toLocaleDateString(localeTag(), { weekday: "long", month: "short", day: "numeric" });
 };
 
 function MemberRow({ m }) {

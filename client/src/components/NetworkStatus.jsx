@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { onlineManager, useMutationState } from "@tanstack/react-query";
 import { WifiOff, Loader2 } from "lucide-react";
 import { onSlowRequests } from "../lib/api";
+import { useT } from "../i18n/I18nProvider";
 
 function useOnline() {
   const [online, setOnline] = useState(() => onlineManager.isOnline());
@@ -16,6 +17,7 @@ function useOnline() {
  */
 export default function NetworkStatus() {
   const online = useOnline();
+  const t = useT();
   const [slow, setSlow] = useState(0);
   useEffect(() => onSlowRequests(setSlow), []);
   const waiting = useMutationState({ filters: { predicate: (m) => m.state.isPaused } }).length;
@@ -25,8 +27,8 @@ export default function NetworkStatus() {
       <div className="netbar netbar-offline" role="status" aria-live="polite">
         <WifiOff size={14} aria-hidden />
         <span>
-          You're offline.{" "}
-          {waiting > 0 ? `${waiting} change${waiting > 1 ? "s" : ""} will be sent when you reconnect.` : "You can keep browsing what's already loaded."}
+          {t("network.offline")}{" "}
+          {waiting > 0 ? t("network.waiting", { count: waiting }) : t("network.keepBrowsing")}
         </span>
       </div>
     );
@@ -35,7 +37,7 @@ export default function NetworkStatus() {
     return (
       <div className="netbar" role="status" aria-live="polite">
         <Loader2 size={14} className="netbar-spin" aria-hidden />
-        <span>Still working… the connection is slow or the server is waking up.</span>
+        <span>{t("network.slow")}</span>
       </div>
     );
   }

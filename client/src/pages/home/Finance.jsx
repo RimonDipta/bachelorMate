@@ -6,7 +6,8 @@ import { ChevronLeft, ChevronRight, HandCoins, Plus, Landmark, ArrowDownToLine, 
 import { api } from "../../lib/api";
 import { useHome } from "../../context/HomeContext";
 import { useAction } from "../../lib/hooks";
-import { Avatar, Button, Card, EmptyState, ErrorState, Money, PageHeader, PageSkeleton, Stat } from "../../components/ui";
+import { useI18n } from "../../i18n/I18nProvider";
+import { Avatar, Button, Card, EmptyState, ErrorState, Money, PageHeader, PageSkeleton, Stat, StatusBadge } from "../../components/ui";
 import { CATEGORY_LABEL, money, monthKey, monthLabel, shiftMonth } from "../../lib/format";
 import { AdjustmentModal, ExpenseModal, PaymentModal } from "../../components/FinanceForms";
 
@@ -29,58 +30,59 @@ function ChartTooltip({ active, payload, label, currency }) {
 
 export default function Finance() {
   const { homeId, can, currency, membershipId } = useHome();
+  const { t, locale } = useI18n();
   const [month, setMonth] = useState(monthKey());
   const [modal, setModal] = useState(null);
   const { data: d, isLoading, error, refetch } = useQuery({ queryKey: ["finance", homeId, "overview", month], queryFn: () => api.get(`/homes/${homeId}/finance/overview`, { month }) });
-  const remind = useAction(() => api.post(`/homes/${homeId}/finance/reminders`), { success: (r) => (r.reminded ? `Reminder sent to ${r.reminded} member(s)` : "Nobody has outstanding dues") });
+  const remind = useAction(() => api.post(`/homes/${homeId}/finance/reminders`), { success: (r) => (r.reminded ? t("finance.reminded", { count: r.reminded }) : t("finance.nobodyDue")) });
   const base = `/h/${homeId}`;
 
   if (isLoading) return <PageSkeleton />;
   if (error) return <Card><ErrorState error={error} retry={refetch} /></Card>;
-  const t = d.totals;
-  const trend = d.trend.map((x) => ({ ...x, label: new Date(`${x.month}-01T00:00:00`).toLocaleDateString(undefined, { month: "short" }) }));
+  const tot = d.totals;
+  const trend = d.trend.map((x) => ({ ...x, label: new Date(`${x.month}-01T00:00:00`).toLocaleDateString(locale, { month: "short" }) }));
   const cats = Object.entries(d.byCategory).sort((a, b) => b[1] - a[1]).map(([k, v], i) => ({ name: CATEGORY_LABEL[k] || k, value: v, fill: CAT_COLORS[i % CAT_COLORS.length] }));
   const axisTick = { fill: "var(--text-3)", fontSize: 11 };
 
   return (
     <div className="stack-lg">
       <PageHeader
-        title="Finance"
-        description="Where the home's money comes from and where it goes."
+        title={t("nav.finance")}
+        description={t("finance.desc")}
         actions={
           <>
-            {can("finance.record") && <Button icon={SlidersHorizontal} onClick={() => setModal("adjust")}>Adjustment</Button>}
-            <Button icon={HandCoins} onClick={() => setModal("pay")}>{can("finance.record") ? "Record payment" : "Submit payment"}</Button>
-            {can("expenses.manage", "expenses.meal") && <Button variant="primary" icon={Plus} onClick={() => setModal("expense")}>Add expense</Button>}
+            {can("finance.record") && <Button icon={SlidersHorizontal} onClick={() => setModal("adjust")}>{t("common.adjustment")}</Button>}
+            <Button icon={HandCoins} onClick={() => setModal("pay")}>{can("finance.record") ? t("common.recordPayment") : t("common.submitPayment")}</Button>
+            {can("expenses.manage", "expenses.meal") && <Button variant="primary" icon={Plus} onClick={() => setModal("expense")}>{t("common.addExpense")}</Button>}
           </>
         }
       />
       <div className="row">
-        <Button icon={ChevronLeft} aria-label="Previous month" onClick={() => setMonth(shiftMonth(month, -1))} />
+        <Button icon={ChevronLeft} aria-label={t("common.prevMonth")} onClick={() => setMonth(shiftMonth(month, -1))} />
         <span className="strong" style={{ minWidth: 150, textAlign: "center" }}>{monthLabel(month)}</span>
-        <Button icon={ChevronRight} aria-label="Next month" onClick={() => setMonth(shiftMonth(month, 1))} />
+        <Button icon={ChevronRight} aria-label={t("common.nextMonth")} onClick={() => setMonth(shiftMonth(month, 1))} />
       </div>
 
       <div className="grid-4">
-        <Stat icon={Wallet} label="You need to pay" value={money(d.mine.payable, currency)} hint={<Link to={`${base}/finance/me`}>{d.mine.balance > 0 ? `${money(d.mine.balance, currency)} advance` : d.mine.balance < 0 ? "Includes dues carried over" : "All settled"} · see why →</Link>} />
-        <Stat icon={Landmark} label="Home fund" value={money(t.fundBalance, currency)} hint="Payments in − expenses paid from fund" />
-        <Stat icon={Receipt} label="Spent this month" value={money(t.monthTotal, currency)} hint={`${money(t.monthMeal, currency)} meals · ${money(t.monthOther, currency)} other`} />
-        <Stat icon={ArrowDownToLine} label="Collected this month" value={money(t.monthCollected, currency)} hint={`${money(t.collected, currency)} all time`} />
+        <Stat icon={Wallet} label={t("common.youNeedToPay")} value={money(d.mine.payable, currency)} hint={<Link to={`${base}/finance/me`}>{d.mine.balance > 0 ? t("finance.advance", { amount: money(d.mine.balance, currency) }) : d.mine.balance < 0 ? t("finance.includesDues") : t("common.allSettled")} · {t("finance.seeWhy")}</Link>} />
+        <Stat icon={Landmark} label={t("finance.homeFund")} value={money(tot.fundBalance, currency)} hint={t("finance.homeFundHint")} />
+        <Stat icon={Receipt} label={t("dashboard.spentThisMonth")} value={money(tot.monthTotal, currency)} hint={t("finance.mealsOther", { meals: money(tot.monthMeal, currency), other: money(tot.monthOther, currency) })} />
+        <Stat icon={ArrowDownToLine} label={t("finance.collectedThisMonth")} value={money(tot.monthCollected, currency)} hint={t("finance.allTime", { amount: money(tot.collected, currency) })} />
       </div>
       {d.full && (
         <div className="grid-2">
-          <Stat icon={AlertCircle} label="Total outstanding dues" value={<span className={t.outstandingDues ? "neg" : ""}>{money(t.outstandingDues, currency)}</span>} hint="Sum of negative balances" />
-          <Stat icon={PiggyBank} label="Total advance balances" value={<span className={t.advances ? "pos" : ""}>{money(t.advances, currency)}</span>} hint="Sum of positive balances" />
+          <Stat icon={AlertCircle} label={t("finance.totalDues")} value={<span className={tot.outstandingDues ? "neg" : ""}>{money(tot.outstandingDues, currency)}</span>} hint={t("finance.totalDuesHint")} />
+          <Stat icon={PiggyBank} label={t("finance.totalAdvances")} value={<span className={tot.advances ? "pos" : ""}>{money(tot.advances, currency)}</span>} hint={t("finance.totalAdvancesHint")} />
         </div>
       )}
 
       <div className="bento">
-        <Card className="span-8" title="Last 6 months">
+        <Card className="span-8" title={t("finance.last6")}>
           <div className="card-body">
             <div className="chart-legend" style={{ marginBottom: 8 }}>
-              <span><i style={{ background: "var(--chart-1)" }} />Meal expenses</span>
-              <span><i style={{ background: "var(--chart-2)" }} />Other expenses</span>
-              <span><i style={{ background: "var(--chart-4)" }} />Collected</span>
+              <span><i style={{ background: "var(--chart-1)" }} />{t("meals.mealExpenses")}</span>
+              <span><i style={{ background: "var(--chart-2)" }} />{t("finance.otherExpenses")}</span>
+              <span><i style={{ background: "var(--chart-4)" }} />{t("finance.collected")}</span>
             </div>
             <div style={{ height: 240 }}>
               <ResponsiveContainer>
@@ -89,16 +91,16 @@ export default function Finance() {
                   <XAxis dataKey="label" tickLine={false} axisLine={false} tick={axisTick} />
                   <YAxis tickLine={false} axisLine={false} tick={axisTick} tickFormatter={(v) => money(v, currency, { compact: true })} width={64} />
                   <Tooltip content={<ChartTooltip currency={currency} />} cursor={{ fill: "var(--surface-hover)" }} />
-                  <Bar dataKey="meal" name="Meal expenses" stackId="e" fill="var(--chart-1)" radius={[0, 0, 0, 0]} maxBarSize={28} />
-                  <Bar dataKey="other" name="Other expenses" stackId="e" fill="var(--chart-2)" radius={[4, 4, 0, 0]} maxBarSize={28} />
-                  <Bar dataKey="collected" name="Collected" fill="var(--chart-4)" radius={[4, 4, 0, 0]} maxBarSize={28} />
+                  <Bar dataKey="meal" name={t("meals.mealExpenses")} stackId="e" fill="var(--chart-1)" radius={[0, 0, 0, 0]} maxBarSize={28} />
+                  <Bar dataKey="other" name={t("finance.otherExpenses")} stackId="e" fill="var(--chart-2)" radius={[4, 4, 0, 0]} maxBarSize={28} />
+                  <Bar dataKey="collected" name={t("finance.collected")} fill="var(--chart-4)" radius={[4, 4, 0, 0]} maxBarSize={28} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
         </Card>
-        <Card className="span-4" title="Spending by category">
-          {cats.length === 0 ? <EmptyState compact icon={Receipt} title="No expenses this month" /> : (
+        <Card className="span-4" title={t("finance.byCategory")}>
+          {cats.length === 0 ? <EmptyState compact icon={Receipt} title={t("finance.noExpensesMonth")} /> : (
             <div className="card-body">
               <div style={{ height: 160 }}>
                 <ResponsiveContainer>
@@ -123,25 +125,25 @@ export default function Finance() {
         </Card>
 
         {d.full && (
-          <Card className="span-12" title="Member accounts" actions={can("finance.record") && <Button size="sm" variant="ghost" icon={BellRing} loading={remind.isPending} onClick={() => remind.mutate()}>Remind members with dues</Button>}>
+          <Card className="span-12" title={t("finance.memberAccounts")} actions={can("finance.record") && <Button size="sm" variant="ghost" icon={BellRing} loading={remind.isPending} onClick={() => remind.mutate()}>{t("finance.remind")}</Button>}>
             <div className="table-wrap">
               <table className="table">
-                <thead><tr><th>Member</th><th className="r hide-sm">Credits</th><th className="r hide-sm">Charges</th><th className="r">Balance</th><th className="r">To pay</th><th className="hide-sm">Position</th></tr></thead>
+                <thead><tr><th>{t("common.member")}</th><th className="r hide-sm">{t("finance.credits")}</th><th className="r hide-sm">{t("finance.charges")}</th><th className="r">{t("common.balance")}</th><th className="r">{t("finance.toPay")}</th><th className="hide-sm">{t("finance.position")}</th></tr></thead>
                 <tbody>
                   {d.accounts.map((a) => (
                     <tr key={a.membership}>
-                      <td><Link to={a.membership === membershipId ? `${base}/finance/me` : `${base}/finance/accounts/${a.membership}`} className="row" style={{ color: "inherit" }}><Avatar user={a.user} size={26} /><span className="text-sm">{a.user?.name}</span>{a.status !== "active" && <span className="badge">{a.status}</span>}</Link></td>
+                      <td><Link to={a.membership === membershipId ? `${base}/finance/me` : `${base}/finance/accounts/${a.membership}`} className="row" style={{ color: "inherit" }}><Avatar user={a.user} size={26} /><span className="text-sm">{a.user?.name}</span>{a.status !== "active" && <StatusBadge status={a.status} />}</Link></td>
                       <td className="r num hide-sm">{money(a.credits, currency)}</td>
                       <td className="r num hide-sm">{money(a.debits, currency)}</td>
                       <td className="r"><Money value={a.balance} currency={currency} colored /></td>
                       <td className="r strong num">{a.payable > 0 ? money(a.payable, currency) : <span className="subtle">—</span>}</td>
-                      <td className="hide-sm">{a.balance < 0 ? <span className="badge badge-danger">Due</span> : a.balance > 0 ? <span className="badge badge-success">Advance</span> : <span className="badge">Settled</span>}</td>
+                      <td className="hide-sm">{a.balance < 0 ? <span className="badge badge-danger">{t("finance.due")}</span> : a.balance > 0 ? <span className="badge badge-success">{t("finance.advanceBadge")}</span> : <span className="badge">{t("finance.settled")}</span>}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            <div className="card-foot hint">Balance = payments & credits − charges. To pay = the amount below zero (an advance already covers new charges).</div>
+            <div className="card-foot hint">{t("finance.balanceHint")}</div>
           </Card>
         )}
       </div>

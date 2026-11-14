@@ -2,7 +2,8 @@ import { createContext, useContext, useEffect, useId, useRef, useState, cloneEle
 import { createPortal } from "react-dom";
 import { Loader2, X, Inbox, AlertTriangle } from "lucide-react";
 import { assetUrl } from "../../lib/api";
-import { initials, money } from "../../lib/format";
+import { initials, money, num } from "../../lib/format";
+import { translate, translateOr } from "../../i18n";
 
 export function Button({ variant = "secondary", size, icon: Icon, iconRight: IconRight, loading, block, className = "", children, type = "button", ...props }) {
   const cls = ["btn", `btn-${variant}`, size === "sm" && "btn-sm", !children && "btn-icon", block && "btn-block", className].filter(Boolean).join(" ");
@@ -34,7 +35,7 @@ export function Field({ label, hint, error, children, className = "", optional }
       <div className={`field ${className}`}>
         {label && (
           <label className="label" htmlFor={id}>
-            {label} {optional && <span className="subtle" style={{ fontWeight: 400 }}>(optional)</span>}
+            {label} {optional && <span className="subtle" style={{ fontWeight: 400 }}>{translate("common.optional")}</span>}
           </label>
         )}
         {child}
@@ -110,7 +111,7 @@ export const Badge = ({ tone, children, icon: Icon, ...p }) => (
 );
 
 const STATUS_TONE = { pending: "warning", approved: "success", posted: "success", active: "success", rejected: "danger", cancelled: undefined, void: "danger", open: "accent", closed: undefined, left: undefined, removed: "danger", accepted: "success", declined: undefined, revoked: "danger", expired: undefined };
-export const StatusBadge = ({ status, label }) => <Badge tone={STATUS_TONE[status]}>{label || status?.replace(/_/g, " ")}</Badge>;
+export const StatusBadge = ({ status, label }) => <Badge tone={STATUS_TONE[status]}>{label || (status && translateOr(`status.${status}`, status.replace(/_/g, " ")))}</Badge>;
 
 export function Avatar({ user, size = 32, online }) {
   const [broken, setBroken] = useState(false);
@@ -154,7 +155,7 @@ export function Modal({ open, onClose, title, description, children, footer, siz
             <h2>{title}</h2>
             {description && <p>{description}</p>}
           </div>
-          <Button variant="ghost" size="sm" icon={X} onClick={onClose} aria-label="Close" data-close />
+          <Button variant="ghost" size="sm" icon={X} onClick={onClose} aria-label={translate("common.close")} data-close />
         </div>
         <div className="modal-body">{children}</div>
         {footer && <div className="modal-foot">{footer}</div>}
@@ -165,13 +166,13 @@ export function Modal({ open, onClose, title, description, children, footer, siz
 }
 
 /** Modal with a form; submit runs onSubmit. */
-export function FormModal({ open, onClose, title, description, onSubmit, submitLabel = "Save", loading, children, danger, size, disabled }) {
+export function FormModal({ open, onClose, title, description, onSubmit, submitLabel, loading, children, danger, size, disabled }) {
   return (
     <Modal open={open} onClose={onClose} title={title} description={description} size={size}
       footer={
         <>
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button variant={danger ? "danger" : "primary"} type="submit" form="modal-form" loading={loading} disabled={disabled}>{submitLabel}</Button>
+          <Button variant="ghost" onClick={onClose}>{translate("common.cancel")}</Button>
+          <Button variant={danger ? "danger" : "primary"} type="submit" form="modal-form" loading={loading} disabled={disabled}>{submitLabel || translate("common.save")}</Button>
         </>
       }>
       <form id="modal-form" className="stack" onSubmit={(e) => { e.preventDefault(); onSubmit(); }}>
@@ -181,13 +182,13 @@ export function FormModal({ open, onClose, title, description, onSubmit, submitL
   );
 }
 
-export function ConfirmDialog({ open, onClose, onConfirm, title, description, confirmLabel = "Confirm", danger, loading, children }) {
+export function ConfirmDialog({ open, onClose, onConfirm, title, description, confirmLabel, danger, loading, children }) {
   return (
     <Modal open={open} onClose={onClose} title={title} description={description}
       footer={
         <>
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button variant={danger ? "danger" : "primary"} onClick={onConfirm} loading={loading}>{confirmLabel}</Button>
+          <Button variant="ghost" onClick={onClose}>{translate("common.cancel")}</Button>
+          <Button variant={danger ? "danger" : "primary"} onClick={onConfirm} loading={loading}>{confirmLabel || translate("common.confirm")}</Button>
         </>
       }>
       {children}
@@ -210,7 +211,7 @@ export const Skeleton = ({ h = 16, w = "100%", r, style }) => <div className="sk
 
 export function LoadingBlock({ rows = 4 }) {
   return (
-    <div className="stack" style={{ padding: "var(--card-pad)" }} aria-busy="true" aria-label="Loading">
+    <div className="stack" style={{ padding: "var(--card-pad)" }} aria-busy="true" aria-label={translate("common.loading")}>
       {Array.from({ length: rows }).map((_, i) => (
         <div className="row-3" key={i}>
           <Skeleton h={32} w={32} r={999} />
@@ -236,7 +237,7 @@ export function PageSkeleton() {
 
 export function ErrorState({ error, retry }) {
   return (
-    <EmptyState icon={AlertTriangle} title="Couldn't load this" description={error?.message || "Something went wrong."} action={retry && <Button onClick={retry}>Try again</Button>} />
+    <EmptyState icon={AlertTriangle} title={translate("common.loadFailed")} description={error?.message || translate("common.somethingWrong")} action={retry && <Button onClick={retry}>{translate("common.tryAgain")}</Button>} />
   );
 }
 
@@ -271,7 +272,7 @@ export function Stat({ label, value, hint, icon: Icon, tone }) {
   return (
     <div className="card stat">
       <div className="stat-label">{Icon && <Icon />}{label}</div>
-      <div className={`stat-value ${tone || ""}`}>{value}</div>
+      <div className={`stat-value ${tone || ""}`}>{num(value)}</div>
       {hint && <div className="stat-hint">{hint}</div>}
     </div>
   );

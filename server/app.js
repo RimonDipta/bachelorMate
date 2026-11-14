@@ -54,7 +54,8 @@ if (env.SERVE_CLIENT) {
     app.get(/^\/(?!api\/|uploads\/|socket\.io\/|health$).*/, (req, res, next) => {
       if (!req.accepts("html")) return next();
       res.setHeader("Cache-Control", "no-cache");
-      res.sendFile(path.join(dist, "index.html"));
+      // `root` keeps the dot-file check to the file name, so it also works from paths like .claude/worktrees.
+      res.sendFile("index.html", { root: dist });
     });
   } else {
     console.warn(`SERVE_CLIENT is on but ${dist} has no build. Run: npm --prefix client run build`);
@@ -98,7 +99,8 @@ app.use(
   })
 );
 
-app.use("/api", rateLimit({ windowMs: 60 * 1000, limit: env.isTest ? 10000 : 300, standardHeaders: "draft-7", legacyHeaders: false, message: { message: "Too many requests, slow down." } }));
+// API_RATE_LIMIT lets the browser tests (one IP, many pages a minute) raise it; production keeps 300/min.
+app.use("/api", rateLimit({ windowMs: 60 * 1000, limit: env.isTest ? 10000 : Number(process.env.API_RATE_LIMIT) || 300, standardHeaders: "draft-7", legacyHeaders: false, message: { message: "Too many requests, slow down." } }));
 app.use("/api/auth", require("./routes/auth"));
 // Stored files (public avatars/photos; private receipts check membership inside).
 app.use("/api", require("./routes/files"));

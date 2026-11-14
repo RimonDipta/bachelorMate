@@ -505,3 +505,17 @@ a.list-item:hover { background: var(--surface-hover); text-decoration: none; }
 /* Decorative initials (avatars, home marks) are drawn by CSS so they don't
    pollute button names for screen readers and voice control. */
 .initials::after { content: attr(data-initials); }
+
+/* ---------- Language ---------- */
+.lang-switch {
+  display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 10px;
+  border: 1px solid var(--border); border-radius: 999px; background: var(--surface);
+  color: var(--text-2); font: inherit; font-size: var(--text-sm); cursor: pointer; white-space: nowrap;
+}
+.lang-switch:hover { color: var(--text); background: var(--surface-hover); }
+.lang-switch:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Bangla script: conjuncts and vowel signs need more vertical room, and tight tracking breaks them. */
+:root:lang(bn) body { line-height: 1.6; }
+:lang(bn) h1, :lang(bn) h2, :lang(bn) h3, :lang(bn) .stat-value, :lang(bn) .btn { letter-spacing: normal; }
+:lang(bn) .btn, :lang(bn) .nav-link, :lang(bn) .badge { line-height: 1.35; }

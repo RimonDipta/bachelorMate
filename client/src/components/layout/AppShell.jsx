@@ -15,7 +15,8 @@ import { api } from "../../lib/api";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import { Avatar, Button, Menu, MenuItem, PageSkeleton } from "../ui";
-import { initials } from "../../lib/format";
+import { initials, num } from "../../lib/format";
+import { useT } from "../../i18n/I18nProvider";
 
 function useHomes() {
   return useQuery({ queryKey: ["homes"], queryFn: () => api.get("/homes") });
@@ -23,21 +24,22 @@ function useHomes() {
 
 function HomeSwitcher({ homes, current, onNavigate }) {
   const navigate = useNavigate();
+  const t = useT();
   const active = homes.filter((h) => h.myMembership?.status === "active");
   return (
     <Menu
       align="start"
       width={232}
       trigger={
-        <button className="nav-link" style={{ border: "1px solid var(--border)", background: "var(--surface)", width: "100%", cursor: "pointer", padding: "6px 8px" }} aria-label={`Switch home: ${current?.name || "Choose a home"}`}>
+        <button className="nav-link" style={{ border: "1px solid var(--border)", background: "var(--surface)", width: "100%", cursor: "pointer", padding: "6px 8px" }} aria-label={t("shell.switchHome", { name: current?.name || t("shell.chooseHome") })}>
           <span aria-hidden="true" className="home-mark" style={{ width: 26, height: 26, borderRadius: 7, fontSize: 11 }}>{current ? <span className="initials" data-initials={initials(current.name)} /> : <House size={14} />}</span>
-          <span className="grow truncate" style={{ textAlign: "left", color: "var(--text)" }}>{current?.name || "Choose a home"}</span>
+          <span className="grow truncate" style={{ textAlign: "left", color: "var(--text)" }}>{current?.name || t("shell.chooseHome")}</span>
           <ChevronsUpDown size={14} />
         </button>
       }
     >
-      <div className="menu-label">Your homes</div>
-      {active.length === 0 && <div className="menu-item subtle" style={{ cursor: "default" }}>No homes yet</div>}
+      <div className="menu-label">{t("shell.yourHomes")}</div>
+      {active.length === 0 && <div className="menu-item subtle" style={{ cursor: "default" }}>{t("shell.noHomes")}</div>}
       {active.map((h) => (
         <MenuItem key={h._id} onClick={() => { navigate(`/h/${h._id}`); onNavigate?.(); }}>
           <span aria-hidden="true" className="home-mark" style={{ width: 22, height: 22, borderRadius: 6, fontSize: 10 }}><span className="initials" data-initials={initials(h.name)} /></span>
@@ -46,9 +48,9 @@ function HomeSwitcher({ homes, current, onNavigate }) {
         </MenuItem>
       ))}
       <div className="menu-sep" />
-      <MenuItem icon={House} onClick={() => { navigate("/homes"); onNavigate?.(); }}>All homes</MenuItem>
-      <MenuItem icon={Plus} onClick={() => { navigate("/onboarding"); onNavigate?.(); }}>Create a home</MenuItem>
-      <MenuItem icon={LogIn} onClick={() => { navigate("/join"); onNavigate?.(); }}>Join with a code</MenuItem>
+      <MenuItem icon={House} onClick={() => { navigate("/homes"); onNavigate?.(); }}>{t("shell.allHomes")}</MenuItem>
+      <MenuItem icon={Plus} onClick={() => { navigate("/onboarding"); onNavigate?.(); }}>{t("shell.createHome")}</MenuItem>
+      <MenuItem icon={LogIn} onClick={() => { navigate("/join"); onNavigate?.(); }}>{t("shell.joinCode")}</MenuItem>
     </Menu>
   );
 }
@@ -58,6 +60,7 @@ function AccountMenu({ user, trigger, align = "start", counts = {} }) {
   const { logout } = useAuth();
   const navigate = useNavigate();
   const theme = useTheme();
+  const t = useT();
   const dark = theme.resolved === "dark";
   const app = useInstallPrompt();
   const [installOpen, setInstallOpen] = useState(false);
@@ -72,20 +75,20 @@ function AccountMenu({ user, trigger, align = "start", counts = {} }) {
         </div>
       </div>
       <div className="menu-sep" />
-      <MenuItem icon={UserRound} onClick={() => navigate(`/people/${user._id}`)}>My profile</MenuItem>
-      <MenuItem icon={MessageCircle} onClick={() => navigate("/messages")}>Messages {counts.dm > 0 && <span className="count" style={{ marginLeft: "auto" }}>{counts.dm}</span>}</MenuItem>
-      <MenuItem icon={Users} onClick={() => navigate("/friends")}>Friends</MenuItem>
-      {counts.invites > 0 && <MenuItem icon={Mail} onClick={() => navigate("/invitations")}>Invitations <span className="count" style={{ marginLeft: "auto" }}>{counts.invites}</span></MenuItem>}
-      <MenuItem icon={House} onClick={() => navigate("/homes")}>All homes</MenuItem>
-      <MenuItem icon={Star} onClick={() => navigate("/reviews")}>My reviews</MenuItem>
-      <MenuItem icon={Search} onClick={() => navigate("/seats")}>Find a seat</MenuItem>
+      <MenuItem icon={UserRound} onClick={() => navigate(`/people/${user._id}`)}>{t("shell.myProfile")}</MenuItem>
+      <MenuItem icon={MessageCircle} onClick={() => navigate("/messages")}>{t("nav.messages")} {counts.dm > 0 && <span className="count" style={{ marginLeft: "auto" }}>{counts.dm}</span>}</MenuItem>
+      <MenuItem icon={Users} onClick={() => navigate("/friends")}>{t("nav.friends")}</MenuItem>
+      {counts.invites > 0 && <MenuItem icon={Mail} onClick={() => navigate("/invitations")}>{t("nav.invitations")} <span className="count" style={{ marginLeft: "auto" }}>{counts.invites}</span></MenuItem>}
+      <MenuItem icon={House} onClick={() => navigate("/homes")}>{t("shell.allHomes")}</MenuItem>
+      <MenuItem icon={Star} onClick={() => navigate("/reviews")}>{t("shell.myReviews")}</MenuItem>
+      <MenuItem icon={Search} onClick={() => navigate("/seats")}>{t("shell.findSeat")}</MenuItem>
       <div className="menu-sep" />
-      <MenuItem icon={Palette} onClick={() => navigate("/settings/appearance")}>Appearance</MenuItem>
-      <MenuItem icon={dark ? Sun : Moon} onClick={() => theme.update({ mode: dark ? "light" : "dark" })}>{dark ? "Light mode" : "Dark mode"}</MenuItem>
-      <MenuItem icon={Settings} onClick={() => navigate("/settings/security")}>Account settings</MenuItem>
-      {app.canInstall && <MenuItem icon={Smartphone} onClick={() => setInstallOpen(true)}>Install the app</MenuItem>}
+      <MenuItem icon={Palette} onClick={() => navigate("/settings/appearance")}>{t("shell.appearanceLanguage")}</MenuItem>
+      <MenuItem icon={dark ? Sun : Moon} onClick={() => theme.update({ mode: dark ? "light" : "dark" })}>{dark ? t("shell.lightMode") : t("shell.darkMode")}</MenuItem>
+      <MenuItem icon={Settings} onClick={() => navigate("/settings/security")}>{t("shell.accountSettings")}</MenuItem>
+      {app.canInstall && <MenuItem icon={Smartphone} onClick={() => setInstallOpen(true)}>{t("shell.installApp")}</MenuItem>}
       <div className="menu-sep" />
-      <MenuItem icon={LogOut} danger onClick={async () => { await logout(); navigate("/login"); }}>Sign out</MenuItem>
+      <MenuItem icon={LogOut} danger onClick={async () => { await logout(); navigate("/login"); }}>{t("shell.signOut")}</MenuItem>
     </Menu>
     <InstallAppDialog open={installOpen} onClose={() => setInstallOpen(false)} />
     </>
@@ -97,15 +100,15 @@ function NavItem({ to, icon: Icon, children, end, count }) {
     <NavLink to={to} end={end} className="nav-link">
       <Icon aria-hidden />
       <span className="truncate">{children}</span>
-      {count > 0 && <span className="count">{count > 99 ? "99+" : count}</span>}
+      {count > 0 && <span className="count">{count > 99 ? "99+" : num(count)}</span>}
     </NavLink>
   );
 }
 
 /** A collapsible group of less-used links. Remembers whether it's open; always open while you're on one of its pages. */
-function NavGroup({ label, paths, children }) {
+function NavGroup({ id, label, paths, children }) {
   const location = useLocation();
-  const key = `bm.nav.${label}`;
+  const key = `bm.nav.${id}`;
   const [open, setOpen] = useState(() => { try { return localStorage.getItem(key) === "1"; } catch { return false; } });
   const inside = paths.some((p) => location.pathname.startsWith(p));
   const shown = open || inside;
@@ -128,6 +131,7 @@ function NavGroup({ label, paths, children }) {
 export default function AppShell() {
   const { user } = useAuth();
   const theme = useTheme();
+  const t = useT();
   const location = useLocation();
   const [open, setOpen] = useState(false);
   const match = useMatch("/h/:homeId/*");
@@ -154,7 +158,7 @@ export default function AppShell() {
   const counts = { dm: dmUnread, invites: invites?.invitations?.length || 0 };
 
   const sidebar = (
-    <aside className={`sidebar ${open ? "open" : ""}`} aria-label="Main navigation" onClick={(e) => e.target.closest("a, .menu-item") && setOpen(false)}>
+    <aside className={`sidebar ${open ? "open" : ""}`} aria-label={t("shell.mainNav")} onClick={(e) => e.target.closest("a, .menu-item") && setOpen(false)}>
       {/* Top: account (with sign out) + home switcher — always visible */}
       <div className="sidebar-top">
         <div className="row" style={{ gap: 6 }}>
@@ -162,7 +166,7 @@ export default function AppShell() {
             user={user}
             counts={counts}
             trigger={
-              <button className="sidebar-account" aria-label={`${user.name}, account menu`}>
+              <button className="sidebar-account" aria-label={t("shell.accountMenuFor", { name: user.name })}>
                 <Avatar user={user} size={28} />
                 <span className="grow truncate" style={{ textAlign: "left" }}>
                   <span className="strong text-sm truncate" style={{ display: "block", color: "var(--text)" }}>{user.name}</span>
@@ -171,49 +175,49 @@ export default function AppShell() {
               </button>
             }
           />
-          <Button variant="ghost" size="sm" icon={X} className="show-sm" onClick={() => setOpen(false)} aria-label="Close menu" />
+          <Button variant="ghost" size="sm" icon={X} className="show-sm" onClick={() => setOpen(false)} aria-label={t("shell.closeMenu")} />
         </div>
         <HomeSwitcher homes={homes} current={home} onNavigate={() => setOpen(false)} />
       </div>
 
       {/* Middle: navigation scrolls on its own */}
-      <nav className="sidebar-scroll" aria-label="Home navigation">
+      <nav className="sidebar-scroll" aria-label={t("shell.homeNav")}>
         {home ? (
           <>
-            <NavItem to={base} end icon={LayoutDashboard}>Overview</NavItem>
-            <NavItem to={`${base}/meals`} icon={UtensilsCrossed}>Meals</NavItem>
-            <NavItem to={`${base}/requests`} icon={ClipboardList} count={pendingRequests}>Requests</NavItem>
-            <NavItem to={`${base}/chat`} icon={MessagesSquare} count={homeChatUnread}>Home chat</NavItem>
-            <NavItem to={`${base}/calendar`} icon={CalendarDays}>Calendar</NavItem>
+            <NavItem to={base} end icon={LayoutDashboard}>{t("nav.overview")}</NavItem>
+            <NavItem to={`${base}/meals`} icon={UtensilsCrossed}>{t("nav.meals")}</NavItem>
+            <NavItem to={`${base}/requests`} icon={ClipboardList} count={pendingRequests}>{t("nav.requests")}</NavItem>
+            <NavItem to={`${base}/chat`} icon={MessagesSquare} count={homeChatUnread}>{t("nav.homeChat")}</NavItem>
+            <NavItem to={`${base}/calendar`} icon={CalendarDays}>{t("nav.calendar")}</NavItem>
 
-            <div className="nav-section">Money</div>
-            <NavItem to={`${base}/finance`} end icon={Wallet}>Finance</NavItem>
-            <NavItem to={`${base}/finance/me`} icon={CircleUserRound}>My account</NavItem>
-            {can("expenses.view", "expenses.manage", "expenses.meal") && <NavItem to={`${base}/finance/expenses`} icon={Receipt}>Expenses</NavItem>}
-            {can("expenses.view", "expenses.manage", "finance.view_all") && <NavItem to={`${base}/finance/recurring`} icon={Repeat}>Recurring costs</NavItem>}
-            <NavItem to={`${base}/finance/transactions`} icon={ArrowLeftRight} count={dash?.pendingPayments}>Transactions</NavItem>
+            <div className="nav-section">{t("nav.money")}</div>
+            <NavItem to={`${base}/finance`} end icon={Wallet}>{t("nav.finance")}</NavItem>
+            <NavItem to={`${base}/finance/me`} icon={CircleUserRound}>{t("nav.myAccount")}</NavItem>
+            {can("expenses.view", "expenses.manage", "expenses.meal") && <NavItem to={`${base}/finance/expenses`} icon={Receipt}>{t("nav.expenses")}</NavItem>}
+            {can("expenses.view", "expenses.manage", "finance.view_all") && <NavItem to={`${base}/finance/recurring`} icon={Repeat}>{t("nav.recurring")}</NavItem>}
+            <NavItem to={`${base}/finance/transactions`} icon={ArrowLeftRight} count={dash?.pendingPayments}>{t("nav.transactions")}</NavItem>
 
-            <div className="nav-section">House</div>
-            <NavItem to={`${base}/announcements`} icon={Megaphone}>Announcements</NavItem>
-            <NavItem to={`${base}/grocery`} icon={ShoppingBasket}>Grocery list</NavItem>
-            {can("members.view") && <NavItem to={`${base}/members`} icon={Users} count={dash?.pendingJoins}>Members</NavItem>}
-            {(can("invites.manage") || home.settings?.allowMemberInvites) && <NavItem to={`${base}/invites`} icon={UserPlus}>Invitations</NavItem>}
-            <NavItem to={`${base}/settings`} icon={Settings}>Home settings</NavItem>
+            <div className="nav-section">{t("nav.house")}</div>
+            <NavItem to={`${base}/announcements`} icon={Megaphone}>{t("nav.announcements")}</NavItem>
+            <NavItem to={`${base}/grocery`} icon={ShoppingBasket}>{t("nav.grocery")}</NavItem>
+            {can("members.view") && <NavItem to={`${base}/members`} icon={Users} count={dash?.pendingJoins}>{t("nav.members")}</NavItem>}
+            {(can("invites.manage") || home.settings?.allowMemberInvites) && <NavItem to={`${base}/invites`} icon={UserPlus}>{t("nav.invitations")}</NavItem>}
+            <NavItem to={`${base}/settings`} icon={Settings}>{t("nav.homeSettings")}</NavItem>
 
-            <NavGroup label="More" paths={["listings", "reviews", "reports", "activity"].map((p) => `${base}/${p}`)}>
-              <NavItem to={`${base}/listings`} icon={DoorOpen}>Seat listings</NavItem>
-              <NavItem to={`${base}/reviews`} icon={Star}>Reviews</NavItem>
-              {can("reports.view") && <NavItem to={`${base}/reports`} icon={BarChart3}>Reports</NavItem>}
-              {can("activity.view") && <NavItem to={`${base}/activity`} icon={History}>Activity log</NavItem>}
+            <NavGroup id="More" label={t("nav.more")} paths={["listings", "reviews", "reports", "activity"].map((p) => `${base}/${p}`)}>
+              <NavItem to={`${base}/listings`} icon={DoorOpen}>{t("nav.listings")}</NavItem>
+              <NavItem to={`${base}/reviews`} icon={Star}>{t("nav.reviews")}</NavItem>
+              {can("reports.view") && <NavItem to={`${base}/reports`} icon={BarChart3}>{t("nav.reports")}</NavItem>}
+              {can("activity.view") && <NavItem to={`${base}/activity`} icon={History}>{t("nav.activity")}</NavItem>}
             </NavGroup>
           </>
         ) : (
           <>
-            <NavItem to="/homes" icon={House}>Homes</NavItem>
-            <NavItem to="/friends" icon={UserRound}>Friends</NavItem>
-            <NavItem to="/messages" icon={MessageCircle} count={dmUnread}>Messages</NavItem>
-            <NavItem to="/notifications" icon={Bell} count={notif?.unread}>Notifications</NavItem>
-            {counts.invites > 0 && <NavItem to="/invitations" icon={Mail} count={counts.invites}>Invitations</NavItem>}
+            <NavItem to="/homes" icon={House}>{t("nav.homes")}</NavItem>
+            <NavItem to="/friends" icon={UserRound}>{t("nav.friends")}</NavItem>
+            <NavItem to="/messages" icon={MessageCircle} count={dmUnread}>{t("nav.messages")}</NavItem>
+            <NavItem to="/notifications" icon={Bell} count={notif?.unread}>{t("nav.notifications")}</NavItem>
+            {counts.invites > 0 && <NavItem to="/invitations" icon={Mail} count={counts.invites}>{t("nav.invitations")}</NavItem>}
           </>
         )}
       </nav>
@@ -222,10 +226,10 @@ export default function AppShell() {
       <div className="sidebar-bottom">
         <Link to="/" className="sidebar-brand-mini" aria-label="BachelorMate" title="BachelorMate"><BrandMark size={26} /></Link>
         <div className="row" style={{ gap: 2, marginLeft: "auto" }}>
-          {[["/messages", MessageCircle, "Messages", dmUnread], ["/friends", UserRound, "Friends", 0], ["/notifications", Bell, "Notifications", notif?.unread]].map(([to, I, label, n]) => (
-            <NavLink key={to} to={to} className="sidebar-iconlink" aria-label={`${label}${n ? ` (${n})` : ""}`} title={label}>
+          {[["/messages", MessageCircle, t("nav.messages"), dmUnread], ["/friends", UserRound, t("nav.friends"), 0], ["/notifications", Bell, t("nav.notifications"), notif?.unread]].map(([to, I, label, n]) => (
+            <NavLink key={to} to={to} className="sidebar-iconlink" aria-label={n ? t("shell.withCount", { label, n }) : label} title={label}>
               <I />
-              {n > 0 && <span className="count">{n > 9 ? "9+" : n}</span>}
+              {n > 0 && <span className="count">{n > 9 ? "9+" : num(n)}</span>}
             </NavLink>
           ))}
         </div>
@@ -239,20 +243,20 @@ export default function AppShell() {
       {open && <div className="scrim" onClick={() => setOpen(false)} />}
       <div className="main">
         <header className="topbar">
-          <Button variant="ghost" icon={MenuIcon} className="show-sm" onClick={() => setOpen(true)} aria-label="Open menu" />
+          <Button variant="ghost" icon={MenuIcon} className="show-sm" onClick={() => setOpen(true)} aria-label={t("shell.openMenu")} />
           <div className="grow truncate strong text-sm">{home?.name || ""}</div>
           <Button
             variant="ghost"
             icon={theme.resolved === "dark" ? Sun : Moon}
-            aria-label="Toggle dark mode"
-            title="Toggle dark mode"
+            aria-label={t("shell.toggleDark")}
+            title={t("shell.toggleDark")}
             onClick={() => theme.update({ mode: theme.resolved === "dark" ? "light" : "dark" })}
           />
-          <Link to="/notifications" className="btn btn-ghost btn-icon" aria-label={`Notifications${notif?.unread ? ` (${notif.unread} unread)` : ""}`} style={{ position: "relative" }}>
+          <Link to="/notifications" className="btn btn-ghost btn-icon" aria-label={notif?.unread ? t("shell.notificationsUnread", { n: notif.unread }) : t("nav.notifications")} style={{ position: "relative" }}>
             <Bell />
-            {notif?.unread > 0 && <span className="count" style={{ position: "absolute", top: 2, right: 0, transform: "scale(.85)" }}>{notif.unread > 9 ? "9+" : notif.unread}</span>}
+            {notif?.unread > 0 && <span className="count" style={{ position: "absolute", top: 2, right: 0, transform: "scale(.85)" }}>{notif.unread > 9 ? "9+" : num(notif.unread)}</span>}
           </Link>
-          <AccountMenu user={user} counts={counts} align="end" trigger={<button className="btn btn-ghost btn-icon" style={{ padding: 0 }} aria-label="Account menu"><Avatar user={user} size={30} /></button>} />
+          <AccountMenu user={user} counts={counts} align="end" trigger={<button className="btn btn-ghost btn-icon" style={{ padding: 0 }} aria-label={t("shell.accountMenu")}><Avatar user={user} size={30} /></button>} />
         </header>
         <NetworkStatus />
         <ErrorBoundary resetKey={location.pathname}>
@@ -262,23 +266,23 @@ export default function AppShell() {
         </ErrorBoundary>
       </div>
 
-      <nav className="mobile-nav" aria-label="Quick navigation">
+      <nav className="mobile-nav" aria-label={t("shell.quickNav")}>
         {home ? (
           <>
-            <NavLink to={base} end><LayoutDashboard />Home</NavLink>
-            <NavLink to={`${base}/meals`}><UtensilsCrossed />Meals</NavLink>
-            <NavLink to={`${base}/finance`}><Wallet />Money</NavLink>
-            <NavLink to={`${base}/chat`}><MessagesSquare />Chat</NavLink>
+            <NavLink to={base} end><LayoutDashboard />{t("mobileNav.home")}</NavLink>
+            <NavLink to={`${base}/meals`}><UtensilsCrossed />{t("nav.meals")}</NavLink>
+            <NavLink to={`${base}/finance`}><Wallet />{t("mobileNav.money")}</NavLink>
+            <NavLink to={`${base}/chat`}><MessagesSquare />{t("mobileNav.chat")}</NavLink>
           </>
         ) : (
           <>
-            <NavLink to="/homes"><House />Homes</NavLink>
-            <NavLink to="/friends"><UserRound />Friends</NavLink>
-            <NavLink to="/messages"><MessageCircle />Messages</NavLink>
-            <NavLink to="/notifications"><Bell />Alerts</NavLink>
+            <NavLink to="/homes"><House />{t("nav.homes")}</NavLink>
+            <NavLink to="/friends"><UserRound />{t("nav.friends")}</NavLink>
+            <NavLink to="/messages"><MessageCircle />{t("nav.messages")}</NavLink>
+            <NavLink to="/notifications"><Bell />{t("mobileNav.alerts")}</NavLink>
           </>
         )}
-        <a href="#menu" onClick={(e) => { e.preventDefault(); setOpen(true); }}><MenuIcon />More</a>
+        <a href="#menu" onClick={(e) => { e.preventDefault(); setOpen(true); }}><MenuIcon />{t("nav.more")}</a>
       </nav>
     </div>
   );

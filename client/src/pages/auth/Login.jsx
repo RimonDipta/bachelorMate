@@ -5,10 +5,13 @@ import AuthLayout from "./AuthLayout";
 import { Alert, Button, Field, Input } from "../../components/ui";
 import { useAuth } from "../../context/AuthContext";
 import GoogleButton from "./GoogleButton";
+import { useT } from "../../i18n/I18nProvider";
+
 
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const t = useT();
   const [params] = useSearchParams();
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
@@ -33,28 +36,28 @@ export default function Login() {
   return (
     <AuthLayout>
       <div className="col" style={{ gap: 6 }}>
-        <h1>Welcome back</h1>
-        <p className="muted">Sign in to manage your home.</p>
+        <h1>{t("auth.login.title")}</h1>
+        <p className="muted">{t("auth.login.subtitle")}</p>
       </div>
       {error && <Alert tone="danger" icon={AlertCircle}>{error}</Alert>}
       <form className="stack" onSubmit={submit} noValidate>
-        <Field label="Email">
+        <Field label={t("auth.email")}>
           <div className="input-group">
             <Mail />
             <Input type="email" autoComplete="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="you@example.com" />
           </div>
         </Field>
-        <Field label={<span className="row between" style={{ width: "100%" }}>Password <Link to="/forgot-password" className="text-xs" style={{ fontWeight: 500 }}>Forgot password?</Link></span>}>
+        <Field label={<span className="row between" style={{ width: "100%" }}>{t("auth.password")} <Link to="/forgot-password" className="text-xs" style={{ fontWeight: 500 }}>{t("auth.login.forgot")}</Link></span>}>
           <div className="input-group">
             <Lock />
             <Input type="password" autoComplete="current-password" required value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
           </div>
         </Field>
-        <Button type="submit" variant="primary" block loading={loading}>Sign in</Button>
+        <Button type="submit" variant="primary" block loading={loading}>{t("auth.signIn")}</Button>
       </form>
       <GoogleButton onDone={() => navigate(dest, { replace: true })} onError={setError} />
       <p className="text-sm muted" style={{ textAlign: "center" }}>
-        New to BachelorMate? <Link to={`/register${next ? `?next=${encodeURIComponent(next)}` : ""}`}>Create an account</Link>
+        {t("auth.login.newHere")} <Link to={`/register${next ? `?next=${encodeURIComponent(next)}` : ""}`}>{t("auth.login.createAccount")}</Link>
       </p>
     </AuthLayout>
   );

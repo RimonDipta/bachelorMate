@@ -594,3 +594,14 @@
 .lp-logo .wordmark-mate { color: var(--lp-brand-ink); }
 .lp-drawer nav .lp-drawer-link { font: inherit; font-size: 32px; letter-spacing: -0.03em; font-weight: 550; padding: 12px 0; border: 0; border-bottom: 1px solid var(--lp-line); background: none; color: inherit; display: flex; justify-content: space-between; align-items: center; width: 100%; cursor: pointer; text-align: left; }
 .lp-drawer nav .lp-drawer-link svg { width: 22px; height: 22px; color: var(--lp-ink-3); }
+
+/* Language switch in the landing nav */
+.lp-langbtn {
+  display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 12px; border-radius: 999px;
+  border: 0; background: transparent; color: var(--lp-ink-2); font: inherit; font-size: 14px; cursor: pointer; white-space: nowrap;
+}
+.lp-langbtn:hover { color: var(--lp-ink); background: var(--lp-line); }
+.lp-langbtn:focus-visible { outline: 2px solid var(--lp-brand); outline-offset: 3px; }
+.lp-langbtn svg { width: 16px; height: 16px; }
+:lang(bn) .lp, :lang(bn) .lp :is(h1, h2, h3), :lang(bn) .lp-drawer nav a { letter-spacing: normal; }
+@media (max-width: 420px) { .lp-langbtn svg { display: none; } .lp-langbtn { padding: 0 8px; } }

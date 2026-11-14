@@ -34,6 +34,8 @@ const userSchema = new mongoose.Schema(
       accent: { type: String, enum: ACCENTS, default: "violet" },
       preset: { type: String, enum: ["default", "slate", "warm", "contrast"], default: "default" },
       density: { type: String, enum: ["comfortable", "compact"], default: "comfortable" },
+      // No default: when unset the client follows the browser language.
+      language: { type: String, enum: ["en", "bn"] },
     },
     lastActiveHome: { type: mongoose.Schema.Types.ObjectId, ref: "Home" },
     lastSeenAt: { type: Date },

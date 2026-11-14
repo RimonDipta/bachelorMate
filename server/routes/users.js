@@ -90,6 +90,7 @@ router.patch(
           accent: z.enum(ACCENTS).optional(),
           preset: z.enum(["default", "slate", "warm", "contrast"]).optional(),
           density: z.enum(["comfortable", "compact"]).optional(),
+          language: z.enum(["en", "bn"]).optional(),
         })
         .optional(),
       notificationPrefs: z

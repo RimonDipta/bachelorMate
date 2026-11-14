@@ -7,11 +7,13 @@ import { api } from "../../lib/api";
 import { HomeContext, buildHomeContext } from "../../context/HomeContext";
 import { useAuth } from "../../context/AuthContext";
 import { Alert, EmptyState, PageSkeleton } from "../ui";
+import { useT } from "../../i18n/I18nProvider";
 
 export default function HomeLayout() {
   const { homeId } = useParams();
   const location = useLocation();
   const { user, setUser } = useAuth();
+  const t = useT();
   const { data, isLoading, error } = useQuery({ queryKey: ["home", homeId], queryFn: () => api.get(`/homes/${homeId}`), retry: false });
 
   // Remember the last opened home so /app returns here next time.
@@ -28,7 +30,7 @@ export default function HomeLayout() {
     return (
       <main className="content">
         <div className="card">
-          <EmptyState icon={House} title="Home not available" description="This home doesn't exist or you're no longer a member." action={<Link className="btn btn-primary" to="/homes">Go to your homes</Link>} />
+          <EmptyState icon={House} title={t("homeLayout.unavailable")} description={t("homeLayout.unavailableHint")} action={<Link className="btn btn-primary" to="/homes">{t("homeLayout.goHomes")}</Link>} />
         </div>
       </main>
     );
@@ -38,7 +40,7 @@ export default function HomeLayout() {
       <main className="content">
         {ctx.archived && (
           <Alert tone="warning" icon={Archive} style={{ marginBottom: 16 }}>
-            This home is archived and read-only.{ctx.isAdmin && <> Restore it from <Link to={`/h/${homeId}/settings`}>settings</Link>.</>}
+            {t("homeLayout.archived")}{ctx.isAdmin && <> <Link to={`/h/${homeId}/settings`}>{t("homeLayout.restoreFromSettings")}</Link></>}
           </Alert>
         )}
         <ErrorBoundary resetKey={location.pathname}>

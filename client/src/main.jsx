@@ -6,6 +6,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { ToastProvider } from "./context/ToastContext";
 import { RealtimeProvider } from "./context/RealtimeContext";
+import { I18nProvider } from "./i18n/I18nProvider";
 import App from "./App";
 import { installGlobalErrorHandlers } from "./lib/errorReporting";
 import { registerServiceWorker } from "./lib/pwa";
@@ -31,11 +32,13 @@ createRoot(document.getElementById("root")).render(
       <QueryClientProvider client={queryClient}>
         <ToastProvider>
           <AuthProvider>
-            <ThemeProvider>
-              <RealtimeProvider>
-                <App />
-              </RealtimeProvider>
-            </ThemeProvider>
+            <I18nProvider>
+              <ThemeProvider>
+                <RealtimeProvider>
+                  <App />
+                </RealtimeProvider>
+              </ThemeProvider>
+            </I18nProvider>
           </AuthProvider>
         </ToastProvider>
       </QueryClientProvider>
