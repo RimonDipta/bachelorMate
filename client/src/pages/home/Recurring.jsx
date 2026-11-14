@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Plus, Repeat, MoreHorizontal, Pencil, Pause, Play, Trash2, CalendarClock, Landmark, Info } from "lucide-react";
 import { api } from "../../lib/api";
@@ -117,7 +118,13 @@ function RecurringForm({ open, onClose, template, members }) {
 export default function Recurring() {
   const { homeId, can, currency } = useHome();
   const manage = can("expenses.manage");
-  const [modal, setModal] = useState(null); // { template? }
+  const [params, setParams] = useSearchParams();
+  // ?new=1 (from the setup checklist) opens the form straight away.
+  const [modal, setModalState] = useState(() => (manage && params.get("new") === "1" ? {} : null)); // { template? }
+  const setModal = (v) => {
+    setModalState(v);
+    if (!v && params.has("new")) setParams((p) => { p.delete("new"); return p; }, { replace: true });
+  };
   const [deleting, setDeleting] = useState(null);
   const { data, isLoading, error, refetch } = useQuery({ queryKey: ["recurring", homeId], queryFn: () => api.get(`/homes/${homeId}/recurring`) });
   const inv = [["recurring", homeId], ["finance"], ["expenses"], ["dashboard", homeId]];

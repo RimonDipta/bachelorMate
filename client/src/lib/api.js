@@ -15,6 +15,13 @@ export class ApiError extends Error {
   }
 }
 
+// Requests that are taking a while (slow network, or the server waking up) — the UI shows a hint.
+const SLOW_MS = 4000;
+let slowCount = 0;
+const slowListeners = new Set();
+const setSlow = (d) => { slowCount += d; slowListeners.forEach((fn) => fn(slowCount)); };
+export const onSlowRequests = (fn) => (slowListeners.add(fn), () => slowListeners.delete(fn));
+
 export const getAccessToken = () => accessToken;
 export const setAccessToken = (t) => (accessToken = t);
 export const onAuthLost = (fn) => (authLostHandler = fn);
@@ -52,10 +59,18 @@ async function request(path, { method = "GET", body, query, raw = false, retry =
     payload = JSON.stringify(body);
   }
   let res;
+  let slow = false;
+  const slowTimer = setTimeout(() => { slow = true; setSlow(1); }, SLOW_MS);
   try {
-    res = await fetch(`${BASE}/api${path}${qs(query)}`, { method, headers, body: payload, credentials: "include" });
-  } catch {
-    throw new ApiError(0, "Can't reach the server. Check your connection.");
+    // Generous limit: a sleeping free-tier server can take ~a minute to wake; uploads get longer.
+    const timeout = AbortSignal.timeout(body instanceof FormData ? 180_000 : 90_000);
+    res = await fetch(`${BASE}/api${path}${qs(query)}`, { method, headers, body: payload, credentials: "include", signal: timeout });
+  } catch (err) {
+    if (err?.name === "TimeoutError") throw new ApiError(0, "The server took too long to respond. Please try again.", undefined, "TIMEOUT");
+    throw new ApiError(0, navigator.onLine === false ? "You're offline. Check your connection." : "Can't reach the server. Check your connection.", undefined, "NETWORK");
+  } finally {
+    clearTimeout(slowTimer);
+    if (slow) setSlow(-1);
   }
 
   if (res.status === 401 && retry && !path.startsWith("/auth/")) {

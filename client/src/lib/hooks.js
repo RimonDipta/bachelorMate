@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { onlineManager, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../context/ToastContext";
@@ -13,6 +13,10 @@ export function useAction(fn, { success, invalidate = [], onSuccess, onError } =
   const navigate = useNavigate();
   return useMutation({
     mutationFn: fn,
+    onMutate: () => {
+      // Offline: the change is held and sent automatically once the connection is back.
+      if (!onlineManager.isOnline()) toast.info("It will be sent when you're back online.", { title: "You're offline" });
+    },
     onSuccess: async (data, vars) => {
       await Promise.all(invalidate.map((k) => qc.invalidateQueries({ queryKey: k })));
       if (success) toast.success(typeof success === "function" ? success(data, vars) : success);

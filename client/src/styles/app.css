@@ -428,3 +428,62 @@ a.list-item:hover { background: var(--surface-hover); text-decoration: none; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
+
+/* ---------- first-run setup checklist ---------- */
+.setup { padding: var(--card-pad); display: flex; flex-direction: column; gap: var(--s-3); }
+.setup-head { display: flex; align-items: flex-start; gap: var(--s-3); }
+.setup-title { margin: 0 0 2px; font-size: var(--text-md); font-weight: 600; letter-spacing: -0.01em; }
+.setup-bar { height: 6px; }
+.setup-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--s-2); }
+.setup-step { display: flex; align-items: center; gap: var(--s-3); min-height: 56px; padding: var(--s-3); border: 1px solid var(--border); border-radius: var(--r-md); color: inherit; background: var(--surface); transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease); }
+.setup-step:hover { background: var(--surface-hover); border-color: var(--border-strong); }
+.setup-step.is-next { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.setup-step-title { display: block; font-size: var(--text-sm); font-weight: 600; }
+.setup-step-hint { display: block; font-size: var(--text-xs); color: var(--text-2); }
+.setup-check { flex: none; width: 28px; height: 28px; border-radius: var(--r-full); display: grid; place-items: center; background: var(--accent-soft); color: var(--accent-text); }
+.setup-step.is-done .setup-check { background: var(--success); color: #fff; }
+.setup-step.is-done .setup-step-title { color: var(--text-2); text-decoration: line-through; text-decoration-color: var(--text-3); }
+
+.nav-toggle { display: flex; align-items: center; gap: 4px; width: 100%; border: 0; background: none; cursor: pointer; text-align: left; font-family: inherit; border-radius: var(--r-sm); }
+.nav-toggle:hover:not(:disabled) { color: var(--text-2); }
+.nav-toggle:disabled { cursor: default; }
+.nav-toggle:focus-visible { outline: 2px solid var(--accent-ring); outline-offset: 1px; }
+.nav-toggle-icon { transition: transform var(--dur) var(--ease); transform: rotate(-90deg); }
+.nav-toggle[aria-expanded="true"] .nav-toggle-icon { transform: none; }
+
+/* ---------- connection status ---------- */
+.netbar { position: sticky; top: var(--topbar-h); z-index: 20; display: flex; align-items: center; justify-content: center; gap: var(--s-2); padding: 6px var(--s-4); font-size: var(--text-xs); color: var(--text-2); background: var(--surface-2); border-bottom: 1px solid var(--border); text-align: center; }
+.netbar-offline { background: var(--warning-soft); color: var(--text); }
+.netbar svg { flex: none; }
+.netbar-spin { animation: spin .8s linear infinite; }
+
+/* ---------- daily meals: phone layout ---------- */
+.meal-cards { display: none; list-style: none; margin: 0; padding: 0; }
+.meal-card { padding: var(--s-3) var(--card-pad); border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: var(--s-3); }
+.meal-card:last-child { border-bottom: 0; }
+.meal-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: var(--s-2); }
+.meal-card-cell { display: flex; flex-direction: column; align-items: stretch; gap: 4px; min-width: 0; }
+.meal-card-cell .meal-count { justify-content: space-between; }
+.meal-card-cell .meal-pill { align-self: flex-start; }
+.save-bar { position: sticky; bottom: 16px; padding: 10px 14px; box-shadow: var(--shadow-lg); z-index: 5; flex-wrap: wrap; gap: var(--s-2); }
+@media (max-width: 720px) {
+  .meal-cards { display: block; }
+  .meal-grid-wrap { display: none; }
+  .meal-card-cell .meal-count button { width: 36px; height: 44px; }
+  .meal-card-cell .meal-count span { font-size: var(--text-md); }
+}
+@media (max-width: 900px) {
+  .save-bar { bottom: calc(76px + env(safe-area-inset-bottom)); }
+}
+
+/* Overview shortcuts: one even row of big buttons on phones. */
+@media (max-width: 720px) {
+  .page-head:has(.quick-actions) { flex-direction: column; align-items: stretch; }
+  .quick-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); grid-auto-flow: column; gap: var(--s-2); }
+  .quick-actions .btn { flex-direction: column; height: auto; min-height: 60px; padding: 8px 4px; gap: 4px; font-size: var(--text-xs); white-space: normal; text-align: center; line-height: 1.2; }
+}
+
+/* iOS zooms the page when a field under 16px gets focus — keep phone fields at 16px. */
+@media (max-width: 900px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), textarea, select { font-size: 16px; }
+}

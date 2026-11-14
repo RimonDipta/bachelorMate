@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, Sun, Moon, ArrowRight, ArrowUpRight, Soup } from "lucide-react";
+import { Menu, X, Sun, Moon, ArrowRight, ArrowUpRight } from "lucide-react";
+import BrandMark, { Wordmark } from "../../components/BrandMark";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
 import { scrollToId } from "./motion";
@@ -8,8 +9,8 @@ import { scrollToId } from "./motion";
 export function Logo() {
   return (
     <Link to="/" className="lp-logo" aria-label="BachelorMate home">
-      <span className="lp-mark"><Soup /></span>
-      BachelorMate
+      <BrandMark size={30} className="lp-brandmark" />
+      <Wordmark />
     </Link>
   );
 }

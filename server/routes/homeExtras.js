@@ -3,7 +3,8 @@ const express = require("express");
 const Membership = require("../models/Membership");
 const Request = require("../models/Request");
 const { MealEntry, MealPeriod } = require("../models/Meal");
-const { LedgerEntry, Expense, MEAL_CATEGORIES } = require("../models/Finance");
+const { LedgerEntry, Expense, RecurringExpense, MEAL_CATEGORIES } = require("../models/Finance");
+const Invitation = require("../models/Invitation");
 const { Announcement, GroceryItem, CalendarEvent, ActivityLog } = require("../models/Misc");
 const { validate, z, objectId, day, badRequest, notFound, forbidden, moneyInput } = require("../lib/http");
 const { toMinor } = require("../lib/money");
@@ -65,6 +66,18 @@ router.get("/dashboard", async (req, res) => {
 
   const upcoming = await buildCalendar(req, today, addDays(today, 14));
 
+  // First-run checklist for whoever runs the home, until it's dismissed.
+  let setup;
+  if (req.can("home.manage") && !home.setupDismissed) {
+    const [invited, recurring, meals, expenses] = await Promise.all([
+      memberCount > 1 || Invitation.exists({ home: home._id }),
+      RecurringExpense.exists({ home: home._id }),
+      MealEntry.exists({ home: home._id }),
+      Expense.exists({ home: home._id }),
+    ]);
+    setup = { invited: Boolean(invited), recurring: Boolean(recurring), meals: Boolean(meals), expenses: Boolean(expenses) };
+  }
+
   res.json({
     today,
     memberCount,
@@ -89,6 +102,7 @@ router.get("/dashboard", async (req, res) => {
     announcements,
     activity,
     upcoming: upcoming.slice(0, 6),
+    setup,
   });
 });
 

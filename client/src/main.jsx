@@ -14,7 +14,8 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 20_000,
       refetchOnWindowFocus: true,
-      retry: (count, err) => err?.status >= 500 && count < 2,
+      // Retry server errors and dropped connections, not 4xx answers.
+      retry: (count, err) => (err?.status >= 500 || err?.status === 0) && count < 2,
     },
   },
 });

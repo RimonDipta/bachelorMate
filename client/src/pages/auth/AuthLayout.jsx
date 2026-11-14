@@ -1,11 +1,12 @@
 import { Link } from "react-router-dom";
-import { Soup, UtensilsCrossed, Wallet, MessagesSquare } from "lucide-react";
+import { UtensilsCrossed, Wallet, MessagesSquare } from "lucide-react";
+import BrandMark, { Wordmark } from "../../components/BrandMark";
 
 export function Brand() {
   return (
     <Link to="/" className="row" style={{ color: "var(--text)", fontWeight: 650, textDecoration: "none" }}>
-      <span className="brand-mark"><Soup size={15} /></span>
-      BachelorMate
+      <BrandMark size={28} />
+      <Wordmark />
     </Link>
   );
 }

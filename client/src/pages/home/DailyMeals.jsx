@@ -94,7 +94,39 @@ export default function DailyMeals() {
         {isLoading ? <LoadingBlock /> : error ? <ErrorState error={error} retry={refetch} /> : !data.members.length ? (
           <EmptyState icon={Users} title="No members" />
         ) : mode === "day" ? (
-          <div className="table-wrap">
+          <>
+          {/* Phones: one card per member, big tap targets, no sideways scrolling. */}
+          <ul className="meal-cards">
+            {data.members.map((m) => (
+              <li key={m._id} className="meal-card" style={m.mealsEnabled === false ? { opacity: 0.6 } : undefined}>
+                <div className="row">
+                  <Avatar user={m.user} size={28} />
+                  <div className="grow" style={{ minWidth: 0 }}>
+                    <div className="text-sm strong truncate">{m.user.name}</div>
+                    {!entryMap.has(`${m._id}|${day}`) && <div className="text-xs subtle">{m.mealsEnabled === false ? "No meals" : "Not filled"}</div>}
+                  </div>
+                </div>
+                <div className="meal-card-grid">
+                  {[["counts", ""], ...(showGuests ? [["guests", " guests"]] : [])].flatMap(([field, suffix]) =>
+                    types.map((t) => {
+                      const v = value(m._id, field, t.key);
+                      return (
+                        <div key={`${field}-${t.key}`} className="meal-card-cell">
+                          <span className="text-xs muted truncate">{t.label}{suffix}{!suffix && t.weight !== 1 && <span className="subtle"> ×{t.weight}</span>}</span>
+                          {canEdit ? (
+                            <Counter value={v} onChange={(n) => setVal(m._id, field, t.key, n)} dirty={`${m._id}|${field}|${t.key}` in edits} label={`${m.user.name} ${t.label}${suffix}`} />
+                          ) : (
+                            <span className={`meal-pill ${v ? "" : "off"}`}>{v}</span>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+          <div className="table-wrap meal-grid-wrap">
             <table className="table meal-grid">
               <thead>
                 <tr>
@@ -145,6 +177,7 @@ export default function DailyMeals() {
               </tfoot>
             </table>
           </div>
+          </>
         ) : (
           <div className="table-wrap">
             <table className="table">
@@ -177,7 +210,7 @@ export default function DailyMeals() {
       </Card>
 
       {dirtyCount > 0 && (
-        <div className="card row between" style={{ position: "sticky", bottom: 16, padding: "10px 14px", boxShadow: "var(--shadow-lg)", zIndex: 5 }}>
+        <div className="card row between save-bar">
           <span className="text-sm muted">{dirtyCount} unsaved change{dirtyCount > 1 ? "s" : ""}</span>
           <div className="row">
             <Button variant="ghost" icon={Undo2} onClick={() => setEdits({})}>Discard</Button>

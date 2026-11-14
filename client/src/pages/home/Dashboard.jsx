@@ -9,6 +9,7 @@ import { useHome } from "../../context/HomeContext";
 import { useAuth } from "../../context/AuthContext";
 import { Avatar, Badge, Card, EmptyState, ErrorState, Money, PageSkeleton, Stat } from "../../components/ui";
 import { fmtDay, fmtDayLong, money, timeAgo } from "../../lib/format";
+import SetupChecklist from "../../components/SetupChecklist";
 
 const greeting = () => {
   const h = new Date().getHours();
@@ -38,20 +39,14 @@ export default function Dashboard() {
           <h1>{greeting()}, {user.name.split(" ")[0]}</h1>
           <p>{fmtDayLong(d.today)} · {home.name}</p>
         </div>
-        <div className="row wrap">
+        <div className="row wrap quick-actions">
           <Link to={`${base}/requests?new=meal_off`} className="btn btn-secondary"><MoonStar size={16} /> Meal off</Link>
           <Link to={`${base}/finance/me?pay=1`} className="btn btn-secondary"><HandCoins size={16} /> {can("finance.record") ? "Record payment" : "Submit payment"}</Link>
           {can("expenses.manage", "expenses.meal") && <Link to={`${base}/finance/expenses?new=1`} className="btn btn-primary"><Plus size={16} /> Add expense</Link>}
         </div>
       </div>
 
-      {!home.onboardingCompleted && can("home.manage") && d.memberCount === 1 && (
-        <div className="card card-pad row-3 wrap">
-          <div className="feature-icon" style={{ margin: 0 }}><UserPlus /></div>
-          <div className="grow"><div className="strong">Invite your roommates</div><div className="text-sm muted">Share your home code or an invitation link to get started.</div></div>
-          <Link to={`${base}/invites`} className="btn btn-primary">Invite members</Link>
-        </div>
-      )}
+      {d.setup && <SetupChecklist homeId={homeId} setup={d.setup} can={can} />}
 
       <div className="grid-4">
         <Stat icon={Wallet} label="You need to pay" value={<Link to={`${base}/finance/me`} style={{ color: "inherit" }}>{money(d.finance.myPayable ?? Math.max(0, -bal), currency)}</Link>} hint={bal > 0 ? `${money(bal, currency)} advance credit` : bal < 0 ? "Your share + any dues" : "All settled"} />

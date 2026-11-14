@@ -53,6 +53,8 @@ const homeSchema = new mongoose.Schema(
     code: { type: String, required: true, unique: true },
     status: { type: String, enum: ["active", "archived"], default: "active" },
     onboardingCompleted: { type: Boolean, default: false },
+    // The "Get your home set up" checklist on the overview is hidden once dismissed.
+    setupDismissed: { type: Boolean, default: false },
     settings: { type: settingsSchema, default: () => ({}) },
   },
   { timestamps: true }

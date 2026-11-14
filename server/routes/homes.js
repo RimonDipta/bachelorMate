@@ -179,6 +179,12 @@ scoped.post("/onboarding/complete", requirePerm("home.manage"), async (req, res)
   res.json({ home: homeView(req.home, req.membership) });
 });
 
+scoped.post("/setup/dismiss", requirePerm("home.manage"), async (req, res) => {
+  req.home.setupDismissed = true;
+  await req.home.save();
+  res.json({ home: homeView(req.home, req.membership) });
+});
+
 scoped.post("/code/regenerate", requirePerm("invites.manage"), async (req, res) => {
   req.home.code = await uniqueHomeCode();
   await req.home.save();

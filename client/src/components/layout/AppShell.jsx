@@ -1,11 +1,12 @@
 import { Suspense, useState } from "react";
 import { NavLink, Outlet, useLocation, useMatch, useNavigate, Link } from "react-router-dom";
 import ErrorBoundary from "../ErrorBoundary";
+import NetworkStatus from "../NetworkStatus";
 import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard, UtensilsCrossed, CalendarDays, ClipboardList, Wallet, Receipt, ArrowLeftRight, MessagesSquare,
-  Megaphone, ShoppingBasket, Users, UserPlus, BarChart3, History, Settings, Bell, Menu as MenuIcon, ChevronsUpDown,
-  Plus, LogIn, House, UserRound, Palette, LogOut, Moon, Sun, MessageCircle, Mail, Check, CircleUserRound, Soup, Repeat, X, DoorOpen, Star, Search,
+  Megaphone, ShoppingBasket, Users, UserPlus, BarChart3, History, Settings, Bell, Menu as MenuIcon, ChevronsUpDown, ChevronDown,
+  Plus, LogIn, House, UserRound, Palette, LogOut, Moon, Sun, MessageCircle, Mail, Check, CircleUserRound, Repeat, X, DoorOpen, Star, Search,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../context/AuthContext";
@@ -92,6 +93,29 @@ function NavItem({ to, icon: Icon, children, end, count }) {
   );
 }
 
+/** A collapsible group of less-used links. Remembers whether it's open; always open while you're on one of its pages. */
+function NavGroup({ label, paths, children }) {
+  const location = useLocation();
+  const key = `bm.nav.${label}`;
+  const [open, setOpen] = useState(() => { try { return localStorage.getItem(key) === "1"; } catch { return false; } });
+  const inside = paths.some((p) => location.pathname.startsWith(p));
+  const shown = open || inside;
+  const toggle = () => {
+    const v = !shown;
+    setOpen(v);
+    try { localStorage.setItem(key, v ? "1" : "0"); } catch { /* storage unavailable */ }
+  };
+  return (
+    <>
+      <button type="button" className="nav-section nav-toggle" aria-expanded={shown} onClick={toggle} disabled={inside && shown}>
+        <span>{label}</span>
+        <ChevronDown size={12} className="nav-toggle-icon" aria-hidden />
+      </button>
+      {shown && children}
+    </>
+  );
+}
+
 export default function AppShell() {
   const { user } = useAuth();
   const theme = useTheme();
@@ -163,13 +187,16 @@ export default function AppShell() {
             <div className="nav-section">House</div>
             <NavItem to={`${base}/announcements`} icon={Megaphone}>Announcements</NavItem>
             <NavItem to={`${base}/grocery`} icon={ShoppingBasket}>Grocery list</NavItem>
-            <NavItem to={`${base}/listings`} icon={DoorOpen}>Seat listings</NavItem>
-            <NavItem to={`${base}/reviews`} icon={Star}>Reviews</NavItem>
             {can("members.view") && <NavItem to={`${base}/members`} icon={Users} count={dash?.pendingJoins}>Members</NavItem>}
             {(can("invites.manage") || home.settings?.allowMemberInvites) && <NavItem to={`${base}/invites`} icon={UserPlus}>Invitations</NavItem>}
-            {can("reports.view") && <NavItem to={`${base}/reports`} icon={BarChart3}>Reports</NavItem>}
-            {can("activity.view") && <NavItem to={`${base}/activity`} icon={History}>Activity log</NavItem>}
             <NavItem to={`${base}/settings`} icon={Settings}>Home settings</NavItem>
+
+            <NavGroup label="More" paths={["listings", "reviews", "reports", "activity"].map((p) => `${base}/${p}`)}>
+              <NavItem to={`${base}/listings`} icon={DoorOpen}>Seat listings</NavItem>
+              <NavItem to={`${base}/reviews`} icon={Star}>Reviews</NavItem>
+              {can("reports.view") && <NavItem to={`${base}/reports`} icon={BarChart3}>Reports</NavItem>}
+              {can("activity.view") && <NavItem to={`${base}/activity`} icon={History}>Activity log</NavItem>}
+            </NavGroup>
           </>
         ) : (
           <>
@@ -184,7 +211,7 @@ export default function AppShell() {
 
       {/* Bottom: personal shortcuts, always visible */}
       <div className="sidebar-bottom">
-        <Link to="/" className="sidebar-brand-mini" aria-label="BachelorMate" title="BachelorMate"><span className="brand-mark"><Soup size={13} /></span></Link>
+        <Link to="/" className="sidebar-brand-mini" aria-label="BachelorMate" title="BachelorMate"><BrandMark size={26} /></Link>
         <div className="row" style={{ gap: 2, marginLeft: "auto" }}>
           {[["/messages", MessageCircle, "Messages", dmUnread], ["/friends", UserRound, "Friends", 0], ["/notifications", Bell, "Notifications", notif?.unread]].map(([to, I, label, n]) => (
             <NavLink key={to} to={to} className="sidebar-iconlink" aria-label={`${label}${n ? ` (${n})` : ""}`} title={label}>
@@ -218,6 +245,7 @@ export default function AppShell() {
           </Link>
           <AccountMenu user={user} counts={counts} align="end" trigger={<button className="btn btn-ghost btn-icon" style={{ padding: 0 }} aria-label="Account menu"><Avatar user={user} size={30} /></button>} />
         </header>
+        <NetworkStatus />
         <ErrorBoundary resetKey={location.pathname}>
           <Suspense fallback={<main className="content"><PageSkeleton /></main>}>
             <Outlet />
