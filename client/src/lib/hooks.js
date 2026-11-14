@@ -2,6 +2,7 @@ import { onlineManager, useMutation, useQueryClient } from "@tanstack/react-quer
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../context/ToastContext";
+import { translate } from "../i18n";
 
 /**
  * useAction(fn, { success, invalidate, onSuccess }) – a mutation that shows a
@@ -15,7 +16,7 @@ export function useAction(fn, { success, invalidate = [], onSuccess, onError } =
     mutationFn: fn,
     onMutate: () => {
       // Offline: the change is held and sent automatically once the connection is back.
-      if (!onlineManager.isOnline()) toast.info("It will be sent when you're back online.", { title: "You're offline" });
+      if (!onlineManager.isOnline()) toast.info(translate("hooks.offlineQueued"), { title: translate("hooks.offlineTitle") });
     },
     onSuccess: async (data, vars) => {
       await Promise.all(invalidate.map((k) => qc.invalidateQueries({ queryKey: k })));
@@ -24,7 +25,7 @@ export function useAction(fn, { success, invalidate = [], onSuccess, onError } =
     },
     onError: (err) => {
       if (err?.code === "EMAIL_NOT_VERIFIED") {
-        toast.info("Enter the code we emailed you to continue.", { title: "Verify your email first" });
+        toast.info(translate("hooks.verifyText"), { title: translate("hooks.verifyTitle") });
         navigate(`/verify-email?next=${encodeURIComponent(window.location.pathname)}`);
       } else toast.error(err);
       onError?.(err);

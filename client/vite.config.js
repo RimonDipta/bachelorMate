@@ -11,6 +11,8 @@ export default defineConfig({
   define: { __APP_RELEASE__: JSON.stringify(RELEASE) },
   server: {
     port: 5173,
+    // ../shared holds the server-text translations used by both client and server.
+    fs: { allow: [".", "../shared"] },
     proxy: {
       "/api": { target: API, changeOrigin: true },
       "/uploads": { target: API, changeOrigin: true },

@@ -4,10 +4,12 @@ import { Plus, LogIn, House, Clock, ChevronRight, Mail, Archive } from "lucide-r
 import { api } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 import { Badge, Card, EmptyState, ErrorState, LoadingBlock, PageHeader, StatusBadge } from "../components/ui";
-import { HOME_TYPES, initials, rolesLabel, pluralize } from "../lib/format";
+import { HOME_TYPES, initials, rolesLabel } from "../lib/format";
+import { useT } from "../i18n/I18nProvider";
 
 export default function Homes() {
   const { user } = useAuth();
+  const t = useT();
   const navigate = useNavigate();
   const { data, isLoading, error, refetch } = useQuery({ queryKey: ["homes"], queryFn: () => api.get("/homes") });
   const { data: inv } = useQuery({ queryKey: ["invitations", "mine"], queryFn: () => api.get("/invitations/mine") });
@@ -18,12 +20,12 @@ export default function Homes() {
   return (
     <main className="content">
       <PageHeader
-        title={`Hi, ${user.name.split(" ")[0]}`}
-        description="Pick a home, or start a new one."
+        title={t("homes.hi", { name: user.name.split(" ")[0] })}
+        description={t("homes.desc")}
         actions={
           <>
-            <Link to="/join" className="btn btn-secondary"><LogIn size={16} /> Join a home</Link>
-            <Link to="/onboarding" className="btn btn-primary"><Plus size={16} /> Create home</Link>
+            <Link to="/join" className="btn btn-secondary"><LogIn size={16} /> {t("homes.join")}</Link>
+            <Link to="/onboarding" className="btn btn-primary"><Plus size={16} /> {t("homes.create")}</Link>
           </>
         }
       />
@@ -31,16 +33,16 @@ export default function Homes() {
         {!user.emailVerified && (
           <div className="alert alert-neutral">
             <Mail />
-            <div className="grow">Verify your email to create or join homes, post seats and write reviews.</div>
-            <Link to="/verify-email?next=/homes" className="btn btn-sm btn-primary">Enter code</Link>
+            <div className="grow">{t("homes.verify")}</div>
+            <Link to="/verify-email?next=/homes" className="btn btn-sm btn-primary">{t("homes.enterCode")}</Link>
           </div>
         )}
         {inv?.invitations?.length > 0 && (
           <Link to="/invitations" className="card card-link home-tile">
             <div className="home-mark"><Mail size={18} /></div>
             <div className="grow">
-              <div className="strong">You have {pluralize(inv.invitations.length, "invitation")}</div>
-              <div className="text-sm muted">Review and accept to join.</div>
+              <div className="strong">{t("homes.youHaveInvites", { count: inv.invitations.length })}</div>
+              <div className="text-sm muted">{t("homes.reviewAccept")}</div>
             </div>
             <ChevronRight size={18} className="subtle" />
           </Link>
@@ -53,12 +55,12 @@ export default function Homes() {
           <Card>
             <EmptyState
               icon={House}
-              title="You're not in a home yet"
-              description="Create a home for your mess or flat, or join one using an invite link or home code."
+              title={t("homes.noneTitle")}
+              description={t("homes.noneDesc")}
               action={
                 <div className="row wrap" style={{ justifyContent: "center" }}>
-                  <button className="btn btn-primary" onClick={() => navigate("/onboarding")}><Plus size={16} /> Create a home</button>
-                  <button className="btn btn-secondary" onClick={() => navigate("/join")}><LogIn size={16} /> Join with a code</button>
+                  <button className="btn btn-primary" onClick={() => navigate("/onboarding")}><Plus size={16} /> {t("shell.createHome")}</button>
+                  <button className="btn btn-secondary" onClick={() => navigate("/join")}><LogIn size={16} /> {t("shell.joinCode")}</button>
                 </div>
               }
             />
@@ -71,12 +73,12 @@ export default function Homes() {
                   <div className="home-mark">{initials(h.name)}</div>
                   <div className="grow" style={{ minWidth: 0 }}>
                     <div className="strong truncate">{h.name}</div>
-                    <div className="text-xs muted truncate">{HOME_TYPES[h.type]} · {pluralize(h.memberCount, "member")}</div>
+                    <div className="text-xs muted truncate">{HOME_TYPES[h.type]} · {t("homes.members", { count: h.memberCount })}</div>
                   </div>
                 </div>
                 <div className="card-foot row between">
                   <span className="text-xs muted">{rolesLabel(h.myMembership.roles)}</span>
-                  {h.status === "archived" ? <Badge icon={Archive}>Archived</Badge> : <ChevronRight size={16} className="subtle" />}
+                  {h.status === "archived" ? <Badge icon={Archive}>{t("homes.archived")}</Badge> : <ChevronRight size={16} className="subtle" />}
                 </div>
               </Link>
             ))}
@@ -86,7 +88,7 @@ export default function Homes() {
                   <div className="home-mark" style={{ background: "var(--surface-2)", color: "var(--text-3)" }}><Clock size={18} /></div>
                   <div className="grow" style={{ minWidth: 0 }}>
                     <div className="strong truncate">{h.name}</div>
-                    <div className="text-xs muted">Waiting for approval</div>
+                    <div className="text-xs muted">{t("homes.waiting")}</div>
                   </div>
                   <StatusBadge status="pending" />
                 </div>

@@ -1,0 +1,788 @@
+{
+  "_about": "English text the server sends (errors, activity log, notifications, emails) with its Bangla. 'exact' is matched whole; each 'patterns' entry is [english, bangla] where {x} matches any text, {x:map} also translates the value through maps[map], and {x:digits} turns 0-9 into Bangla digits. 'calendarPatterns' only apply to calendar items. Used by client/src/i18n/serverText.js and server/lib/i18n.js.",
+  "maps": {
+    "requestType": {
+      "meal-off": "মিল অফ",
+      "guest meal": "গেস্ট মিল",
+      "absence": "অনুপস্থিতি",
+      "departure": "বাসা ছাড়া"
+    },
+    "category": {
+      "groceries": "বাজার",
+      "meal_other": "মিলের অন্যান্য",
+      "utilities": "বিল",
+      "rent": "বাসা ভাড়া",
+      "internet": "ইন্টারনেট",
+      "cleaning": "পরিষ্কার",
+      "maintenance": "মেরামত",
+      "other": "অন্যান্য"
+    },
+    "entryKind": {
+      "adjustment": "সমন্বয়",
+      "opening balance": "শুরুর ব্যালেন্স",
+      "opening_balance": "শুরুর ব্যালেন্স",
+      "payment": "জমা",
+      "reimbursement": "খরচ ফেরত",
+      "expense_share": "খরচের ভাগ",
+      "meal_charge": "মিল খরচ",
+      "reversal": "বাতিল এন্ট্রি"
+    },
+    "direction": {
+      "credit": "জমা",
+      "debit": "চার্জ"
+    },
+    "frequency": {
+      "monthly": "মাসিক",
+      "weekly": "সাপ্তাহিক"
+    },
+    "joinVia": {
+      "link": "লিংক দিয়ে",
+      "code": "কোড দিয়ে",
+      "direct": "আমন্ত্রণে"
+    },
+    "status": {
+      "pending": "অপেক্ষমাণ",
+      "approved": "অনুমোদিত",
+      "rejected": "বাতিল",
+      "cancelled": "বাতিল",
+      "active": "চালু",
+      "accepted": "গৃহীত",
+      "declined": "প্রত্যাখ্যাত",
+      "revoked": "প্রত্যাহার",
+      "expired": "মেয়াদ শেষ",
+      "left": "চলে গেছেন",
+      "removed": "বাদ দেওয়া"
+    },
+    "role": {
+      "admin": "অ্যাডমিন",
+      "manager": "ম্যানেজার",
+      "meal_manager": "মিল ম্যানেজার",
+      "meal manager": "মিল ম্যানেজার",
+      "member": "সদস্য"
+    },
+    "mealType": {
+      "Breakfast": "সকাল",
+      "Lunch": "দুপুর",
+      "Dinner": "রাত"
+    }
+  },
+  "exact": {
+    "A meal period can be at most 3 months long": "একটি মিলের মাস সর্বোচ্চ ৩ মাসের হতে পারে",
+    "A reversal cannot itself be reversed": "উল্টানো এন্ট্রি আবার উল্টানো যায় না",
+    "Already void": "আগেই বাতিল করা হয়েছে",
+    "Amount cannot be negative": "পরিমাণ মাইনাস হতে পারে না",
+    "Amount is required": "পরিমাণ দিতে হবে",
+    "Amount is too large": "পরিমাণ অনেক বেশি",
+    "Amount must be a number with at most 2 decimals": "পরিমাণ সংখ্যায় দিন, দশমিকের পর সর্বোচ্চ ২ ঘর",
+    "Amount must be greater than zero": "পরিমাণ শূন্যের বেশি হতে হবে",
+    "An account with this email already exists": "এই ইমেইলে আগেই একটি অ্যাকাউন্ট আছে",
+    "Announcement not found": "নোটিশটি পাওয়া যায়নি",
+    "Assignee must be an active member": "যাকে দায়িত্ব দেবেন তাকে বাসার সক্রিয় সদস্য হতে হবে",
+    "Authentication required": "সাইন ইন করতে হবে",
+    "Choose a photo to upload": "আপলোড করতে একটি ছবি বাছুন",
+    "Choose an image to upload": "আপলোড করতে একটি ছবি বাছুন",
+    "Choose at least one member to split with": "ভাগ করতে অন্তত একজন সদস্য বাছুন",
+    "Choose who shares this cost": "খরচটা কারা ভাগ করবে বাছুন",
+    "Closed periods cannot be deleted": "ক্লোজ করা মাস মোছা যায় না",
+    "Conversation not found": "কথোপকথনটি পাওয়া যায়নি",
+    "Current password is incorrect": "বর্তমান পাসওয়ার্ড ভুল",
+    "Custom amounts must add up to the total": "নিজের মতো ভাগের যোগফল মোটের সমান হতে হবে",
+    "Deleted messages cannot be edited": "মুছে ফেলা মেসেজ এডিট করা যায় না",
+    "Departure date cannot be in the past": "চলে যাওয়ার তারিখ অতীতে হতে পারে না",
+    "Each member can appear only once": "প্রত্যেক সদস্য একবারই থাকতে পারবে",
+    "Edit or void the expense instead": "এর বদলে খরচটি এডিট বা বাতিল করুন",
+    "Email already verified": "ইমেইল আগেই যাচাই করা আছে",
+    "Email verified": "ইমেইল যাচাই হয়েছে",
+    "End date must be on or after the start date": "শেষের তারিখ শুরুর তারিখের দিন বা পরে হতে হবে",
+    "Enter the actual cost to record an expense": "খরচ হিসেবে লিখতে আসল দাম দিন",
+    "Event not found": "ইভেন্টটি পাওয়া যায়নি",
+    "Everyone in the split must be an active member": "ভাগে থাকা সবাইকে সক্রিয় সদস্য হতে হবে",
+    "Expense not found": "খরচটি পাওয়া যায়নি",
+    "File content does not match its type": "ফাইলের ভেতরের জিনিস তার ধরনের সাথে মিলছে না",
+    "File not found": "ফাইলটি পাওয়া যায়নি",
+    "Friend not found": "বন্ধু পাওয়া যায়নি",
+    "Friend request already sent": "ফ্রেন্ড রিকোয়েস্ট আগেই পাঠানো হয়েছে",
+    "Friend request not found": "ফ্রেন্ড রিকোয়েস্ট পাওয়া যায়নি",
+    "Google account email is not verified": "Google অ্যাকাউন্টের ইমেইল যাচাই করা নেই",
+    "Google sign-in could not be verified": "Google সাইন ইন যাচাই করা যায়নি",
+    "Google sign-in is not configured on this server": "এই সার্ভারে Google সাইন ইন চালু নেই",
+    "Home not found": "বাসা পাওয়া যায়নি",
+    "If an account exists for that email, a reset link has been sent.": "ওই ইমেইলে অ্যাকাউন্ট থাকলে রিসেট লিংক পাঠানো হয়েছে।",
+    "Invalid data": "তথ্য ঠিক নেই",
+    "Invalid date": "তারিখ ঠিক নেই",
+    "Invalid dates": "তারিখগুলো ঠিক নেই",
+    "Invalid email or password": "ইমেইল বা পাসওয়ার্ড ভুল",
+    "Invalid id": "আইডি ঠিক নেই",
+    "Invalid identifier": "আইডি ঠিক নেই",
+    "Invalid input": "দেওয়া তথ্য ঠিক নেই",
+    "Invitation not found": "আমন্ত্রণটি পাওয়া যায়নি",
+    "Item not found": "জিনিসটি পাওয়া যায়নি",
+    "Listing not found": "বিজ্ঞাপনটি পাওয়া যায়নি",
+    "Malformed JSON body": "পাঠানো তথ্য ঠিক নেই",
+    "Meal period not found": "মিলের মাস পাওয়া যায়নি",
+    "Member not found in this home": "এই বাসায় সদস্যটি পাওয়া যায়নি",
+    "Member not found": "সদস্য পাওয়া যায়নি",
+    "Message not found": "মেসেজটি পাওয়া যায়নি",
+    "Messages can only be edited within 24 hours": "মেসেজ শুধু ২৪ ঘণ্টার মধ্যে এডিট করা যায়",
+    "No home matches this code": "এই কোডের কোনো বাসা নেই",
+    "No members to split this expense between": "খরচটা ভাগ করার মতো কোনো সদস্য নেই",
+    "No session": "সেশন নেই",
+    "Not found": "পাওয়া যায়নি",
+    "Notification not found": "নোটিফিকেশনটি পাওয়া যায়নি",
+    "One or more members do not belong to this home": "এক বা একাধিক সদস্য এই বাসার নন",
+    "Only closed periods can be reopened": "শুধু ক্লোজ করা মাস আবার খোলা যায়",
+    "Only meal managers can change meal defaults": "শুধু মিল ম্যানেজার মিলের ডিফল্ট বদলাতে পারেন",
+    "Only pending requests can be cancelled": "শুধু অপেক্ষমাণ রিকোয়েস্ট বাতিল করা যায়",
+    "Only posted entries can be reversed": "শুধু পোস্ট হওয়া এন্ট্রি উল্টানো যায়",
+    "Only the Admin can approve a departure exception": "শুধু অ্যাডমিন বাসা ছাড়ার ব্যতিক্রম অনুমোদন দিতে পারেন",
+    "Only the Admin can change role permissions": "শুধু অ্যাডমিন দায়িত্বের অনুমতি বদলাতে পারেন",
+    "Only the Admin can remove managers": "শুধু অ্যাডমিন ম্যানেজারকে বাদ দিতে পারেন",
+    "Only the home admin can do this": "শুধু বাসার অ্যাডমিন এটা করতে পারেন",
+    "Only the home's admin or managers can reply": "শুধু বাসার অ্যাডমিন বা ম্যানেজার উত্তর দিতে পারেন",
+    "Password updated. You can now sign in.": "পাসওয়ার্ড আপডেট হয়েছে। এখন সাইন ইন করতে পারবেন।",
+    "Payer must be an active member": "যিনি দিয়েছেন তাকে সক্রিয় সদস্য হতে হবে",
+    "Photo not found": "ছবিটি পাওয়া যায়নি",
+    "Please verify your email address first": "আগে আপনার ইমেইল যাচাই করুন",
+    "Provide an email or a user to invite": "আমন্ত্রণ জানাতে একটি ইমেইল বা ব্যবহারকারী দিন",
+    "Provide an invitation token or home code": "আমন্ত্রণ লিংক বা বাসার কোড দিন",
+    "Push notifications aren't set up on this server": "এই সার্ভারে পুশ নোটিফিকেশন সেট করা নেই",
+    "Recurring cost not found": "নিয়মিত খরচটি পাওয়া যায়নি",
+    "Reopen the meal period instead": "এর বদলে মিলের মাসটি আবার খুলুন",
+    "Reopen the period before editing it": "এডিট করার আগে মাসটি আবার খুলুন",
+    "Request body too large": "পাঠানো তথ্য অনেক বড়",
+    "Request failed": "অনুরোধ ব্যর্থ হয়েছে",
+    "Request not found": "রিকোয়েস্টটি পাওয়া যায়নি",
+    "Requests can cover at most 60 days": "একটি রিকোয়েস্ট সর্বোচ্চ ৬০ দিনের হতে পারে",
+    "Review not found": "রিভিউটি পাওয়া যায়নি",
+    "Session expired": "সেশনের মেয়াদ শেষ",
+    "Session is no longer valid": "সেশনটি আর বৈধ নয়",
+    "Something went wrong": "কিছু একটা সমস্যা হয়েছে",
+    "Split members must be active members of this home": "ভাগের সদস্যদের এই বাসার সক্রিয় সদস্য হতে হবে",
+    "That image couldn't be read. Try a different JPG, PNG or WEBP file.": "ছবিটা পড়া যায়নি। অন্য একটি JPG, PNG বা WEBP ফাইল দিন।",
+    "That password isn't right": "পাসওয়ার্ডটা ঠিক নয়",
+    "The Admin cannot be removed": "অ্যাডমিনকে বাদ দেওয়া যায় না",
+    "The date has already passed": "তারিখটি পার হয়ে গেছে",
+    "There are meal expenses but no meals recorded in this period": "এই মাসে মিলের খরচ আছে কিন্তু কোনো মিল লেখা হয়নি",
+    "This code has expired. Send a new one.": "কোডের মেয়াদ শেষ। নতুন একটি পাঠান।",
+    "This entry has already been reversed": "এই এন্ট্রি আগেই উল্টানো হয়েছে",
+    "This home is archived and not accepting members": "বাসাটি আর্কাইভ করা, নতুন সদস্য নিচ্ছে না",
+    "This home is archived": "বাসাটি আর্কাইভ করা",
+    "This home is archived. Restore it to make changes.": "বাসাটি আর্কাইভ করা। পরিবর্তন করতে আগে ফিরিয়ে আনুন।",
+    "This home is no longer available": "বাসাটি আর পাওয়া যাচ্ছে না",
+    "This invitation has been revoked": "আমন্ত্রণটি প্রত্যাহার করা হয়েছে",
+    "This invitation has expired": "আমন্ত্রণের মেয়াদ শেষ",
+    "This invitation is no longer valid": "আমন্ত্রণটি আর বৈধ নয়",
+    "This invitation link is invalid": "আমন্ত্রণ লিংকটি ঠিক নেই",
+    "This is your own listing": "এটা আপনার নিজের বিজ্ঞাপন",
+    "This item is linked to an expense and cannot be deleted": "এই জিনিসটি একটি খরচের সাথে যুক্ত, তাই মোছা যাবে না",
+    "This listing is no longer available": "বিজ্ঞাপনটি আর নেই",
+    "This member is no longer active": "এই সদস্য আর সক্রিয় নন",
+    "This payment has already been reviewed": "এই জমা আগেই দেখা হয়েছে",
+    "This period is already closed": "এই মাস আগেই ক্লোজ করা",
+    "This person already has a pending invitation": "এই ব্যক্তির জন্য একটি আমন্ত্রণ আগেই অপেক্ষায় আছে",
+    "This record already exists": "এটা আগে থেকেই আছে",
+    "This reset link is invalid or has expired": "রিসেট লিংকটি ঠিক নেই বা মেয়াদ শেষ",
+    "This verification link is invalid or has expired": "যাচাইয়ের লিংকটি ঠিক নেই বা মেয়াদ শেষ",
+    "Too many attempts. Please try again in a few minutes.": "অনেকবার চেষ্টা হয়েছে। কয়েক মিনিট পর আবার চেষ্টা করুন।",
+    "Too many attempts. Try again later.": "অনেকবার চেষ্টা হয়েছে। পরে আবার চেষ্টা করুন।",
+    "Too many reports": "অনেকগুলো রিপোর্ট হয়ে গেছে",
+    "Too many requests, slow down.": "অনেক বেশি অনুরোধ, একটু ধীরে।",
+    "Too many wrong attempts. Send a new code.": "অনেকবার ভুল হয়েছে। নতুন কোড পাঠান।",
+    "Transaction not found": "লেনদেনটি পাওয়া যায়নি",
+    "Transfer ownership before requesting to leave": "চলে যাওয়ার রিকোয়েস্টের আগে মালিকানা অন্য কাউকে দিন",
+    "Transfer ownership to another member before leaving": "চলে যাওয়ার আগে মালিকানা অন্য সদস্যকে দিন",
+    "Type the exact home name to confirm deletion": "মোছা নিশ্চিত করতে বাসার নাম হুবহু লিখুন",
+    "Unknown meal type": "অজানা মিলের ধরন",
+    "Use leave home instead": "এর বদলে বাসা ছাড়ুন অপশন ব্যবহার করুন",
+    "Use ownership transfer to change the Admin's role": "অ্যাডমিনের দায়িত্ব বদলাতে মালিকানা হস্তান্তর ব্যবহার করুন",
+    "User not found": "ব্যবহারকারী পাওয়া যায়নি",
+    "Void expenses cannot be edited": "বাতিল খরচ এডিট করা যায় না",
+    "Void the linked expense first": "আগে যুক্ত খরচটি বাতিল করুন",
+    "We couldn't send the email right now. Please try again in a minute.": "এখন ইমেইল পাঠানো যায়নি। এক মিনিট পর আবার চেষ্টা করুন।",
+    "You already have a pending departure request": "আপনার একটি বাসা ছাড়ার রিকোয়েস্ট আগেই অপেক্ষায় আছে",
+    "You already live in this home": "আপনি আগেই এই বাসায় থাকেন",
+    "You already own this home": "আপনিই এই বাসার মালিক",
+    "You are already a member of this home": "আপনি আগেই এই বাসার সদস্য",
+    "You are already friends": "আপনারা আগেই বন্ধু",
+    "You can only delete your own messages": "শুধু নিজের মেসেজ মোছা যায়",
+    "You can only edit your own messages": "শুধু নিজের মেসেজ এডিট করা যায়",
+    "You can only message friends": "শুধু বন্ধুদের মেসেজ দেওয়া যায়",
+    "You can only record grocery / meal expenses": "আপনি শুধু বাজার / মিলের খরচ লিখতে পারবেন",
+    "You can only submit your own payments": "শুধু নিজের জমা পাঠাতে পারবেন",
+    "You can't review yourself": "নিজের রিভিউ দেওয়া যায় না",
+    "You cannot approve your own request": "নিজের রিকোয়েস্ট নিজে অনুমোদন দেওয়া যায় না",
+    "You cannot befriend yourself": "নিজেকে বন্ধু বানানো যায় না",
+    "You cannot message yourself": "নিজেকে মেসেজ দেওয়া যায় না",
+    "You cannot record expenses": "আপনি খরচ লিখতে পারবেন না",
+    "You do not have permission to do this": "এটা করার অনুমতি আপনার নেই",
+    "You must accept the house rules": "বাসার নিয়ম মেনে নিতে হবে",
+    "You're sending messages too fast": "আপনি খুব দ্রুত মেসেজ পাঠাচ্ছেন",
+    "You've contacted a lot of listings — try again later.": "আপনি অনেকগুলো বিজ্ঞাপনে যোগাযোগ করেছেন — পরে আবার চেষ্টা করুন।",
+    "Your request to join is already waiting for approval": "যোগ দেওয়ার রিকোয়েস্ট আগেই অনুমোদনের অপেক্ষায় আছে",
+    "Some permissions can only belong to the Admin": "কিছু অনুমতি শুধু অ্যাডমিনেরই থাকতে পারে",
+    "Session expired. Please sign in again.": "সেশনের মেয়াদ শেষ। আবার সাইন ইন করুন।",
+    "This month": "এই মাস",
+    "Confirm your email": "আপনার ইমেইল নিশ্চিত করুন",
+    "Payment deadline": "জমার শেষ দিন",
+    "Confirm it once you've received the money.": "টাকা পেলে নিশ্চিত করুন।",
+    "Review the request in Members.": "সদস্য পেজে রিকোয়েস্টটি দেখুন।",
+    "Your request to join was approved.": "যোগ দেওয়ার রিকোয়েস্ট অনুমোদিত হয়েছে।",
+    "Added automatically from a recurring cost.": "নিয়মিত খরচ থেকে নিজে থেকেই যোগ হয়েছে।",
+    "Reset your password": "পাসওয়ার্ড রিসেট করুন",
+    "We received a request to reset your BachelorMate password. This link expires in 30 minutes and can be used once. If you didn't request it, you can ignore this email.": "আপনার BachelorMate পাসওয়ার্ড রিসেটের অনুরোধ পেয়েছি। লিংকটি ৩০ মিনিটে মেয়াদোত্তীর্ণ হবে এবং একবারই কাজ করবে। আপনি অনুরোধ না করে থাকলে ইমেইলটি এড়িয়ে যান।",
+    "Reset password": "পাসওয়ার্ড রিসেট",
+    "Verify email": "ইমেইল যাচাই করুন",
+    "Accept invitation": "আমন্ত্রণ গ্রহণ করুন",
+    "Open BachelorMate": "BachelorMate খুলুন",
+    "If you didn't create a BachelorMate account, you can safely ignore this email.": "আপনি BachelorMate অ্যাকাউন্ট না খুলে থাকলে ইমেইলটি নিশ্চিন্তে এড়িয়ে যান।",
+    "Edit home details": "বাসার তথ্য এডিট",
+    "Archive or delete the home": "বাসা আর্কাইভ বা মুছে ফেলা",
+    "Change house rules and settings": "বাসার নিয়ম আর সেটিংস বদলানো",
+    "View members": "সদস্যদের দেখা",
+    "Approve, edit and remove members": "সদস্য অনুমোদন, এডিট আর বাদ দেওয়া",
+    "Assign roles": "দায়িত্ব দেওয়া",
+    "Create and revoke invitations": "আমন্ত্রণ বানানো আর প্রত্যাহার",
+    "Review absence and departure requests": "অনুপস্থিতি আর বাসা ছাড়ার রিকোয়েস্ট দেখা",
+    "Edit daily meal entries": "দৈনিক মিল এডিট",
+    "Review meal-off and guest meal requests": "মিল অফ আর গেস্ট মিল রিকোয়েস্ট দেখা",
+    "Configure meal types, rates and periods": "মিলের ধরন, রেট আর মাস ঠিক করা",
+    "View every member's account": "সব সদস্যের হিসাব দেখা",
+    "Record payments and adjustments": "জমা আর সমন্বয় লেখা",
+    "View home expenses": "বাসার খরচ দেখা",
+    "Add and edit any expense": "যেকোনো খরচ যোগ আর এডিট",
+    "Add and edit grocery / meal expenses": "বাজার / মিলের খরচ যোগ আর এডিট",
+    "Publish announcements": "নোটিশ দেওয়া",
+    "Manage the grocery list": "বাজারের লিস্ট দেখাশোনা",
+    "Manage calendar events": "ক্যালেন্ডারের ইভেন্ট দেখাশোনা",
+    "View reports": "রিপোর্ট দেখা",
+    "View the activity log": "কার্যকলাপ দেখা",
+    "Advance": "অগ্রিম",
+    "Category": "খাত",
+    "Date": "তারিখ",
+    "Description": "বিবরণ",
+    "Due": "বকেয়া",
+    "Guest meals": "গেস্ট মিল",
+    "Home fund": "বাসার ফান্ড",
+    "Member": "সদস্য",
+    "Method": "কীভাবে",
+    "Paid by": "কে দিয়েছে",
+    "Position": "অবস্থা",
+    "Recorded by": "লিখেছেন",
+    "Reversed": "উল্টানো",
+    "Settled": "পরিশোধ",
+    "Split": "ভাগ",
+    "Status": "অবস্থা",
+    "Title": "নাম",
+    "Unknown": "অজানা",
+    "Weighted guest meals": "ওজনসহ গেস্ট মিল",
+    "Weighted meals": "ওজনসহ মিল",
+    "Share %": "ভাগ %",
+    "Breakfast": "সকাল",
+    "Lunch": "দুপুর",
+    "Dinner": "রাত",
+    "Yes": "হ্যাঁ",
+    "No": "না",
+    "Button not working? Paste this link into your browser:": "বাটন কাজ করছে না? এই লিংকটি ব্রাউজারে পেস্ট করুন:",
+    "You're receiving this because of activity on your BachelorMate account. You can change email preferences in Settings → Notifications.": "আপনার BachelorMate অ্যাকাউন্টে কিছু হয়েছে বলে এই ইমেইল পেয়েছেন। সেটিংস → নোটিফিকেশন থেকে ইমেইলের পছন্দ বদলাতে পারেন।"
+  },
+  "patterns": [
+    [
+      "Please wait {s:digits}s before requesting another code",
+      "নতুন কোড চাওয়ার আগে {s} সেকেন্ড অপেক্ষা করুন"
+    ],
+    [
+      "A listing can have up to {n:digits} photos",
+      "একটি বিজ্ঞাপনে সর্বোচ্চ {n}টি ছবি দেওয়া যায়"
+    ],
+    [
+      "Custom amounts add up to {a:digits}, but the cost is {b:digits}",
+      "ভাগের যোগফল {a}, কিন্তু খরচ {b}"
+    ],
+    [
+      "Custom amounts add up to {a:digits}, but the expense is {b:digits}",
+      "ভাগের যোগফল {a}, কিন্তু খরচ {b}"
+    ],
+    [
+      "Invalid day {d:digits}",
+      "দিন ঠিক নেই: {d}"
+    ],
+    [
+      "File is too large (max {n:digits} MB)",
+      "ফাইল অনেক বড় (সর্বোচ্চ {n} MB)"
+    ],
+    [
+      "This home requires {n:digits} days notice. The earliest departure date is {d:digits}. Add a reason to ask the Admin for an exception.",
+      "এই বাসায় {n} দিন আগে জানাতে হয়। সবচেয়ে আগে {d} তারিখে যেতে পারবেন। ব্যতিক্রম চাইলে কারণ লিখে অ্যাডমিনকে জানান।"
+    ],
+    [
+      "This home requires {n:digits} days notice. Submit a departure request instead.",
+      "এই বাসায় {n} দিন আগে জানাতে হয়। এর বদলে বাসা ছাড়ার রিকোয়েস্ট দিন।"
+    ],
+    [
+      "This request is already {s:status}",
+      "এই রিকোয়েস্ট আগেই {s}"
+    ],
+    [
+      "Too late — requests for {d:digits} closed at {t:digits} on {p:digits}",
+      "দেরি হয়ে গেছে — {d}-এর রিকোয়েস্ট {p} তারিখ {t}-এ বন্ধ হয়ে গেছে"
+    ],
+    [
+      "You already have a {s:status} {type:requestType} request covering these meals",
+      "এই মিলগুলোর জন্য আপনার একটি {s} {type} রিকোয়েস্ট আগেই আছে"
+    ],
+    [
+      "You can review a home after living there for at least {n:digits} days",
+      "অন্তত {n} দিন থাকার পর বাসার রিভিউ দেওয়া যায়"
+    ],
+    [
+      "Verification code sent to {email}",
+      "{email} ঠিকানায় যাচাই কোড পাঠানো হয়েছে"
+    ],
+    [
+      "Something went wrong on our side (ref {ref}). Please try again.",
+      "আমাদের দিকে একটা সমস্যা হয়েছে (রেফ {ref})। আবার চেষ্টা করুন।"
+    ],
+    [
+      "Dates overlap with \"{name}\"",
+      "তারিখ “{name}”-এর সাথে মিলে যাচ্ছে"
+    ],
+    [
+      "Unknown meal type \"{k}\"",
+      "অজানা মিলের ধরন “{k}”"
+    ],
+    [
+      "{a} reopened listing \"{t}\"",
+      "{a} বিজ্ঞাপন “{t}” আবার চালু করেছেন"
+    ],
+    [
+      "{a} closed listing \"{t}\"",
+      "{a} বিজ্ঞাপন “{t}” বন্ধ করেছেন"
+    ],
+    [
+      "{a} recorded a payment of {m:digits} for {b}",
+      "{a} {b}-এর {m} জমা লিখেছেন"
+    ],
+    [
+      "{a} submitted a payment of {m:digits} for {b}",
+      "{a} {b}-এর {m} জমা পাঠিয়েছেন"
+    ],
+    [
+      "{a} resumed recurring cost \"{t}\"",
+      "{a} নিয়মিত খরচ “{t}” আবার চালু করেছেন"
+    ],
+    [
+      "{a} paused recurring cost \"{t}\"",
+      "{a} নিয়মিত খরচ “{t}” থামিয়েছেন"
+    ],
+    [
+      "{a} added {c:category} expense \"{t}\" ({m:digits})",
+      "{a} {c} খরচ “{t}” যোগ করেছেন ({m})"
+    ],
+    [
+      "{a} added a {d:direction} {k:entryKind} of {m:digits} for {b}",
+      "{a} {b}-এর জন্য {m} {d} ({k}) যোগ করেছেন"
+    ],
+    [
+      "{a} added event \"{t}\" on {d:digits}",
+      "{a} {d} তারিখে ইভেন্ট “{t}” যোগ করেছেন"
+    ],
+    [
+      "{a} added recurring cost \"{t}\" ({m:digits} {f:frequency})",
+      "{a} নিয়মিত খরচ “{t}” যোগ করেছেন ({m}, {f})"
+    ],
+    [
+      "{a} approved a {type:requestType} request",
+      "{a} একটি {type} রিকোয়েস্ট অনুমোদন দিয়েছেন"
+    ],
+    [
+      "{a} declined a {type:requestType} request",
+      "{a} একটি {type} রিকোয়েস্ট বাতিল করেছেন"
+    ],
+    [
+      "{a} submitted a {type:requestType} request",
+      "{a} একটি {type} রিকোয়েস্ট দিয়েছেন"
+    ],
+    [
+      "{a} archived the home",
+      "{a} বাসাটি আর্কাইভ করেছেন"
+    ],
+    [
+      "{a} restored the home",
+      "{a} বাসাটি ফিরিয়ে এনেছেন"
+    ],
+    [
+      "{a} changed {b}'s role from {x} to {y}",
+      "{a} {b}-এর দায়িত্ব {x} থেকে {y} করেছেন"
+    ],
+    [
+      "{a} closed \"{p}\" at rate {r:digits}",
+      "{a} “{p}” ক্লোজ করেছেন, মিল রেট {r}"
+    ],
+    [
+      "{a} confirmed {b}'s payment of {m:digits}",
+      "{a} {b}-এর {m} জমা নিশ্চিত করেছেন"
+    ],
+    [
+      "{a} created an invitation link",
+      "{a} একটি আমন্ত্রণ লিংক বানিয়েছেন"
+    ],
+    [
+      "{a} created meal period \"{p}\"",
+      "{a} মিলের মাস “{p}” খুলেছেন"
+    ],
+    [
+      "{a} declined {b}'s join request",
+      "{a} {b}-এর যোগ দেওয়ার রিকোয়েস্ট বাতিল করেছেন"
+    ],
+    [
+      "{a} deleted recurring cost \"{t}\"",
+      "{a} নিয়মিত খরচ “{t}” মুছেছেন"
+    ],
+    [
+      "{a} deleted \"{t}\"",
+      "{a} “{t}” মুছেছেন"
+    ],
+    [
+      "{a} edited expense \"{t}\" ({f})",
+      "{a} খরচ “{t}” এডিট করেছেন ({f})"
+    ],
+    [
+      "{a} emailed an invitation to {e}",
+      "{a} {e} ঠিকানায় আমন্ত্রণ ইমেইল করেছেন"
+    ],
+    [
+      "{a} filled default meals for {n:digits} day(s)",
+      "{a} {n} দিনের ডিফল্ট মিল বসিয়েছেন"
+    ],
+    [
+      "{a} left the home",
+      "{a} বাসা ছেড়ে গেছেন"
+    ],
+    [
+      "{a} listed {n:digits} empty seats: \"{t}\"",
+      "{a} {n}টি খালি সিটের বিজ্ঞাপন দিয়েছেন: “{t}”"
+    ],
+    [
+      "{a} listed {n:digits} empty seat: \"{t}\"",
+      "{a} {n}টি খালি সিটের বিজ্ঞাপন দিয়েছেন: “{t}”"
+    ],
+    [
+      "{a} published \"{t}\"",
+      "{a} “{t}” প্রকাশ করেছেন"
+    ],
+    [
+      "{a} recorded grocery purchase \"{t}\" ({m:digits})",
+      "{a} বাজার “{t}” লিখেছেন ({m})"
+    ],
+    [
+      "{a} regenerated the home code",
+      "{a} বাসার কোড নতুন করেছেন"
+    ],
+    [
+      "{a} rejected a payment from {b}",
+      "{a} {b}-এর একটি জমা বাতিল করেছেন"
+    ],
+    [
+      "{a} reopened \"{p}\": {r}",
+      "{a} “{p}” আবার খুলেছেন: {r}"
+    ],
+    [
+      "{a} reversed a {k:entryKind} of {m:digits} for {b}: {r}",
+      "{a} {b}-এর {m} {k} উল্টে দিয়েছেন: {r}"
+    ],
+    [
+      "{a} reviewed the home ({n:digits}★)",
+      "{a} বাসার রিভিউ দিয়েছেন ({n}★)"
+    ],
+    [
+      "{a} revoked an invitation",
+      "{a} একটি আমন্ত্রণ প্রত্যাহার করেছেন"
+    ],
+    [
+      "{a} sent payment reminders to {n:digits} member(s)",
+      "{a} {n} জনকে জমার রিমাইন্ডার পাঠিয়েছেন"
+    ],
+    [
+      "{a} transferred ownership to {b}",
+      "{a} মালিকানা {b}-কে দিয়েছেন"
+    ],
+    [
+      "{a} updated {n:digits} meal entries ({d:digits})",
+      "{a} {n}টি মিল এন্ট্রি আপডেট করেছেন ({d})"
+    ],
+    [
+      "{a} updated {n:digits} meal entry ({d:digits})",
+      "{a} {n}টি মিল এন্ট্রি আপডেট করেছেন ({d})"
+    ],
+    [
+      "{a} updated {b}'s details",
+      "{a} {b}-এর তথ্য আপডেট করেছেন"
+    ],
+    [
+      "{a} updated home details",
+      "{a} বাসার তথ্য আপডেট করেছেন"
+    ],
+    [
+      "{a} updated recurring cost \"{t}\"",
+      "{a} নিয়মিত খরচ “{t}” আপডেট করেছেন"
+    ],
+    [
+      "{a} voided expense \"{t}\": {r}",
+      "{a} খরচ “{t}” বাতিল করেছেন: {r}"
+    ],
+    [
+      "{a} requested to join via {v:joinVia}",
+      "{a} {v} যোগ দেওয়ার রিকোয়েস্ট দিয়েছেন"
+    ],
+    [
+      "{a} joined via {v:joinVia}",
+      "{a} {v} যোগ দিয়েছেন"
+    ],
+    [
+      "Recurring cost posted: {t} ({m:digits})",
+      "নিয়মিত খরচ বসেছে: {t} ({m})"
+    ],
+    [
+      "{a} approved {b}",
+      "{a} {b}-কে অনুমোদন দিয়েছেন"
+    ],
+    [
+      "{a} invited {b}",
+      "{a} {b}-কে আমন্ত্রণ জানিয়েছেন"
+    ],
+    [
+      "{a} created {h}",
+      "{a} {h} বাসাটি খুলেছেন"
+    ],
+    [
+      "{a} removed {b}: {r}",
+      "{a} {b}-কে বাদ দিয়েছেন: {r}"
+    ],
+    [
+      "{a} removed {b}",
+      "{a} {b}-কে বাদ দিয়েছেন"
+    ],
+    [
+      "{a} changed {k}",
+      "{a} {k} বদলেছেন"
+    ],
+    [
+      "Credit of {m:digits} added to your account",
+      "আপনার হিসাবে {m} জমা যোগ হয়েছে"
+    ],
+    [
+      "Charge of {m:digits} added to your account",
+      "আপনার হিসাবে {m} চার্জ যোগ হয়েছে"
+    ],
+    [
+      "Important: {t}",
+      "জরুরি: {t}"
+    ],
+    [
+      "{t}: your share is {m:digits}",
+      "{t}: আপনার ভাগ {m}"
+    ],
+    [
+      "{p} meal accounts are closed",
+      "{p}-এর মিলের হিসাব ক্লোজ হয়েছে"
+    ],
+    [
+      "Meal rate: {m:digits}",
+      "মিল রেট: {m}"
+    ],
+    [
+      "{a} accepted your friend request",
+      "{a} আপনার ফ্রেন্ড রিকোয়েস্ট গ্রহণ করেছেন"
+    ],
+    [
+      "{a} accepted your invitation",
+      "{a} আপনার আমন্ত্রণ গ্রহণ করেছেন"
+    ],
+    [
+      "{a} invited you to join {h}",
+      "{a} আপনাকে {h}-এ যোগ দিতে আমন্ত্রণ জানিয়েছেন"
+    ],
+    [
+      "{a} is interested in your seat: {t}",
+      "{a} আপনার সিটে আগ্রহী: {t}"
+    ],
+    [
+      "{a} left you a {n:digits}★ roommate review",
+      "{a} আপনাকে {n}★ রুমমেট রিভিউ দিয়েছেন"
+    ],
+    [
+      "{a} rated {h} {n:digits}★",
+      "{a} {h}-কে {n}★ দিয়েছেন"
+    ],
+    [
+      "{a} replied to your review",
+      "{a} আপনার রিভিউয়ের উত্তর দিয়েছেন"
+    ],
+    [
+      "{a} requested {n:digits} guest meal(s)",
+      "{a} {n}টি গেস্ট মিল চেয়েছেন"
+    ],
+    [
+      "{a} requested {type:requestType}",
+      "{a} {type} চেয়েছেন"
+    ],
+    [
+      "{a} sent you a friend request",
+      "{a} আপনাকে ফ্রেন্ড রিকোয়েস্ট পাঠিয়েছেন"
+    ],
+    [
+      "{a} submitted a payment of {m:digits}",
+      "{a} {m} জমা দিয়েছেন"
+    ],
+    [
+      "{a} joined {h}",
+      "{a} {h}-এ যোগ দিয়েছেন"
+    ],
+    [
+      "{a} wants to join {h}",
+      "{a} {h}-এ যোগ দিতে চান"
+    ],
+    [
+      "Grocery: {t}",
+      "বাজার: {t}"
+    ],
+    [
+      "New expense: {t}",
+      "নতুন খরচ: {t}"
+    ],
+    [
+      "New message from {a}",
+      "{a}-এর নতুন মেসেজ"
+    ],
+    [
+      "Payment of {m:digits} recorded",
+      "{m} জমা লেখা হয়েছে"
+    ],
+    [
+      "Recorded by {a}",
+      "লিখেছেন {a}"
+    ],
+    [
+      "Payment reminder for {h}",
+      "{h}-এর জমার রিমাইন্ডার"
+    ],
+    [
+      "You have outstanding dues of {m:digits}. Please pay by day {d:digits} of the month.",
+      "আপনার {m} বকেয়া আছে। মাসের {d} তারিখের মধ্যে দিয়ে দিন।"
+    ],
+    [
+      "You are now the Admin of {h}",
+      "আপনি এখন {h}-এর অ্যাডমিন"
+    ],
+    [
+      "You were removed from {h}",
+      "আপনাকে {h} থেকে বাদ দেওয়া হয়েছে"
+    ],
+    [
+      "You're in! Welcome to {h}",
+      "আপনি যুক্ত হয়েছেন! {h}-এ স্বাগতম"
+    ],
+    [
+      "Your {type:requestType} request was approved",
+      "আপনার {type} রিকোয়েস্ট অনুমোদিত হয়েছে"
+    ],
+    [
+      "Your {type:requestType} request was declined",
+      "আপনার {type} রিকোয়েস্ট বাতিল হয়েছে"
+    ],
+    [
+      "Your payment of {m:digits} was confirmed",
+      "আপনার {m} জমা নিশ্চিত হয়েছে"
+    ],
+    [
+      "Your payment of {m:digits} was not confirmed",
+      "আপনার {m} জমা নিশ্চিত হয়নি"
+    ],
+    [
+      "Your request to join {h} was declined",
+      "{h}-এ যোগ দেওয়ার রিকোয়েস্ট বাতিল হয়েছে"
+    ],
+    [
+      "Your role in {h} changed",
+      "{h}-এ আপনার দায়িত্ব বদলেছে"
+    ],
+    [
+      "New role: {r}",
+      "নতুন দায়িত্ব: {r}"
+    ],
+    [
+      "{t} · week of {d:digits}",
+      "{t} · {d}-এর সপ্তাহ"
+    ],
+    [
+      "{d:digits} → {e:digits} · exception requested",
+      "{d} → {e} · ব্যতিক্রম চাওয়া হয়েছে"
+    ],
+    [
+      "{d:digits} · exception requested",
+      "{d} · ব্যতিক্রম চাওয়া হয়েছে"
+    ],
+    [
+      "{d:digits} → {e:digits}",
+      "{d} → {e}"
+    ],
+    [
+      "{code:digits} is your BachelorMate verification code",
+      "{code} আপনার BachelorMate যাচাই কোড"
+    ],
+    [
+      "Hi {n}, enter this code in BachelorMate to verify your email address — or use the button below. Both expire in 24 hours.",
+      "{n}, ইমেইল যাচাই করতে BachelorMate-এ এই কোডটি দিন — অথবা নিচের বাটনে চাপুন। দুটোরই মেয়াদ ২৪ ঘণ্টা।"
+    ],
+    [
+      "{a} invited you to {h} on BachelorMate",
+      "{a} আপনাকে BachelorMate-এ {h}-এ আমন্ত্রণ জানিয়েছেন"
+    ],
+    [
+      "Amount ({c})",
+      "পরিমাণ ({c})"
+    ],
+    [
+      "Estimated cost ({c})",
+      "আনুমানিক খরচ ({c})"
+    ],
+    [
+      "Credits ({c})",
+      "জমা ({c})"
+    ],
+    [
+      "Charges ({c})",
+      "খরচ ({c})"
+    ],
+    [
+      "Balance ({c})",
+      "ব্যালেন্স ({c})"
+    ],
+    [
+      "{m:mealType} guests",
+      "{m} গেস্ট"
+    ],
+    [
+      "Hi {n},",
+      "প্রিয় {n},"
+    ]
+  ],
+  "calendarPatterns": [
+    [
+      "{p} starts",
+      "{p} শুরু"
+    ],
+    [
+      "{p} ends",
+      "{p} শেষ"
+    ],
+    [
+      "{a} leaves",
+      "{a} চলে যাচ্ছেন"
+    ],
+    [
+      "{a} away",
+      "{a} বাইরে"
+    ]
+  ]
+}

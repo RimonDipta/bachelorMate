@@ -20,8 +20,7 @@ export default function Landing() {
     <div className="lp" ref={root}>
       <a href="#main" className="sr-only">{t("landing.skip")}</a>
       <Nav />
-      {/* The marketing sections aren't translated yet; mark them English so screen readers read them correctly in Bangla mode. */}
-      <main id="main" lang="en">
+      <main id="main">
         <Hero />
         <Statement />
         <Features />
@@ -31,7 +30,7 @@ export default function Landing() {
         <ChatShowcase />
         <FinalCta />
       </main>
-      <div lang="en"><Footer /></div>
+      <Footer />
     </div>
   );
 }

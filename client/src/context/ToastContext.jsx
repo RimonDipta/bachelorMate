@@ -1,4 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
+import { translate } from "../i18n";
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
 import { CheckCircle2, XCircle, Info, X } from "lucide-react";
 
@@ -19,7 +20,7 @@ export function ToastProvider({ children }) {
   const api = useMemo(
     () => ({
       success: (m, o) => push("success", m, o),
-      error: (m, o) => push("error", typeof m === "string" ? m : m?.message || "Something went wrong", o),
+      error: (m, o) => push("error", typeof m === "string" ? m : m?.message || translate("common.somethingWrong"), o),
       info: (m, o) => push("info", m, o),
     }),
     [push]
@@ -38,7 +39,7 @@ export function ToastProvider({ children }) {
                 {t.title && <div className="strong">{t.title}</div>}
                 <div className={t.title ? "muted" : ""}>{t.message}</div>
               </div>
-              <button className="btn btn-ghost btn-sm btn-icon" onClick={() => dismiss(t.id)} aria-label="Dismiss"><X /></button>
+              <button className="btn btn-ghost btn-sm btn-icon" onClick={() => dismiss(t.id)} aria-label={translate("setup.dismiss")}><X /></button>
             </div>
           );
         })}

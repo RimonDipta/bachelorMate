@@ -1,35 +1,17 @@
+import { labelMap, translate } from "../i18n";
 import { Wifi, Utensils, Snowflake, Bath, Sun, Sofa, Zap, ArrowUpDown, Flame, Droplets, Shirt, Car, ShieldCheck, Sparkles } from "lucide-react";
 
-export const AMENITIES = {
-  wifi: { label: "Wi-Fi", icon: Wifi },
-  meals: { label: "Meals", icon: Utensils },
-  ac: { label: "AC", icon: Snowflake },
-  attached_bath: { label: "Attached bath", icon: Bath },
-  balcony: { label: "Balcony", icon: Sun },
-  furnished: { label: "Furnished", icon: Sofa },
-  generator: { label: "Generator / IPS", icon: Zap },
-  lift: { label: "Lift", icon: ArrowUpDown },
-  gas: { label: "Gas line", icon: Flame },
-  water_filter: { label: "Filtered water", icon: Droplets },
-  laundry: { label: "Laundry", icon: Shirt },
-  parking: { label: "Parking", icon: Car },
-  security: { label: "Security", icon: ShieldCheck },
-  cleaner: { label: "Cleaner", icon: Sparkles },
+const AMENITY_ICONS = {
+  wifi: Wifi, meals: Utensils, ac: Snowflake, attached_bath: Bath, balcony: Sun, furnished: Sofa, generator: Zap,
+  lift: ArrowUpDown, gas: Flame, water_filter: Droplets, laundry: Shirt, parking: Car, security: ShieldCheck, cleaner: Sparkles,
 };
+// { wifi: { label, icon } } with the label read in the current language.
+export const AMENITIES = Object.fromEntries(
+  Object.entries(AMENITY_ICONS).map(([k, icon]) => [k, Object.defineProperty({ icon }, "label", { enumerable: true, get: () => translate(`listing.amenities.${k}`) })])
+);
 
-export const ROOM_TYPES = { shared_room: "Shared room", single_room: "Single room", bed_space: "Bed space" };
-export const GENDER = { any: "Anyone", male: "Male only", female: "Female only" };
-export const OCCUPATION = { any: "Students & professionals", student: "Students", professional: "Professionals" };
-export const ROOMMATE_TAGS = {
-  clean: "Clean",
-  respectful: "Respectful",
-  pays_on_time: "Pays on time",
-  quiet: "Quiet",
-  friendly: "Friendly",
-  helpful: "Helpful",
-  cooks_well: "Cooks well",
-  messy: "Messy",
-  noisy: "Noisy",
-  late_payments: "Late payments",
-};
+export const ROOM_TYPES = labelMap("listing.roomTypes", ["shared_room", "single_room", "bed_space"]);
+export const GENDER = labelMap("listing.gender", ["any", "male", "female"]);
+export const OCCUPATION = labelMap("listing.occupation", ["any", "student", "professional"]);
+export const ROOMMATE_TAGS = labelMap("listing.tags", ["clean", "respectful", "pays_on_time", "quiet", "friendly", "helpful", "cooks_well", "messy", "noisy", "late_payments"]);
 export const NEGATIVE_TAGS = new Set(["messy", "noisy", "late_payments"]);

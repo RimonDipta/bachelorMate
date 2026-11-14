@@ -3,7 +3,8 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, MapPin, BedDouble, Users, CalendarDays, Wallet, Utensils, UserRound, Send, ImageOff, ShieldCheck, Home as HomeIcon } from "lucide-react";
 import { api, assetUrl } from "../../lib/api";
-import { money, fmtDay, fmtDate, localDay, HOME_TYPES } from "../../lib/format";
+import { money, fmtDay, fmtDate, localDay, num, HOME_TYPES } from "../../lib/format";
+import { useT } from "../../i18n/I18nProvider";
 import { AMENITIES, ROOM_TYPES, GENDER, OCCUPATION } from "../../lib/listing";
 import { useAuth } from "../../context/AuthContext";
 import { Avatar } from "../../components/ui";
@@ -13,24 +14,28 @@ import { Footer } from "../landing/Showcases";
 import "../../styles/landing.css";
 import "../../styles/seats.css";
 
+// Drop a zero fraction (৳4,500.00 → ৳4,500) in either script.
+const whole = (s) => s.replace(/[.][0০]{2}(?=\D*$)/, "");
+
 export function ReviewSummary({ summary }) {
+  const t = useT();
   const max = Math.max(1, ...summary.distribution);
   return (
     <div className="lp-rev-summary">
       <div>
-        <div className="lp-rev-big">{summary.avg ? summary.avg.toFixed(1) : "–"}</div>
+        <div className="lp-rev-big">{summary.avg ? num(Number(summary.avg.toFixed(1))) : "–"}</div>
         <Stars value={summary.avg || 0} size={15} />
-        <small>{summary.count} review{summary.count === 1 ? "" : "s"}</small>
+        <small>{t("stars.reviews", { count: summary.count })}</small>
       </div>
       <div className="lp-rev-bars">
         {[5, 4, 3, 2, 1].map((n) => (
-          <div key={n}><span>{n}</span><i><b style={{ width: `${(summary.distribution[n - 1] / max) * 100}%` }} /></i></div>
+          <div key={n}><span>{num(n)}</span><i><b style={{ width: `${(summary.distribution[n - 1] / max) * 100}%` }} /></i></div>
         ))}
       </div>
       {Object.values(summary.scores || {}).some(Boolean) && (
         <div className="lp-rev-scores">
-          {[["cleanliness", "Cleanliness"], ["food", "Food"], ["management", "Management"], ["value", "Value"]].filter(([k]) => summary.scores[k]).map(([k, l]) => (
-            <div key={k}><span>{l}</span><b>{summary.scores[k].toFixed(1)}</b></div>
+          {["cleanliness", "food", "management", "value"].filter((k) => summary.scores[k]).map((k) => (
+            <div key={k}><span>{t(`reviews.scores.${k}`)}</span><b>{num(Number(summary.scores[k].toFixed(1)))}</b></div>
           ))}
         </div>
       )}
@@ -39,18 +44,19 @@ export function ReviewSummary({ summary }) {
 }
 
 export function ReviewItem({ r }) {
+  const t = useT();
   return (
     <article className="lp-rev">
       <div className="lp-rev-head">
         <Avatar user={r.user} size={34} />
         <div>
-          <b>{r.user?.name || "Former member"}</b>
-          <small>{r.stayedTo ? "Former member" : "Lives here"} · {fmtDate(r.createdAt)}</small>
+          <b>{r.user?.name || t("seats.formerMember")}</b>
+          <small>{r.stayedTo ? t("seats.formerMember") : t("seats.livesHere")} · {fmtDate(r.createdAt)}</small>
         </div>
         <Stars value={r.rating} size={13} />
       </div>
       <p>{r.body}</p>
-      {r.reply?.body && <div className="lp-rev-reply"><b>Reply from the home</b><p>{r.reply.body}</p></div>}
+      {r.reply?.body && <div className="lp-rev-reply"><b>{t("reviews.replyFromHome")}</b><p>{r.reply.body}</p></div>}
     </article>
   );
 }
@@ -58,6 +64,7 @@ export function ReviewItem({ r }) {
 export default function SeatDetail() {
   const { id } = useParams();
   const { user } = useAuth();
+  const t = useT();
   const navigate = useNavigate();
   const [photo, setPhoto] = useState(0);
   const [message, setMessage] = useState("");
@@ -87,21 +94,21 @@ export default function SeatDetail() {
       <Nav />
       <main className="lp-seats">
         <div className="lp-wrap">
-          <Link to="/seats" className="lp-navlink" style={{ display: "inline-flex", gap: 6, alignItems: "center", marginLeft: -14 }}><ArrowLeft size={15} /> All seats</Link>
+          <Link to="/seats" className="lp-navlink" style={{ display: "inline-flex", gap: 6, alignItems: "center", marginLeft: -14 }}><ArrowLeft size={15} /> {t("seats.all")}</Link>
           {isLoading ? (
             <div className="skeleton" style={{ height: 420, borderRadius: 24, marginTop: 20 }} />
           ) : loadError ? (
-            <div className="lp-seat-empty"><h3>Listing not available</h3><p>{loadError.message}</p><Link to="/seats" className="lp-btn lp-btn-primary">Browse other seats</Link></div>
+            <div className="lp-seat-empty"><h3>{t("seats.unavailable")}</h3><p>{loadError.message}</p><Link to="/seats" className="lp-btn lp-btn-primary">{t("seats.browseOther")}</Link></div>
           ) : (
             <>
               <div className="lp-gallery">
                 <div className="lp-gallery-main">
-                  {l.photos.length ? <img src={assetUrl(l.photos[photo])} alt={`Photo ${photo + 1} of ${l.title}`} /> : <div className="lp-seat-nophoto"><ImageOff size={30} /><span>No photos yet</span></div>}
+                  {l.photos.length ? <img src={assetUrl(l.photos[photo])} alt={t("seats.photoOf", { n: photo + 1, title: l.title })} /> : <div className="lp-seat-nophoto"><ImageOff size={30} /><span>{t("seats.noPhotos")}</span></div>}
                 </div>
                 {l.photos.length > 1 && (
                   <div className="lp-gallery-thumbs">
                     {l.photos.map((p, i) => (
-                      <button key={p} type="button" aria-pressed={i === photo} onClick={() => setPhoto(i)} aria-label={`Show photo ${i + 1}`}><img src={assetUrl(p)} alt="" loading="lazy" /></button>
+                      <button key={p} type="button" aria-pressed={i === photo} onClick={() => setPhoto(i)} aria-label={t("seats.showPhoto", { n: i + 1 })}><img src={assetUrl(p)} alt="" loading="lazy" /></button>
                     ))}
                   </div>
                 )}
@@ -113,33 +120,33 @@ export default function SeatDetail() {
                   <h1 className="lp-detail-title">{l.title}</h1>
                   <div className="lp-seat-row" style={{ justifyContent: "flex-start", gap: 14 }}>
                     <Stars value={l.rating.avg || 0} size={15} showValue count={l.rating.count} />
-                    <span className="lp-seat-area"><HomeIcon size={14} /> {l.home.name} · {HOME_TYPES[l.home.type] || "Shared home"} · {l.home.memberCount} living there</span>
+                    <span className="lp-seat-area"><HomeIcon size={14} /> {l.home.name} · {HOME_TYPES[l.home.type] || t("seats.sharedHome")} · {t("seats.living", { count: l.home.memberCount })}</span>
                   </div>
 
                   <div className="lp-facts">
-                    <div><BedDouble /><span>Room</span><b>{ROOM_TYPES[l.roomType]}</b></div>
-                    <div><Users /><span>Seats</span><b>{l.seats} available</b></div>
-                    <div><CalendarDays /><span>Move in</span><b>{l.availableFrom <= localDay() ? "Now" : fmtDay(l.availableFrom, { month: "short", day: "numeric", year: "numeric" })}</b></div>
-                    <div><UserRound /><span>For</span><b>{GENDER[l.gender]}</b></div>
+                    <div><BedDouble /><span>{t("seats.room")}</span><b>{ROOM_TYPES[l.roomType]}</b></div>
+                    <div><Users /><span>{t("seats.seats")}</span><b>{t("seats.available", { count: l.seats })}</b></div>
+                    <div><CalendarDays /><span>{t("seats.moveIn")}</span><b>{l.availableFrom <= localDay() ? t("seats.now") : fmtDay(l.availableFrom, { month: "short", day: "numeric", year: "numeric" })}</b></div>
+                    <div><UserRound /><span>{t("seats.for")}</span><b>{GENDER[l.gender]}</b></div>
                   </div>
 
-                  {l.description && <section className="lp-detail-sec"><h2>About this seat</h2><p style={{ whiteSpace: "pre-wrap" }}>{l.description}</p><p className="lp-muted">Best for: {OCCUPATION[l.occupation]}</p></section>}
+                  {l.description && <section className="lp-detail-sec"><h2>{t("seats.about")}</h2><p style={{ whiteSpace: "pre-wrap" }}>{l.description}</p><p className="lp-muted">{t("seats.bestFor", { who: OCCUPATION[l.occupation] })}</p></section>}
 
                   {l.amenities.length > 0 && (
                     <section className="lp-detail-sec">
-                      <h2>What's included</h2>
+                      <h2>{t("listings.included")}</h2>
                       <div className="lp-amen-grid">{l.amenities.map((a) => { const A = AMENITIES[a]; return A && <span key={a}><A.icon size={17} /> {A.label}</span>; })}</div>
                     </section>
                   )}
 
                   {l.home.rules?.length > 0 && (
-                    <section className="lp-detail-sec"><h2>House rules</h2><ol className="lp-rules">{l.home.rules.map((r) => <li key={r}>{r}</li>)}</ol></section>
+                    <section className="lp-detail-sec"><h2>{t("homeSettings.houseRules")}</h2><ol className="lp-rules">{l.home.rules.map((r) => <li key={r}>{r}</li>)}</ol></section>
                   )}
 
                   <section className="lp-detail-sec">
-                    <h2>Reviews from people who lived here</h2>
+                    <h2>{t("seats.reviewsTitle")}</h2>
                     {data.reviews.summary.count === 0 ? (
-                      <p className="lp-muted">No reviews yet. Reviews come only from current and former members of this home.</p>
+                      <p className="lp-muted">{t("seats.noReviews")}</p>
                     ) : (
                       <>
                         <ReviewSummary summary={data.reviews.summary} />
@@ -151,24 +158,24 @@ export default function SeatDetail() {
 
                 <aside className="lp-detail-side">
                   <div className="lp-contact">
-                    <div className="lp-contact-price"><b>{money(l.rent, cur).replace(/\.00$/, "")}</b><span>/ month</span></div>
+                    <div className="lp-contact-price"><b>{whole(money(l.rent, cur))}</b><span>{t("listings.perMonth")}</span></div>
                     <div className="lp-contact-rows">
-                      <div><Wallet size={15} /> Deposit <b>{l.deposit ? money(l.deposit, cur).replace(/\.00$/, "") : "None"}</b></div>
-                      {l.mealCostEstimate ? <div><Utensils size={15} /> Meals ≈ <b>{money(l.mealCostEstimate, cur).replace(/\.00$/, "")}/mo</b></div> : null}
+                      <div><Wallet size={15} /> {t("seats.deposit")} <b>{l.deposit ? whole(money(l.deposit, cur)) : t("seats.none")}</b></div>
+                      {l.mealCostEstimate ? <div><Utensils size={15} /> {t("seats.meals")} ≈ <b>{whole(money(l.mealCostEstimate, cur))}{t("listings.perMonth")}</b></div> : null}
                     </div>
-                    <div className="lp-contact-poster"><Avatar user={l.postedBy} size={36} /><div><small>Posted by</small><b>{l.postedBy?.name}</b></div></div>
+                    <div className="lp-contact-poster"><Avatar user={l.postedBy} size={36} /><div><small>{t("seats.postedBy")}</small><b>{l.postedBy?.name}</b></div></div>
                     {!user ? (
-                      <Link to={`/login?next=${encodeURIComponent(`/seats/${id}`)}`} className="lp-btn lp-btn-primary" style={{ width: "100%" }}>Log in to contact</Link>
+                      <Link to={`/login?next=${encodeURIComponent(`/seats/${id}`)}`} className="lp-btn lp-btn-primary" style={{ width: "100%" }}>{t("seats.loginToContact")}</Link>
                     ) : String(user._id) === String(l.postedBy?._id) ? (
-                      <p className="lp-muted">This is your listing.</p>
+                      <p className="lp-muted">{t("seats.yours")}</p>
                     ) : (
                       <form onSubmit={contact} className="lp-contact-form">
-                        <textarea value={message} onChange={(e) => setMessage(e.target.value)} maxLength={1000} rows={4} placeholder={`Hi! I'm interested in the seat. A bit about me…`} aria-label="Message to the poster" />
+                        <textarea value={message} onChange={(e) => setMessage(e.target.value)} maxLength={1000} rows={4} placeholder={t("seats.messagePlaceholder")} aria-label={t("seats.messageLabel")} />
                         {error && <p className="lp-contact-err">{error}</p>}
-                        <button type="submit" className="lp-btn lp-btn-primary" style={{ width: "100%" }} disabled={sending || message.trim().length < 5}><Send /> {sending ? "Sending…" : "Send message"}</button>
+                        <button type="submit" className="lp-btn lp-btn-primary" style={{ width: "100%" }} disabled={sending || message.trim().length < 5}><Send /> {sending ? t("seats.sending") : t("seats.send")}</button>
                       </form>
                     )}
-                    <p className="lp-contact-note"><ShieldCheck size={14} /> Your message goes privately to the poster. Never pay before visiting.</p>
+                    <p className="lp-contact-note"><ShieldCheck size={14} /> {t("seats.safety")}</p>
                   </div>
                 </aside>
               </div>

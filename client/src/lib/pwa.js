@@ -1,4 +1,5 @@
 // Installable app (PWA): service worker, "Install app" prompt and push notifications.
+import { translate } from "../i18n";
 import { useEffect, useState } from "react";
 import { api } from "./api";
 
@@ -85,9 +86,9 @@ export async function getPushState() {
 
 export async function enablePush() {
   const cfg = await api.get("/push/config");
-  if (!cfg.enabled) throw new Error("Push notifications aren't set up on the server yet.");
+  if (!cfg.enabled) throw new Error(translate("settings.notifications.pushHint.off-server"));
   const permission = await Notification.requestPermission();
-  if (permission !== "granted") throw new Error("Notifications are blocked. Allow them in your browser or phone settings.");
+  if (permission !== "granted") throw new Error(translate("hooks.pushBlocked"));
   const reg = await navigator.serviceWorker.ready;
   const sub = (await reg.pushManager.getSubscription()) || (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes(cfg.publicKey) }));
   await api.post("/push/subscriptions", sub.toJSON());

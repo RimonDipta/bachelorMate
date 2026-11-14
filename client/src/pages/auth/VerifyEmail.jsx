@@ -4,6 +4,7 @@ import { CheckCircle2, AlertCircle, Loader2, MailCheck, RotateCw } from "lucide-
 import AuthLayout from "./AuthLayout";
 import { Alert, Button, Input } from "../../components/ui";
 import { api } from "../../lib/api";
+import { translateServer } from "../../i18n/serverText";
 import { useAuth } from "../../context/AuthContext";
 import { useT } from "../../i18n/I18nProvider";
 
@@ -81,7 +82,7 @@ function CodeVerify() {
     setError("");
     try {
       const r = await api.post("/auth/resend-verification");
-      setInfo(r.message);
+      setInfo(translateServer(r.message));
       setCooldown(60);
     } catch (e) {
       const secs = /(\d+)s/.exec(e.message)?.[1];

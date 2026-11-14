@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { localeTag } from "../i18n";
+import { localeTag, translate } from "../i18n";
+import { useT } from "../i18n/I18nProvider";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Send, Smile, Pencil, Trash2, ArrowLeft, CheckCheck, MessagesSquare } from "lucide-react";
 import { api } from "../lib/api";
@@ -7,7 +8,7 @@ import { useAuth } from "../context/AuthContext";
 import { useRealtime, useOnline } from "../context/RealtimeContext";
 import { useToast } from "../context/ToastContext";
 import { Avatar, Button, EmptyState, ErrorState, FormModal, LoadingBlock, Textarea, Badge, Field } from "./ui";
-import { fmtTime, timeAgo, ROLE_LABEL } from "../lib/format";
+import { fmtTime, num, timeAgo, ROLE_LABEL } from "../lib/format";
 
 const EMOJI = ["😀", "😂", "😍", "🥲", "😎", "🤔", "😴", "😡", "👍", "👎", "🙏", "👏", "🔥", "🎉", "❤️", "💯", "🍛", "🍚", "🍗", "🥘", "☕", "🛒", "💸", "✅"];
 
@@ -16,19 +17,20 @@ const dayLabel = (iso) => {
   const today = new Date();
   const y = new Date();
   y.setDate(today.getDate() - 1);
-  if (d.toDateString() === today.toDateString()) return "Today";
-  if (d.toDateString() === y.toDateString()) return "Yesterday";
+  if (d.toDateString() === today.toDateString()) return translate("common.today");
+  if (d.toDateString() === y.toDateString()) return translate("chat.yesterday");
   return d.toLocaleDateString(localeTag(), { weekday: "long", month: "short", day: "numeric" });
 };
 
 function MemberRow({ m }) {
   const online = useOnline(m._id, m.online);
+  const t = useT();
   return (
     <div className="list-item" style={{ padding: "8px 14px" }}>
       <Avatar user={m} size={28} online={online} />
       <div className="grow" style={{ minWidth: 0 }}>
         <div className="text-sm truncate">{m.name}</div>
-        <div className="text-xs subtle">{online ? "Online" : m.lastSeenAt ? `Seen ${timeAgo(m.lastSeenAt)}` : "Offline"}</div>
+        <div className="text-xs subtle">{online ? t("members.online") : m.lastSeenAt ? t("chat.seenAgo", { ago: timeAgo(m.lastSeenAt) }) : t("chat.offline")}</div>
       </div>
       {m.roles && !m.roles.includes("member") && <Badge>{ROLE_LABEL[m.roles[0]]}</Badge>}
     </div>
@@ -37,6 +39,7 @@ function MemberRow({ m }) {
 
 export default function ChatView({ conversationId, title, subtitle, avatar, onBack, showMembers = true, emptyHint }) {
   const { user } = useAuth();
+  const t = useT();
   const { socket, typing } = useRealtime();
   const toast = useToast();
   const qc = useQueryClient();
@@ -124,7 +127,7 @@ export default function ChatView({ conversationId, title, subtitle, avatar, onBa
     }
   };
   const remove = async (m) => {
-    if (!window.confirm("Delete this message for everyone?")) return;
+    if (!window.confirm(t("chat.deleteConfirm"))) return;
     api.del(`/chat/messages/${m._id}`).catch((e) => toast.error(e));
   };
 
@@ -146,19 +149,19 @@ export default function ChatView({ conversationId, title, subtitle, avatar, onBa
     <div className={showMembers ? "chat card" : "chat-main"} style={showMembers ? undefined : { height: "100%" }}>
       <div className="chat-main" style={{ flex: 1, minHeight: 0 }}>
         <div className="chat-head">
-          {onBack && <Button variant="ghost" size="sm" icon={ArrowLeft} onClick={onBack} aria-label="Back" className="show-sm" />}
+          {onBack && <Button variant="ghost" size="sm" icon={ArrowLeft} onClick={onBack} aria-label={t("errorPage.back")} className="show-sm" />}
           {avatar}
           <div className="grow" style={{ minWidth: 0 }}>
-            <div className="strong text-sm truncate">{title}</div>
+            <h1 className="strong text-sm truncate" style={{ margin: 0, fontSize: "var(--text-sm)", lineHeight: 1.4, letterSpacing: "normal" }}>{title}</h1>
             {subtitle && <div className="text-xs muted truncate">{subtitle}</div>}
           </div>
         </div>
         <div className="chat-scroll" ref={scroller} onScroll={onScroll} aria-live="polite">
           {isLoading ? <LoadingBlock rows={4} /> : error ? <ErrorState error={error} retry={refetch} /> : messages.length === 0 ? (
-            <EmptyState icon={MessagesSquare} title="No messages yet" description={emptyHint || "Say hello 👋"} />
+            <EmptyState icon={MessagesSquare} title={t("chat.none")} description={emptyHint || t("chat.sayHello")} />
           ) : (
             <>
-              {data.hasMore && <div style={{ textAlign: "center" }}><Button size="sm" variant="ghost" loading={loadingOlder} onClick={loadOlder}>Load earlier messages</Button></div>}
+              {data.hasMore && <div style={{ textAlign: "center" }}><Button size="sm" variant="ghost" loading={loadingOlder} onClick={loadOlder}>{t("chat.loadEarlier")}</Button></div>}
               {groups.map((g) => {
                 const mine = g.sender?._id === user._id;
                 return (
@@ -171,13 +174,13 @@ export default function ChatView({ conversationId, title, subtitle, avatar, onBa
                         {g.items.map((m) => (
                           <div key={m._id} className="msg-row">
                             <div className={`msg ${m.deletedAt ? "deleted" : ""}`}>
-                              {m.deletedAt ? "Message deleted" : m.body}
-                              {m.editedAt && !m.deletedAt && <span style={{ opacity: 0.7, fontSize: 11 }}> (edited)</span>}
+                              {m.deletedAt ? t("chat.deleted") : m.body}
+                              {m.editedAt && !m.deletedAt && <span style={{ opacity: 0.7, fontSize: 11 }}> ({t("chat.edited")})</span>}
                             </div>
                             {mine && !m.deletedAt && (
                               <div className="msg-actions">
-                                <Button size="sm" variant="ghost" icon={Pencil} aria-label="Edit message" onClick={() => setEditing({ _id: m._id, body: m.body })} />
-                                <Button size="sm" variant="ghost" icon={Trash2} aria-label="Delete message" onClick={() => remove(m)} />
+                                <Button size="sm" variant="ghost" icon={Pencil} aria-label={t("chat.editTitle")} onClick={() => setEditing({ _id: m._id, body: m.body })} />
+                                <Button size="sm" variant="ghost" icon={Trash2} aria-label={t("chat.deleteLabel")} onClick={() => remove(m)} />
                               </div>
                             )}
                           </div>
@@ -188,14 +191,14 @@ export default function ChatView({ conversationId, title, subtitle, avatar, onBa
                 );
               })}
               {myLast && seenBy > 0 && (
-                <div className="msg-meta" style={{ justifyContent: "flex-end", marginTop: 4 }}><CheckCheck size={13} /> {otherReads.length === 1 ? "Seen" : `Seen by ${seenBy}`}</div>
+                <div className="msg-meta" style={{ justifyContent: "flex-end", marginTop: 4 }}><CheckCheck size={13} /> {otherReads.length === 1 ? t("chat.seen") : t("chat.seenBy", { n: seenBy })}</div>
               )}
             </>
           )}
         </div>
-        <div className="typing">{typers.length > 0 && `${typers.slice(0, 3).join(", ")} ${typers.length > 1 ? "are" : "is"} typing…`}</div>
+        <div className="typing">{typers.length > 0 && t("chat.typing", { names: typers.slice(0, 3).join(", "), count: typers.length })}</div>
         <form className="chat-compose" onSubmit={(e) => { e.preventDefault(); send(); }}>
-          <Button variant="ghost" icon={Smile} aria-label="Insert emoji" onClick={() => setEmoji(!emoji)} />
+          <Button variant="ghost" icon={Smile} aria-label={t("chat.emoji")} onClick={() => setEmoji(!emoji)} />
           {emoji && (
             <div className="menu emoji-pop">
               {EMOJI.map((e) => <button type="button" key={e} onClick={() => { setText((t) => t + e); setEmoji(false); }}>{e}</button>)}
@@ -205,8 +208,8 @@ export default function ChatView({ conversationId, title, subtitle, avatar, onBa
             rows={1}
             value={text}
             maxLength={4000}
-            placeholder="Write a message…"
-            aria-label="Message"
+            placeholder={t("chat.placeholder")}
+            aria-label={t("announce.message")}
             onChange={(e) => {
               setText(e.target.value);
               emitTyping(true);
@@ -220,17 +223,17 @@ export default function ChatView({ conversationId, title, subtitle, avatar, onBa
               }
             }}
           />
-          <Button type="submit" variant="primary" icon={Send} aria-label="Send" loading={sending} disabled={!text.trim()} />
+          <Button type="submit" variant="primary" icon={Send} aria-label={t("invites.send")} loading={sending} disabled={!text.trim()} />
         </form>
       </div>
       {showMembers && (
         <aside className="chat-side">
-          <div className="card-head" style={{ minHeight: 49 }}><h3>Members · {data?.members?.length || 0}</h3></div>
+          <div className="card-head" style={{ minHeight: 49 }}><h3>{t("nav.members")} · {num(data?.members?.length || 0)}</h3></div>
           {(data?.members || []).map((m) => <MemberRow key={m._id} m={m} />)}
         </aside>
       )}
-      <FormModal open={Boolean(editing)} onClose={() => setEditing(null)} title="Edit message" onSubmit={saveEdit} disabled={!editing?.body?.trim()}>
-        <Field label="Message"><Textarea value={editing?.body || ""} maxLength={4000} onChange={(e) => setEditing({ ...editing, body: e.target.value })} /></Field>
+      <FormModal open={Boolean(editing)} onClose={() => setEditing(null)} title={t("chat.editTitle")} onSubmit={saveEdit} disabled={!editing?.body?.trim()}>
+        <Field label={t("announce.message")}><Textarea value={editing?.body || ""} maxLength={4000} onChange={(e) => setEditing({ ...editing, body: e.target.value })} /></Field>
       </FormModal>
     </div>
   );

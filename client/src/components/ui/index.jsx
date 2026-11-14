@@ -211,7 +211,7 @@ export const Skeleton = ({ h = 16, w = "100%", r, style }) => <div className="sk
 
 export function LoadingBlock({ rows = 4 }) {
   return (
-    <div className="stack" style={{ padding: "var(--card-pad)" }} aria-busy="true" aria-label={translate("common.loading")}>
+    <div className="stack" style={{ padding: "var(--card-pad)" }} role="status" aria-busy="true" aria-label={translate("common.loading")}>
       {Array.from({ length: rows }).map((_, i) => (
         <div className="row-3" key={i}>
           <Skeleton h={32} w={32} r={999} />

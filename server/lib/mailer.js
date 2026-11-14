@@ -4,6 +4,7 @@
 //   SMTP_HOST      → any SMTP provider via nodemailer (e.g. Gmail with an app password)
 //   none           → logged to the console (dev) / stored in `outbox` (tests)
 // Sending never throws into the request that triggered it.
+const { translate } = require("./i18n");
 const nodemailer = require("nodemailer");
 const env = require("../config/env");
 
@@ -55,7 +56,8 @@ function brevoPayload({ to, subject, html, text }) {
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 
 /** Responsive, client-safe HTML email (tables + inline styles). `body` is trusted HTML built by the server. */
-function layout({ title, body, cta, code, footer }) {
+function layout({ title, body, cta, code, footer, lang }) {
+  const tr = (s) => translate(lang, s);
   const brand = "#6d4bf0";
   return `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"></head>
 <body style="margin:0;padding:0;background:#f4f2ee;font-family:Inter,Segoe UI,Helvetica,Arial,sans-serif;color:#18171c">
@@ -71,8 +73,8 @@ function layout({ title, body, cta, code, footer }) {
 <tr><td style="padding:10px 32px 0;font-size:15px;line-height:1.65;color:#4a4752">${body}</td></tr>
 ${code ? `<tr><td style="padding:22px 32px 0"><div style="font-family:SFMono-Regular,Menlo,Consolas,monospace;font-size:32px;font-weight:700;letter-spacing:10px;text-align:center;background:#f4f2ee;border-radius:12px;padding:16px 8px;color:#18171c">${esc(code)}</div></td></tr>` : ""}
 ${cta ? `<tr><td style="padding:24px 32px 0"><a href="${esc(cta.url)}" style="display:inline-block;background:${brand};color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 22px;border-radius:10px">${esc(cta.label)}</a></td></tr>
-<tr><td style="padding:16px 32px 0;font-size:12px;line-height:1.6;color:#8a8794">Button not working? Paste this link into your browser:<br><a href="${esc(cta.url)}" style="color:${brand};word-break:break-all">${esc(cta.url)}</a></td></tr>` : ""}
-<tr><td style="padding:28px 32px 28px"><div style="border-top:1px solid #eeebe6;padding-top:16px;font-size:12px;line-height:1.6;color:#8a8794">${footer || "You're receiving this because of activity on your BachelorMate account. You can change email preferences in Settings → Notifications."}</div></td></tr>
+<tr><td style="padding:16px 32px 0;font-size:12px;line-height:1.6;color:#8a8794">${tr("Button not working? Paste this link into your browser:")}<br><a href="${esc(cta.url)}" style="color:${brand};word-break:break-all">${esc(cta.url)}</a></td></tr>` : ""}
+<tr><td style="padding:28px 32px 28px"><div style="border-top:1px solid #eeebe6;padding-top:16px;font-size:12px;line-height:1.6;color:#8a8794">${footer || tr("You're receiving this because of activity on your BachelorMate account. You can change email preferences in Settings → Notifications.")}</div></td></tr>
 </table></td></tr></table></body></html>`;
 }
 
@@ -83,8 +85,14 @@ const toText = ({ title, body, cta, code }) =>
  * sendMail({ to, subject, title?, body, cta?, code?, footer? }) – resolves to
  * { ok, provider, id?, error? }. Never rejects.
  */
-async function sendMail(msg) {
-  const content = { title: msg.title || msg.subject, body: msg.body, cta: msg.cta, code: msg.code, footer: msg.footer };
+/**
+ * sendMail({ to, subject, title?, body, cta?, code?, footer?, lang? })
+ * With lang "bn", known English text (subject, title, body, button, footer) is sent in Bangla.
+ */
+async function sendMail(input) {
+  const tr = (s) => translate(input.lang, s);
+  const msg = { ...input, subject: tr(input.subject), title: tr(input.title), body: tr(input.body), footer: tr(input.footer), cta: input.cta && { ...input.cta, label: tr(input.cta.label) } };
+  const content = { title: msg.title || msg.subject, body: msg.body, cta: msg.cta, code: msg.code, footer: msg.footer, lang: msg.lang };
   const html = layout(content);
   const text = toText(content);
   const p = provider();

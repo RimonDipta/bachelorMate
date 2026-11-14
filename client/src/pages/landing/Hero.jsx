@@ -2,12 +2,12 @@ import { Link } from "react-router-dom";
 import { ArrowRight, LayoutDashboard, UtensilsCrossed, Wallet, MessagesSquare, Users, HandCoins, CircleCheck, ShieldCheck, Zap, Search } from "lucide-react";
 import { Avatar } from "../../components/ui";
 import { money } from "../../lib/format";
+import { useI18n, useT } from "../../i18n/I18nProvider";
 import { useCountUp, useTilt, scrollToId } from "./motion";
 
 // Illustrative product data — the same shapes the real dashboard renders.
-const TREND = [
-  ["Jun", 58, 26], ["Jul", 64, 30], ["Aug", 52, 24], ["Sep", 70, 34], ["Oct", 66, 28], ["Nov", 82, 36],
-];
+// Months 5–10 (Jun–Nov), labelled in the chosen language.
+const TREND = [[5, 58, 26], [6, 64, 30], [7, 52, 24], [8, 70, 34], [9, 66, 28], [10, 82, 36]];
 const PEOPLE = [
   { name: "Rahim Ahmed", bal: 125000 },
   { name: "Karim Hossain", bal: -64000 },
@@ -21,11 +21,13 @@ function Counter({ to, render }) {
 }
 
 function ProductWindow() {
+  const { t, locale } = useI18n();
+  const monthName = (m) => new Date(2024, m, 1).toLocaleDateString(locale, { month: "short" });
   return (
     <div className="lp-win" aria-hidden>
       <div className="lp-win-bar">
-        <span className="lp-win-home"><i>GV</i>Green Villa Mess</span>
-        <span>· November</span>
+        <span className="lp-win-home"><i>GV</i>{t("lp.demoHome")}</span>
+        <span>· {new Date(2024, 10, 1).toLocaleDateString(locale, { month: "long" })}</span>
         <span className="lp-win-search"><Search size={12} /><kbd>⌘K</kbd></span>
       </div>
       <div className="lp-win-body">
@@ -37,27 +39,27 @@ function ProductWindow() {
           <span><Users /></span>
         </div>
         <div className="lp-win-main">
-          <div className="lp-win-head"><b>Good evening, Rahim</b><small>6 members · all synced</small></div>
+          <div className="lp-win-head"><b>{t("dashboard.greeting.evening", { name: t("lp.demoName") })}</b><small>{t("lp.synced", { n: 6 })}</small></div>
           <div className="lp-tiles">
-            <div className="lp-tile"><small>Spent this month</small><Counter to={4574100} render={(v) => money(v, "BDT").replace(/\.\d+$/, "")} /><em className="lp-neg">↑ 6% vs Oct</em></div>
-            <div className="lp-tile"><small>Meal rate</small><Counter to={6244} render={(v) => money(v, "BDT")} /><em className="lp-pos">↓ ৳3.10</em></div>
-            <div className="lp-tile"><small>Collected</small><Counter to={3400000} render={(v) => money(v, "BDT").replace(/\.\d+$/, "")} /><em className="lp-pos">5 of 6 paid</em></div>
+            <div className="lp-tile"><small>{t("dashboard.spentThisMonth")}</small><Counter to={4574100} render={(v) => money(v, "BDT").replace(/[.][0-9০-৯]+(?=\D*$)/, "")} /><em className="lp-neg">{t("lp.vsOct", { n: 6, month: monthName(9) })}</em></div>
+            <div className="lp-tile"><small>{t("meals.mealRate")}</small><Counter to={6244} render={(v) => money(v, "BDT")} /><em className="lp-pos">↓ {money(310, "BDT")}</em></div>
+            <div className="lp-tile"><small>{t("finance.collected")}</small><Counter to={3400000} render={(v) => money(v, "BDT").replace(/[.][0-9০-৯]+(?=\D*$)/, "")} /><em className="lp-pos">{t("lp.paidOf", { a: 5, b: 6 })}</em></div>
           </div>
           <div className="lp-panels">
             <div className="lp-panel">
-              <div className="lp-panel-t">Monthly spending <span>meals · other</span></div>
+              <div className="lp-panel-t">{t("lp.monthlySpending")} <span>{t("lp.mealsOther")}</span></div>
               <div className="lp-bars">
                 {TREND.map(([m, a, b], i) => (
                   <div className="lp-bar" key={m}>
                     <i className="o" style={{ height: `${b}%`, transitionDelay: `${300 + i * 70}ms` }} />
                     <i className="m" style={{ height: `${a - b}%`, transitionDelay: `${300 + i * 70}ms` }} />
-                    <small>{m}</small>
+                    <small>{monthName(m)}</small>
                   </div>
                 ))}
               </div>
             </div>
             <div className="lp-panel">
-              <div className="lp-panel-t">Balances <span>live</span></div>
+              <div className="lp-panel-t">{t("lp.balances")} <span>{t("lp.live")}</span></div>
               <div className="lp-people">
                 {PEOPLE.map((p) => (
                   <div className="lp-person" key={p.name}>
@@ -77,6 +79,7 @@ function ProductWindow() {
 
 export default function Hero() {
   const tilt = useTilt(5);
+  const t = useT();
   return (
     <section className="lp-hero" aria-labelledby="hero-title">
       <div className="lp-ambient" aria-hidden>
@@ -87,21 +90,21 @@ export default function Hero() {
       </div>
       <div className="lp-wrap lp-hero-grid">
         <div className="lp-hero-copy">
-          <span className="lp-kicker" data-reveal>The better way to live together</span>
+          <span className="lp-kicker" data-reveal>{t("lp.hero.kicker")}</span>
           <h1 id="hero-title">
-            <span className="line" data-reveal style={{ "--d": "80ms" }}>Your home,</span>
-            <span className="line" data-reveal style={{ "--d": "180ms" }}>minus the <span className="lp-serif lp-brandword">chaos.</span></span>
+            <span className="line" data-reveal style={{ "--d": "80ms" }}>{t("lp.hero.line1")}</span>
+            <span className="line" data-reveal style={{ "--d": "180ms" }}>{t("lp.hero.line2")}<span className="lp-serif lp-brandword">{t("lp.hero.word")}</span></span>
           </h1>
           <p className="lp-hero-desc" data-reveal style={{ "--d": "300ms" }}>
-            One place for meals, expenses, payments, roommates — and everything that keeps a shared home running smoothly.
+            {t("lp.hero.desc")}
           </p>
           <div className="lp-hero-ctas" data-reveal style={{ "--d": "400ms" }}>
-            <Link to="/register" className="lp-btn lp-btn-primary">Get started <ArrowRight /></Link>
-            <a href="/#features" className="lp-btn lp-btn-ghost" onClick={(e) => scrollToId(e, "features")}>Explore the platform</a>
+            <Link to="/register" className="lp-btn lp-btn-primary">{t("landing.getStarted")} <ArrowRight /></Link>
+            <a href="/#features" className="lp-btn lp-btn-ghost" onClick={(e) => scrollToId(e, "features")}>{t("lp.hero.explore")}</a>
           </div>
           <div className="lp-hero-meta" data-reveal style={{ "--d": "520ms" }}>
-            <span><Zap /> Set up in two minutes</span>
-            <span><ShieldCheck /> Every taka on a ledger</span>
+            <span><Zap /> {t("lp.hero.setup")}</span>
+            <span><ShieldCheck /> {t("lp.hero.ledger")}</span>
           </div>
         </div>
 
@@ -109,24 +112,24 @@ export default function Hero() {
           <div className="lp-stage-inner" ref={tilt}>
             <ProductWindow />
             <div className="lp-float lp-float-rate" aria-hidden>
-              <small>Meal rate today</small>
-              <b className="num">৳62.44</b>
+              <small>{t("lp.rateToday")}</small>
+              <b className="num">{money(6244, "BDT")}</b>
             </div>
             <div className="lp-float lp-float-meal" aria-hidden>
               <span className="lp-float-ico" style={{ background: "var(--lp-brand-soft)", color: "var(--lp-brand-ink)" }}><UtensilsCrossed /></span>
-              <div><b>13 meals</b><small>planned tonight</small></div>
+              <div><b>{t("daily.mealsCount", { count: 13 })}</b><small>{t("lp.tonight")}</small></div>
             </div>
             <div className="lp-float lp-float-pay" aria-hidden>
               <span className="lp-float-ico" style={{ background: "var(--lp-coral-soft)", color: "var(--lp-coral)" }}><HandCoins /></span>
               <div>
-                <b>Karim paid ৳1,250</b>
-                <small>via bKash · just now</small>
+                <b>{t("lp.paid", { name: t("lp.demoKarim"), amount: money(125000, "BDT").replace(/[.][0০]{2}(?=\D*$)/, "") })}</b>
+                <small>{t("lp.viaBkash")} · {t("time.justNow")}</small>
               </div>
               <CircleCheck size={16} style={{ color: "#16a34a", marginLeft: 6 }} />
             </div>
             <div className="lp-float lp-float-chat" aria-hidden>
-              <small>Home chat · Sakib</small>
-              <div className="lp-bubble">Bazar done 🛒 receipt is on the expense</div>
+              <small>{t("nav.homeChat")} · {t("lp.demoSakib")}</small>
+              <div className="lp-bubble">{t("lp.bubble")}</div>
             </div>
           </div>
         </div>

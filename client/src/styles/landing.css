@@ -605,3 +605,10 @@
 .lp-langbtn svg { width: 16px; height: 16px; }
 :lang(bn) .lp, :lang(bn) .lp :is(h1, h2, h3), :lang(bn) .lp-drawer nav a { letter-spacing: normal; }
 @media (max-width: 420px) { .lp-langbtn svg { display: none; } .lp-langbtn { padding: 0 8px; } }
+
+/* Bangla: words are longer and conjuncts taller — let headline lines wrap, size them down a little,
+   and drop the uppercase-style tracking on kickers (it breaks Bangla letter joins). */
+:lang(bn) .lp-hero h1 { font-size: min(11.5cqw, 80px); line-height: 1.15; }
+:lang(bn) .lp-hero h1 .line { white-space: normal; }
+:lang(bn) .lp-kicker { letter-spacing: normal; text-transform: none; }
+:lang(bn) .lp-h2 { line-height: 1.25; }
