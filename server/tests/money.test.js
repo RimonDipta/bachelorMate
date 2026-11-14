@@ -15,6 +15,15 @@ test("toMinor parses decimals exactly", () => {
   assert.equal(toMinor("-5", { allowNegative: true }), -500);
 });
 
+test("toMinor accepts amounts typed on a Bangla keyboard", () => {
+  assert.equal(toMinor("১২০"), 12000);
+  assert.equal(toMinor("১,২০০.৫০"), 120050);
+  assert.equal(toMinor("৳ ৪৫০০"), 450000);
+  assert.equal(toMinor("12০.5"), 12050); // mixed scripts
+  assert.throws(() => toMinor("৳"), /required/);
+  assert.throws(() => toMinor("১.২৩৪"));
+});
+
 test("allocate always sums to the total", () => {
   assert.deepEqual(allocate(100, [1, 1, 1]), [34, 33, 33]);
   assert.equal(allocate(1000, [0.5, 1, 2.5]).reduce((a, b) => a + b), 1000);

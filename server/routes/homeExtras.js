@@ -72,7 +72,8 @@ router.get("/dashboard", async (req, res) => {
     const [invited, recurring, meals, expenses] = await Promise.all([
       memberCount > 1 || Invitation.exists({ home: home._id }),
       RecurringExpense.exists({ home: home._id }),
-      MealEntry.exists({ home: home._id }),
+      // Meals a person entered or adjusted; entries filled in automatically from defaults don't count.
+      MealEntry.exists({ home: home._id, updatedBy: { $ne: null } }),
       Expense.exists({ home: home._id }),
     ]);
     setup = { invited: Boolean(invited), recurring: Boolean(recurring), meals: Boolean(meals), expenses: Boolean(expenses) };

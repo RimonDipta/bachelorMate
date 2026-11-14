@@ -63,7 +63,7 @@ function PaymentForm({ open, onClose, membershipId: fixedMember }) {
     },
     { invalidate: INVALIDATE(homeId), success: (r) => (r.entry.status === "pending" ? t("forms.payment.submitted") : t("forms.payment.recorded")), onSuccess: onClose }
   );
-  const valid = /^\d+(\.\d{1,2})?$/.test(String(f.amount).trim()) && Number(f.amount) > 0;
+  const valid = parseMinor(f.amount) > 0;
   return (
     <FormModal open={open} onClose={onClose} title={recorder ? t("forms.payment.recordTitle") : t("forms.payment.submitTitle")} description={recorder ? t("forms.payment.recordDesc") : t("forms.payment.submitDesc")}
       submitLabel={recorder ? t("common.recordPayment") : t("forms.payment.submitForConfirm")} loading={submit.isPending} disabled={!valid} onSubmit={() => submit.mutate()}>
@@ -91,7 +91,7 @@ function AdjustmentForm({ open, onClose, membershipId: fixedMember }) {
   const submit = useAction(() => api.post(`/homes/${homeId}/finance/adjustments`, f), { invalidate: INVALIDATE(homeId), success: t("forms.adjust.added"), onSuccess: onClose });
   return (
     <FormModal open={open} onClose={onClose} title={t("forms.adjust.title")} description={t("forms.adjust.desc")} submitLabel={t("forms.adjust.submit")} loading={submit.isPending}
-      disabled={!f.membershipId || !Number(f.amount) || (f.description || "").trim().length < 3} onSubmit={() => submit.mutate()}>
+      disabled={!f.membershipId || !(parseMinor(f.amount) > 0) || (f.description || "").trim().length < 3} onSubmit={() => submit.mutate()}>
       {!fixedMember && (
         <Field label={t("common.member")}>
           <Select value={f.membershipId} onChange={(e) => setF({ ...f, membershipId: e.target.value })}>

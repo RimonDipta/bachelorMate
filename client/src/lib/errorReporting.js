@@ -5,7 +5,7 @@ import { apiBase } from "./api";
 const sent = new Set();
 let budget = 10;
 // eslint-disable-next-line no-undef -- injected by vite.config.js
-const RELEASE = typeof __APP_RELEASE__ !== "undefined" ? __APP_RELEASE__ : undefined;
+export const RELEASE = typeof __APP_RELEASE__ !== "undefined" ? __APP_RELEASE__ : undefined;
 
 export function reportError(error, { kind = "error", componentStack } = {}) {
   try {

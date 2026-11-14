@@ -3,13 +3,14 @@ import { NavLink, Outlet, useLocation, useMatch, useNavigate, Link } from "react
 import ErrorBoundary from "../ErrorBoundary";
 import NetworkStatus from "../NetworkStatus";
 import InstallAppDialog from "../InstallApp";
+import { FeedbackDialog } from "../FeedbackDialog";
 import { useInstallPrompt } from "../../lib/pwa";
 import BrandMark from "../BrandMark";
 import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard, UtensilsCrossed, CalendarDays, ClipboardList, Wallet, Receipt, ArrowLeftRight, MessagesSquare,
   Megaphone, ShoppingBasket, Users, UserPlus, BarChart3, History, Settings, Bell, Menu as MenuIcon, ChevronsUpDown, ChevronDown,
-  Plus, LogIn, House, UserRound, Palette, LogOut, Moon, Sun, MessageCircle, Mail, Check, CircleUserRound, Repeat, X, DoorOpen, Star, Search, Smartphone,
+  Plus, LogIn, House, UserRound, Palette, LogOut, Moon, Sun, MessageCircle, Mail, Check, CircleUserRound, Repeat, X, DoorOpen, Star, Search, Smartphone, MessageSquareHeart,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../context/AuthContext";
@@ -64,6 +65,7 @@ function AccountMenu({ user, trigger, align = "start", counts = {} }) {
   const dark = theme.resolved === "dark";
   const app = useInstallPrompt();
   const [installOpen, setInstallOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   return (
     <>
     <Menu align={align} width={248} trigger={trigger}>
@@ -87,10 +89,12 @@ function AccountMenu({ user, trigger, align = "start", counts = {} }) {
       <MenuItem icon={dark ? Sun : Moon} onClick={() => theme.update({ mode: dark ? "light" : "dark" })}>{dark ? t("shell.lightMode") : t("shell.darkMode")}</MenuItem>
       <MenuItem icon={Settings} onClick={() => navigate("/settings/security")}>{t("shell.accountSettings")}</MenuItem>
       {app.canInstall && <MenuItem icon={Smartphone} onClick={() => setInstallOpen(true)}>{t("shell.installApp")}</MenuItem>}
+      <MenuItem icon={MessageSquareHeart} onClick={() => setFeedbackOpen(true)}>{t("feedback.menu")}</MenuItem>
       <div className="menu-sep" />
       <MenuItem icon={LogOut} danger onClick={async () => { await logout(); navigate("/login"); }}>{t("shell.signOut")}</MenuItem>
     </Menu>
     <InstallAppDialog open={installOpen} onClose={() => setInstallOpen(false)} />
+    <FeedbackDialog open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
     </>
   );
 }

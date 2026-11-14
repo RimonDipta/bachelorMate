@@ -112,6 +112,7 @@ app.use("/api", require("./routes/clientErrors"));
 // Everything below requires authentication.
 app.use("/api", protect);
 app.use("/api/users", require("./routes/users"));
+app.use("/api", require("./routes/feedback"));
 app.use("/api", require("./routes/push"));
 app.use("/api", require("./routes/join"));
 app.use("/api", require("./routes/chat"));

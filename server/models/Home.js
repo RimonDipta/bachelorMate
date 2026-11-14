@@ -30,6 +30,9 @@ const settingsSchema = new mongoose.Schema(
     mealTypes: { type: [mealTypeSchema], default: () => DEFAULT_MEAL_TYPES },
     mealOffCutoff: { type: String, default: "22:00", match: /^([01]\d|2[0-3]):[0-5]\d$/ },
     autoApproveMealOff: { type: Boolean, default: false },
+    // Meal automation (services/mealAutomation.js): open a period each month, fill today's meals from defaults.
+    autoMealPeriods: { type: Boolean, default: true },
+    autoFillMeals: { type: Boolean, default: true },
     guestMealPricing: { type: String, enum: ["meal_rate", "fixed"], default: "meal_rate" },
     guestMealFixedRate: { type: Number, default: 0, min: 0 }, // minor units
     mealPolicy: { type: String, default: "", maxlength: 2000 },

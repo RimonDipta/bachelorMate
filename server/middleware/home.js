@@ -8,6 +8,7 @@ const { permissionsFor } = require("../lib/permissions");
 const { forbidden, notFound } = require("../lib/http");
 const { finalizeDueDepartures } = require("../services/membership");
 const { syncHome } = require("../services/recurring");
+const { maintainMeals } = require("../services/mealAutomation");
 
 const loadHome = async (req, _res, next) => {
   const { homeId } = req.params;
@@ -19,6 +20,8 @@ const loadHome = async (req, _res, next) => {
   await syncHome(home).catch((err) => console.error("Recurring sync failed:", err.message));
   const membership = await Membership.findOne({ home: home._id, user: req.user._id, status: "active" });
   if (!membership) throw notFound("Home not found");
+  // This month's meal period and today's default meals (throttled per home; never throws).
+  await maintainMeals(home);
   req.home = home;
   req.membership = membership;
   req.perms = permissionsFor(membership, home);

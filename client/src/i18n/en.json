@@ -235,8 +235,8 @@
     "inviteHint": "Share a link — they join straight away.",
     "recurring": "Add rent and monthly bills",
     "recurringHint": "Split automatically every month.",
-    "meals": "Log today's meals",
-    "mealsHint": "Who's eating lunch and dinner.",
+    "meals": "Check today's meal list",
+    "mealsHint": "Filled in from everyone's usual meals — fix who's eating.",
     "bazar": "Record your first bazar",
     "bazarHint": "Sets the meal rate for everyone."
   },
@@ -268,7 +268,8 @@
     "mealRate": "Meal rate",
     "guestsFixed": "Guests at fixed {amount}",
     "rateFormula": "Expenses ÷ total meals",
-    "yourMeals": "Your meals"
+    "yourMeals": "Your meals",
+    "autoPeriodHint": "A new period opens by itself at the start of each month. Close it at the end of the month to post everyone's meal cost."
   },
   "daily": {
     "title": "Daily meal list",
@@ -297,7 +298,8 @@
     "saved": "Meals saved",
     "filled": "Filled {count} member(s) from defaults",
     "allHaveEntry": "Everyone already has an entry",
-    "discardConfirm": "Discard unsaved changes?"
+    "discardConfirm": "Discard unsaved changes?",
+    "autoFilled": "Today's meals were filled in from everyone's usual meals. Change anyone who isn't eating — approved meal-offs are already applied."
   },
   "finance": {
     "desc": "Where the home's money comes from and where it goes.",
@@ -1185,7 +1187,11 @@
       "permissions": "Permissions",
       "danger": "Archive & delete",
       "leave": "Leave"
-    }
+    },
+    "autoFill": "Fill today's meals automatically",
+    "autoFillHint": "Each morning everyone gets their usual meals. People who aren't eating take a meal-off, or the meal manager changes it. Nothing already entered is overwritten.",
+    "autoPeriods": "Open a meal period every month",
+    "autoPeriodsHint": "Starts this month's meal period by itself so the meal rate is always tracked. You still close it yourself."
   },
   "invites": {
     "copied": "Copied to clipboard",
@@ -1906,5 +1912,26 @@
     "verifyText": "Enter the code we emailed you to continue.",
     "verifyTitle": "Verify your email first",
     "pushBlocked": "Notifications are blocked. Allow them in your browser or phone settings."
+  },
+  "feedback": {
+    "menu": "Send feedback",
+    "title": "Send feedback",
+    "desc": "Goes straight to the people building BachelorMate. We read every message.",
+    "send": "Send",
+    "thanks": "Thanks — we read every message.",
+    "kind": "Type of feedback",
+    "kinds": {
+      "problem": "Problem",
+      "idea": "Idea",
+      "praise": "Like it",
+      "other": "Other"
+    },
+    "prompt": {
+      "problem": "What went wrong?",
+      "idea": "What would make it better?",
+      "praise": "What do you like?",
+      "other": "Your message"
+    },
+    "hint": "We include the page you're on so we can find the problem. Don't share passwords."
   }
 }

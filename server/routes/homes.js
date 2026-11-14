@@ -49,6 +49,8 @@ const settingsInput = z
       .refine((a) => new Set(a.map((t) => t.key)).size === a.length, "Meal type keys must be unique"),
     mealOffCutoff: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Use HH:mm"),
     autoApproveMealOff: z.boolean(),
+    autoMealPeriods: z.boolean(),
+    autoFillMeals: z.boolean(),
     guestMealPricing: z.enum(["meal_rate", "fixed"]),
     guestMealFixedRate: moneyInput,
     mealPolicy: z.string().max(2000),
@@ -57,7 +59,7 @@ const settingsInput = z
     rolePermissions: z.object({ manager: permList, meal_manager: permList, member: permList }).partial(),
   })
   .partial();
-const MEAL_SETTING_KEYS = ["mealTypes", "mealOffCutoff", "autoApproveMealOff", "guestMealPricing", "guestMealFixedRate", "mealPolicy", "guestPolicy"];
+const MEAL_SETTING_KEYS = ["mealTypes", "mealOffCutoff", "autoApproveMealOff", "autoMealPeriods", "autoFillMeals", "guestMealPricing", "guestMealFixedRate", "mealPolicy", "guestPolicy"];
 
 const homeInput = z.object({
   name: z.string().trim().min(2).max(80),

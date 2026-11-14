@@ -118,7 +118,8 @@ describe("BachelorMate API", () => {
         name: "Green Villa",
         address: "Road 5, Dhaka",
         type: "bachelor_mess",
-        settings: { rules: ["Keep the kitchen clean", "Quiet after 11pm"], departureNoticeDays: 15 },
+        // Meal automation is covered in mealAutomation.test.js; these tests drive meals by hand.
+        settings: { rules: ["Keep the kitchen clean", "Quiet after 11pm"], departureNoticeDays: 15, autoMealPeriods: false, autoFillMeals: false },
       });
       assert.equal(res.status, 201);
       home = res.body.home;

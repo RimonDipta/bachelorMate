@@ -102,7 +102,7 @@ function RulesTab() {
   );
 }
 
-const MEAL_KEYS = ["mealTypes", "mealOffCutoff", "autoApproveMealOff", "guestMealPricing", "guestMealFixedRate", "mealPolicy", "guestPolicy"];
+const MEAL_KEYS = ["mealTypes", "mealOffCutoff", "autoApproveMealOff", "autoMealPeriods", "autoFillMeals", "guestMealPricing", "guestMealFixedRate", "mealPolicy", "guestPolicy"];
 
 function MealsTab() {
   const { home, homeId, can, currency } = useHome();
@@ -128,6 +128,8 @@ function MealsTab() {
             <Field label={t("homeSettings.guestPolicy")} optional className="full"><Textarea value={d.guestPolicy} maxLength={2000} onChange={(e) => set("guestPolicy", e.target.value)} /></Field>
           </div>
           <SettingRow title={t("homeSettings.autoApprove")} description={t("homeSettings.autoApproveHint")}><Switch checked={d.autoApproveMealOff} onChange={(v) => set("autoApproveMealOff", v)} label={t("homeSettings.autoApprove")} disabled={!editable} /></SettingRow>
+          <SettingRow title={t("homeSettings.autoFill")} description={t("homeSettings.autoFillHint")}><Switch checked={d.autoFillMeals !== false} onChange={(v) => set("autoFillMeals", v)} label={t("homeSettings.autoFill")} disabled={!editable} /></SettingRow>
+          <SettingRow title={t("homeSettings.autoPeriods")} description={t("homeSettings.autoPeriodsHint")}><Switch checked={d.autoMealPeriods !== false} onChange={(v) => set("autoMealPeriods", v)} label={t("homeSettings.autoPeriods")} disabled={!editable} /></SettingRow>
         </Card>
       </fieldset>
       {editable && <SaveBar dirty={dirty} loading={save.isPending} onSave={() => save.mutate()} onReset={reset} />}

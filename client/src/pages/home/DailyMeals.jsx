@@ -6,7 +6,7 @@ import { useHome } from "../../context/HomeContext";
 import { useAction } from "../../lib/hooks";
 import { useT } from "../../i18n/I18nProvider";
 import { Alert, Avatar, Button, Card, EmptyState, ErrorState, Input, LoadingBlock, PageHeader, Segmented, Badge } from "../../components/ui";
-import { addDays, fmtDay, fmtDayLong, localDay, mealTotal, mealTypeLabel, num } from "../../lib/format";
+import { addDays, fmtDay, fmtDayLong, localDay, mealTotal, mealTypeLabel, num, periodName } from "../../lib/format";
 
 function Counter({ value, onChange, disabled, dirty, label }) {
   const t = useT();
@@ -20,7 +20,7 @@ function Counter({ value, onChange, disabled, dirty, label }) {
 }
 
 export default function DailyMeals() {
-  const { homeId, can } = useHome();
+  const { homeId, home, can } = useHome();
   const t = useT();
   const editable = can("meals.manage");
   const [mode, setMode] = useState("day");
@@ -93,7 +93,8 @@ export default function DailyMeals() {
           </div>
         )}
       </div>
-      {closed && <Alert tone="neutral" icon={Lock}>{t("daily.closedDay", { name: closed.name })}</Alert>}
+      {home.settings.autoFillMeals !== false && mode === "day" && day === localDay() && !closed && <Alert tone="info" icon={Wand2}>{t("daily.autoFilled")}</Alert>}
+      {closed && <Alert tone="neutral" icon={Lock}>{t("daily.closedDay", { name: periodName(closed.name) })}</Alert>}
 
       <Card title={mode === "day" ? fmtDayLong(day) : `${fmtDay(range.from)} – ${fmtDay(range.to)}`} actions={mode === "day" && <Badge>{t("daily.mealsCount", { count: totals.reduce((a, x) => a + x.meals, 0) })} · {t("daily.guestsCount", { count: totals.reduce((a, x) => a + x.guests, 0) })}</Badge>}>
         {isLoading ? <LoadingBlock /> : error ? <ErrorState error={error} retry={refetch} /> : !data.members.length ? (
