@@ -7,6 +7,8 @@ import { ThemeProvider } from "./context/ThemeContext";
 import { ToastProvider } from "./context/ToastContext";
 import { RealtimeProvider } from "./context/RealtimeContext";
 import App from "./App";
+import { installGlobalErrorHandlers } from "./lib/errorReporting";
+import { registerServiceWorker } from "./lib/pwa";
 import "./styles/app.css";
 
 const queryClient = new QueryClient({
@@ -19,6 +21,9 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+installGlobalErrorHandlers();
+registerServiceWorker();
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>

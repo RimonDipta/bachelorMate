@@ -1,4 +1,5 @@
 const express = require("express");
+const env = require("../config/env");
 const User = require("../models/User");
 const { ACCENTS } = require("../models/User");
 const { NOTIFICATION_TYPES } = require("../models/Misc");
@@ -8,6 +9,7 @@ const { escapeRegex } = require("../lib/security");
 const { makeUploader, removeUpload } = require("../middleware/upload");
 const { deleteByUrl } = require("../services/storage");
 const realtime = require("../services/realtime");
+const { exportUserData, deleteAccount, deletionBlockers } = require("../services/account");
 
 const router = express.Router();
 const avatarUpload = makeUploader("avatar");
@@ -51,6 +53,32 @@ router.delete("/me/avatar", async (req, res) => {
   await req.user.save();
   res.json({ user: req.user });
 });
+
+// ---------- your data ----------
+router.get("/me/export", async (req, res) => {
+  const data = await exportUserData(req.user);
+  res.setHeader("Content-Disposition", `attachment; filename="bachelormate-data-${new Date().toISOString().slice(0, 10)}.json"`);
+  res.setHeader("Cache-Control", "no-store");
+  res.type("application/json").send(JSON.stringify(data, null, 2));
+});
+
+router.get("/me/deletion-check", async (req, res) => {
+  res.json({ blockers: await deletionBlockers(req.user) });
+});
+
+router.delete(
+  "/me",
+  validate({ body: z.object({ password: z.string().max(200).optional(), confirm: z.literal("DELETE") }) }),
+  async (req, res) => {
+    const user = await User.findById(req.user._id).select("+passwordHash");
+    // Password accounts confirm with their password; Google accounts with the typed word.
+    if (user.passwordHash && !(await user.validatePassword(req.v.body.password || ""))) throw badRequest("That password isn't right");
+    await deleteAccount(user);
+    // Sessions are already revoked; this just tidies the browser.
+    res.clearCookie("bm_rt", { httpOnly: true, secure: env.COOKIE_SECURE, sameSite: env.COOKIE_SAMESITE, path: "/api/auth" });
+    res.json({ ok: true });
+  }
+);
 
 router.patch(
   "/me/preferences",

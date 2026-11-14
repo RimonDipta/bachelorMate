@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, cloneElement } from "react";
+import { createContext, useContext, useEffect, useId, useRef, useState, cloneElement } from "react";
 import { createPortal } from "react-dom";
 import { Loader2, X, Inbox, AlertTriangle } from "lucide-react";
 import { assetUrl } from "../../lib/api";
@@ -15,25 +15,50 @@ export function Button({ variant = "secondary", size, icon: Icon, iconRight: Ico
   );
 }
 
+// Lets an Input/Textarea/Select nested in a wrapper (e.g. an icon input-group)
+// take its Field's id, so the <label> is always linked to the real control.
+const FieldContext = createContext(null);
+
 export function Field({ label, hint, error, children, className = "", optional }) {
-  const id = useId();
-  const child = children && typeof children === "object" && !Array.isArray(children) ? cloneElement(children, { id: children.props.id || id, "aria-invalid": error ? "true" : undefined }) : children;
+  const autoId = useId();
+  const single = children && typeof children === "object" && !Array.isArray(children);
+  const id = (single && children.props.id) || autoId;
+  const noteId = `${id}-note`;
+  const describedBy = error || hint ? noteId : undefined;
+  const isControl = single && [Input, Textarea, Select, "input", "select", "textarea"].includes(children.type);
+  const child = isControl
+    ? cloneElement(children, { id, "aria-invalid": error ? "true" : undefined, "aria-describedby": children.props["aria-describedby"] || describedBy })
+    : children;
   return (
-    <div className={`field ${className}`}>
-      {label && (
-        <label className="label" htmlFor={children?.props?.id || id}>
-          {label} {optional && <span className="subtle" style={{ fontWeight: 400 }}>(optional)</span>}
-        </label>
-      )}
-      {child}
-      {error ? <span className="error-text">{error}</span> : hint ? <span className="hint">{hint}</span> : null}
-    </div>
+    <FieldContext.Provider value={isControl ? null : { id, invalid: Boolean(error), describedBy }}>
+      <div className={`field ${className}`}>
+        {label && (
+          <label className="label" htmlFor={id}>
+            {label} {optional && <span className="subtle" style={{ fontWeight: 400 }}>(optional)</span>}
+          </label>
+        )}
+        {child}
+        {error ? <span className="error-text" id={noteId}>{error}</span> : hint ? <span className="hint" id={noteId}>{hint}</span> : null}
+      </div>
+    </FieldContext.Provider>
   );
 }
 
-export const Input = (props) => <input className="input" {...props} />;
-export const Textarea = (props) => <textarea className="textarea" {...props} />;
-export function Select({ options = [], children, ...props }) {
+/** A control nested inside a Field wrapper picks up the Field's id (unless it has its own). */
+function useFieldProps(props) {
+  const ctx = useContext(FieldContext);
+  if (!ctx || props.id) return props;
+  return { id: ctx.id, "aria-invalid": ctx.invalid ? "true" : undefined, "aria-describedby": ctx.describedBy, ...props };
+}
+
+export function Input(props) {
+  return <input className="input" {...useFieldProps(props)} />;
+}
+export function Textarea(props) {
+  return <textarea className="textarea" {...useFieldProps(props)} />;
+}
+export function Select({ options = [], children, ...rest }) {
+  const props = useFieldProps(rest);
   return (
     <select className="select" {...props}>
       {children}
@@ -92,7 +117,7 @@ export function Avatar({ user, size = 32, online }) {
   const src = user?.avatarUrl && !broken ? assetUrl(user.avatarUrl) : null;
   return (
     <span className="avatar" style={{ width: size, height: size, fontSize: Math.max(10, size * 0.38) }} title={user?.name}>
-      {src ? <img src={src} alt="" onError={() => setBroken(true)} /> : initials(user?.name)}
+      {src ? <img src={src} alt="" onError={() => setBroken(true)} /> : <span aria-hidden="true" className="initials" data-initials={initials(user?.name)} />}
       {online !== undefined && online && <span className="dot dot-online" />}
     </span>
   );
@@ -100,10 +125,17 @@ export function Avatar({ user, size = 32, online }) {
 
 export function Modal({ open, onClose, title, description, children, footer, size }) {
   const ref = useRef(null);
+  // Keep the latest onClose without re-running the open/focus effect: callers often pass
+  // a new arrow function every render, which used to yank focus back to the first field
+  // on every keystroke.
+  const closeRef = useRef(onClose);
+  useEffect(() => {
+    closeRef.current = onClose;
+  });
   useEffect(() => {
     if (!open) return;
     const prev = document.activeElement;
-    const onKey = (e) => e.key === "Escape" && onClose?.();
+    const onKey = (e) => e.key === "Escape" && closeRef.current?.();
     document.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
     setTimeout(() => ref.current?.querySelector("input, select, textarea, button:not([data-close])")?.focus(), 30);
@@ -112,7 +144,7 @@ export function Modal({ open, onClose, title, description, children, footer, siz
       document.body.style.overflow = "";
       prev?.focus?.();
     };
-  }, [open, onClose]);
+  }, [open]);
   if (!open) return null;
   return createPortal(
     <div className="modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose?.()}>

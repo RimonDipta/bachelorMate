@@ -5,6 +5,16 @@ const { connectDB } = require("./config/db");
 const app = require("./app");
 const { initSockets } = require("./sockets");
 
+const { reportError, flush } = require("./lib/monitoring");
+
+// Last-resort handlers: record the problem instead of dying silently.
+process.on("unhandledRejection", (reason) => reportError(reason instanceof Error ? reason : new Error(String(reason)), { source: "unhandledRejection" }));
+process.on("uncaughtException", async (err) => {
+  reportError(err, { source: "uncaughtException" });
+  await flush();
+  process.exit(1);
+});
+
 async function start() {
   await connectDB();
 
@@ -20,7 +30,7 @@ async function start() {
 
   // Post due recurring costs now and then hourly, even for homes nobody opens.
   const { syncAllHomes } = require("./services/recurring");
-  const sweep = () => syncAllHomes().catch((err) => console.error("Recurring sweep failed:", err.message));
+  const sweep = () => syncAllHomes().catch((err) => reportError(err, { source: "recurring-sweep" }));
   sweep();
   setInterval(sweep, 60 * 60 * 1000).unref();
 
@@ -28,6 +38,8 @@ async function start() {
   const mail = require("./lib/mailer").mailDiagnostics();
   console.log(`Email: ${mail.provider}${mail.key ? ` · key ${mail.key}` : ""} · from ${mail.from}`);
   mail.warnings.forEach((w) => console.warn(`Email warning: ${w}`));
+  console.log(`Push notifications: ${require("./services/push").enabled() ? "on" : "off (set VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY)"}`);
+  console.log(`Error tracking: ${require("./lib/monitoring").enabled() ? "Sentry + logs" : "logs only (set SENTRY_DSN to add Sentry)"}`);
 
   const server = http.createServer(app);
   initSockets(server);

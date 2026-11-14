@@ -53,6 +53,14 @@ const env = {
   // When on, unverified accounts can browse but can't create/join homes,
   // post listings or write reviews. Defaults on in production.
   REQUIRE_EMAIL_VERIFICATION: bool(process.env.REQUIRE_EMAIL_VERIFICATION, isProd),
+  // Optional web push (npx web-push generate-vapid-keys). Empty = push off.
+  VAPID_PUBLIC_KEY: clean(process.env.VAPID_PUBLIC_KEY),
+  VAPID_PRIVATE_KEY: clean(process.env.VAPID_PRIVATE_KEY),
+  VAPID_SUBJECT: clean(process.env.VAPID_SUBJECT),
+  // Optional error tracking (sentry.io free plan). Leave empty to only log errors.
+  SENTRY_DSN: clean(process.env.SENTRY_DSN),
+  // Identifies the deployed version in error reports (Render sets RENDER_GIT_COMMIT).
+  RELEASE: clean(process.env.RELEASE || process.env.RENDER_GIT_COMMIT)?.slice(0, 12),
   REVIEW_MIN_STAY_DAYS: process.env.REVIEW_MIN_STAY_DAYS !== undefined ? Number(process.env.REVIEW_MIN_STAY_DAYS) : isTest ? 0 : 7,
 };
 

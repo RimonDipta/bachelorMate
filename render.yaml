@@ -41,4 +41,11 @@ services:
         value: "true"
       - key: REVIEW_MIN_STAY_DAYS
         value: "7"
+      # Optional extras (all free):
+      - key: VAPID_PUBLIC_KEY
+        sync: false # push notifications: run `npx web-push generate-vapid-keys` once
+      - key: VAPID_PRIVATE_KEY
+        sync: false # keep secret; changing it signs everyone's devices out of push
+      - key: SENTRY_DSN
+        sync: false # sentry.io free plan; leave empty to only log errors
       # Optional: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS (instead of Resend), FIREBASE_PROJECT_ID

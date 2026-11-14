@@ -5,6 +5,7 @@ const User = require("../models/User");
 const Membership = require("../models/Membership");
 const { permissionsFor } = require("../lib/permissions");
 const realtime = require("./realtime");
+const { pushToUsers } = require("./push");
 const { sendMail, esc } = require("../lib/mailer");
 const env = require("../config/env");
 
@@ -41,6 +42,10 @@ async function notify(userIds, payload) {
   }
   const created = docs.length ? await Notification.insertMany(docs) : [];
   for (const n of created) realtime.toUser(n.user, "notification:new", n);
+  // Phone/desktop push for installed apps (no-op unless push keys are configured).
+  if (created.length) {
+    pushToUsers(created.map((n) => n.user), { title: payload.title, body: payload.body?.slice(0, 180), url: payload.link || "/notifications", tag: payload.type }).catch(() => {});
+  }
 
   const wantsEmail = payload.email ?? EMAIL_TYPES.has(payload.type);
   if (wantsEmail) {

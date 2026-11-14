@@ -42,3 +42,11 @@ server/.dev-db/
 # Private notes and local tooling (not published)
 docs/
 .claude/
+
+# Database backups (encrypted, but still never commit them)
+backups/
+*.bmbak
+
+# Browser test output
+e2e/test-results/
+e2e/playwright-report/

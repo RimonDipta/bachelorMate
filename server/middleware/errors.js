@@ -1,5 +1,6 @@
 const env = require("../config/env");
 const { HttpError } = require("../lib/http");
+const { reportError } = require("../lib/monitoring");
 
 const notFound = (req, res) => {
   res.status(404).json({ message: `Route not found: ${req.method} ${req.originalUrl}` });
@@ -37,9 +38,14 @@ const errorHandler = (err, req, res, _next) => {
     message = "Request body too large";
   }
 
-  if (status >= 500 && !env.isTest) console.error(`[${req.method} ${req.originalUrl}]`, err);
+  // Server faults get a short reference id the user can quote when reporting a problem.
+  let ref;
+  if (status >= 500) {
+    ref = reportError(err, { method: req.method, path: req.originalUrl.split("?")[0], userId: req.user?._id });
+    message = `Something went wrong on our side (ref ${ref}). Please try again.`;
+  }
   // Internal error details are never leaked to clients.
-  res.status(status).json({ message, ...(code ? { code } : {}), ...(details ? { details } : {}) });
+  res.status(status).json({ message, ...(code ? { code } : {}), ...(details ? { details } : {}), ...(ref ? { ref } : {}) });
 };
 
 module.exports = { notFound, errorHandler };

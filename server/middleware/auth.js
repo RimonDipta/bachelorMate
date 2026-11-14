@@ -11,7 +11,7 @@ async function authenticateToken(token) {
     throw unauthorized(err.name === "TokenExpiredError" ? "Session expired" : "Invalid token");
   }
   const user = await User.findById(payload.sub);
-  if (!user || (user.tokenVersion || 0) !== payload.tv) throw unauthorized("Session is no longer valid");
+  if (!user || user.deletedAt || (user.tokenVersion || 0) !== payload.tv) throw unauthorized("Session is no longer valid");
   return user;
 }
 

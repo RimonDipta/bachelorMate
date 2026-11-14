@@ -1,13 +1,15 @@
-import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { Camera, Trash2, Monitor, Sun, Moon, Check, ShieldCheck, LogOut, MailCheck, Mail } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { Camera, Trash2, Monitor, Sun, Moon, Check, ShieldCheck, LogOut, MailCheck, Mail, Download } from "lucide-react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme, ACCENTS } from "../../context/ThemeContext";
 import { useToast } from "../../context/ToastContext";
 import { useAction } from "../../lib/hooks";
-import { Alert, Avatar, Badge, Button, Card, ConfirmDialog, Field, Input, PageHeader, SettingRow, Switch, Tabs, Textarea, Segmented } from "../../components/ui";
+import { Alert, Avatar, Badge, Button, Card, ConfirmDialog, Field, FormModal, Input, PageHeader, SettingRow, Switch, Tabs, Textarea, Segmented } from "../../components/ui";
 import { passwordChecks, PasswordHints } from "../auth/Register";
+import { disablePush, enablePush, getPushState } from "../../lib/pwa";
 
 function Profile() {
   const { user, setUser } = useAuth();
@@ -155,6 +157,45 @@ const NOTIF_GROUPS = [
   ["Social", [["friend_request", "Friend requests"], ["friend_accepted", "Accepted friend requests"], ["message", "Messages while offline"]]],
 ];
 
+const PUSH_HINT = {
+  "needs-install": "On iPhone, notifications work in the installed app. Use “Install the app” from your account menu, then turn this on there.",
+  unsupported: "This browser doesn't support notifications.",
+  "off-server": "Push notifications haven't been set up on the server yet.",
+  denied: "Notifications are blocked for this site. Allow them in your browser or phone settings, then come back.",
+};
+
+function DevicePush() {
+  const toast = useToast();
+  const [state, setState] = useState("loading");
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    getPushState().then((s) => alive && setState(s)).catch(() => alive && setState("unsupported"));
+    return () => { alive = false; };
+  }, []);
+  const toggle = async (on) => {
+    setBusy(true);
+    try {
+      if (on) await enablePush();
+      else await disablePush();
+      setState(on ? "on" : "off");
+      if (on) toast.success("Notifications are on for this device");
+    } catch (e) {
+      toast.error(e.message);
+      setState(await getPushState().catch(() => "off"));
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <Card pad title="This device">
+      <SettingRow title="Push notifications" description={PUSH_HINT[state] || "Get alerts on this phone or computer, even when BachelorMate is closed."}>
+        <Switch checked={state === "on"} disabled={busy || !["on", "off"].includes(state)} onChange={toggle} label="Push notifications on this device" />
+      </SettingRow>
+    </Card>
+  );
+}
+
 function NotificationPrefs() {
   const { user, setUser } = useAuth();
   const muted = user.notificationPrefs?.muted || [];
@@ -168,6 +209,7 @@ function NotificationPrefs() {
   const toggle = (type, on) => apply({ muted: on ? muted.filter((m) => m !== type) : [...muted, type] });
   return (
     <div className="stack">
+      <DevicePush />
       <Card pad title="Email">
         <SettingRow title="Email notifications" description="Important updates — invitations, departures, reminders, important announcements — are also emailed.">
           <Switch checked={email} onChange={(v) => apply({ email: v })} label="Email notifications" />
@@ -184,10 +226,92 @@ function NotificationPrefs() {
   );
 }
 
+function YourData() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const toast = useToast();
+  const [downloading, setDownloading] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [f, setF] = useState({ password: "", confirm: "" });
+  const [error, setError] = useState("");
+  const { data: check, isLoading: checking } = useQuery({ queryKey: ["deletion-check"], queryFn: () => api.get("/users/me/deletion-check"), enabled: open });
+  const blockers = check?.blockers || [];
+  const google = user.provider === "google";
+
+  const download = async () => {
+    setDownloading(true);
+    try {
+      await api.download("/users/me/export", null, `bachelormate-data-${new Date().toISOString().slice(0, 10)}.json`);
+    } catch (e) {
+      toast.error(e);
+    } finally {
+      setDownloading(false);
+    }
+  };
+  const del = useAction(() => api.del("/users/me", { password: f.password || undefined, confirm: f.confirm }), {
+    onSuccess: async () => {
+      // Leave the signed-in area first so the sign-in redirect doesn't kick in.
+      navigate("/", { replace: true });
+      await logout();
+      toast.success("Your account has been deleted.");
+    },
+    onError: (e) => setError(e.message),
+  });
+  const close = () => { setOpen(false); setError(""); setF({ password: "", confirm: "" }); };
+
+  return (
+    <div className="stack">
+      <Card pad title="Download your data">
+        <div className="row between wrap" style={{ gap: 12 }}>
+          <p className="text-sm muted grow" style={{ minWidth: 220 }}>Your profile, homes, payments, meals, requests, messages and reviews, as a JSON file.</p>
+          <Button icon={Download} loading={downloading} onClick={download}>Download</Button>
+        </div>
+      </Card>
+      <Card pad title="Delete account">
+        <div className="row between wrap" style={{ gap: 12 }}>
+          <p className="text-sm muted grow" style={{ minWidth: 220 }}>
+            Permanently erases your profile, messages, reviews and friends. Payments and meals you were part of stay in your old homes&apos; records as &ldquo;Deleted user&rdquo;, so their accounts still add up.
+          </p>
+          <Button variant="danger-ghost" icon={Trash2} onClick={() => setOpen(true)}>Delete account</Button>
+        </div>
+      </Card>
+      <FormModal
+        open={open}
+        onClose={close}
+        danger
+        title="Delete your account?"
+        description="This can't be undone."
+        submitLabel="Delete my account"
+        loading={del.isPending}
+        disabled={checking || blockers.length > 0 || f.confirm !== "DELETE" || (!google && !f.password)}
+        onSubmit={() => { setError(""); del.mutate(); }}
+      >
+        {checking ? <p className="text-sm muted">Checking your homes…</p> : blockers.length > 0 ? (
+          <Alert tone="warning">
+            You still live with others in {blockers.map((b, i) => (
+              <span key={b.homeId}>{i > 0 && ", "}<Link to={`/h/${b.homeId}/settings`} onClick={close}>{b.name}</Link></span>
+            ))}. Leave {blockers.length > 1 ? "those homes" : "it"} first{blockers.some((b) => b.admin) ? " — hand over Admin to another member before leaving" : ""}.
+          </Alert>
+        ) : (
+          <>
+            {error && <Alert tone="danger">{error}</Alert>}
+            <Field label="Your password" optional={google} hint={google ? "Only needed if you've set one." : undefined}>
+              <Input type="password" autoComplete="current-password" value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} />
+            </Field>
+            <Field label="Type DELETE to confirm">
+              <Input value={f.confirm} autoComplete="off" autoCapitalize="characters" spellCheck={false} onChange={(e) => setF({ ...f, confirm: e.target.value })} />
+            </Field>
+          </>
+        )}
+      </FormModal>
+    </div>
+  );
+}
+
 export default function AccountSettings() {
   const { tab = "profile" } = useParams();
   const navigate = useNavigate();
-  const tabs = [{ value: "profile", label: "Profile" }, { value: "appearance", label: "Appearance" }, { value: "security", label: "Security" }, { value: "notifications", label: "Notifications" }];
+  const tabs = [{ value: "profile", label: "Profile" }, { value: "appearance", label: "Appearance" }, { value: "security", label: "Security" }, { value: "notifications", label: "Notifications" }, { value: "data", label: "Your data" }];
   return (
     <main className="content content-narrow">
       <PageHeader title="Account settings" />
@@ -196,6 +320,7 @@ export default function AccountSettings() {
       {tab === "appearance" && <Appearance />}
       {tab === "security" && <Security />}
       {tab === "notifications" && <NotificationPrefs />}
+      {tab === "data" && <YourData />}
     </main>
   );
 }

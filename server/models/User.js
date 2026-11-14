@@ -37,6 +37,9 @@ const userSchema = new mongoose.Schema(
     },
     lastActiveHome: { type: mongoose.Schema.Types.ObjectId, ref: "Home" },
     lastSeenAt: { type: Date },
+    // Set when the person deletes their account; the record stays (anonymised)
+    // so shared money history in their old homes still adds up.
+    deletedAt: { type: Date },
   },
   { timestamps: true }
 );

@@ -124,6 +124,9 @@ Without SMTP settings, emails (verification, reset, invitations) are printed to 
 | `UPLOAD_DIR`, `MAX_UPLOAD_MB` | | Where avatars and receipts are stored, and the size limit |
 | `SERVE_CLIENT` | | `true` to serve `client/dist` from the API (one-service deploy) |
 | `SEED_DEMO`, `DEMO_PASSWORD` | | Seed the demo home on first start, and its password |
+| `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | | Push notifications for the installed app. Generate once with `npx web-push generate-vapid-keys`. Empty = push off |
+| `SENTRY_DSN` | | Send server errors and browser crashes to Sentry (free plan). Errors are always logged as JSON lines either way |
+| `BACKUP_PASSPHRASE` | | Encrypts database backups (`npm --prefix server run backup`). At least 12 characters; without it backups can't be opened |
 
 **client/.env**
 
@@ -152,7 +155,7 @@ The legacy collections are only read, never modified. Re-running skips families 
 ```bash
 npm --prefix server test
 ```
-The suite runs 67 tests (API integration, recurring costs, email codes, uploads, listings, reviews, demo seed and unit) against an in-memory MongoDB replica set. They cover registration, login, email verification, password reset and change, refresh rotation and reuse detection, multiple homes, link/code/in-app joining, approvals, usage limits, revocation, IDOR isolation, role and permission escalation attempts, meal grids and defaults, meal-rate maths, period close/reopen with ledger reversal, payments, expenses with exact splits, edit audit, voiding, reversals, CSV reports, meal-off, guest and departure requests with notice exceptions, home chat access control, editing and deleting messages, friends and DMs, notifications, announcements, grocery-to-expense, dashboard, calendar, member removal, ownership transfer, archiving and deletion.
+The suite runs 86 tests (API integration, recurring costs, email codes, uploads, listings, reviews, backups, account export and deletion, push, demo seed and unit) against an in-memory MongoDB replica set. They cover registration, login, email verification, password reset and change, refresh rotation and reuse detection, multiple homes, link/code/in-app joining, approvals, usage limits, revocation, IDOR isolation, role and permission escalation attempts, meal grids and defaults, meal-rate maths, period close/reopen with ledger reversal, payments, expenses with exact splits, edit audit, voiding, reversals, CSV reports, meal-off, guest and departure requests with notice exceptions, home chat access control, editing and deleting messages, friends and DMs, notifications, announcements, grocery-to-expense, dashboard, calendar, member removal, ownership transfer, archiving and deletion.
 
 Client checks:
 ```bash
@@ -161,6 +164,16 @@ npm --prefix client run lint
 ```bash
 npm --prefix client run build
 ```
+
+Browser tests (Playwright, desktop and phone, with automatic WCAG AA accessibility checks) run against the built client and a throwaway database:
+```bash
+npm --prefix e2e ci && npx --prefix e2e playwright install chromium
+```
+```bash
+npm --prefix client run build && npm --prefix e2e test
+```
+
+GitHub Actions runs all of this on every push (`.github/workflows/ci.yml`), plus `npm audit` for high/critical advisories.
 
 ## Demo accounts
 
@@ -184,6 +197,14 @@ Setting `SEED_DEMO=true` seeds the demo automatically on server start, once.
 Recommended: **MongoDB Atlas** (free cluster) + **Render**, set up in one step from [`render.yaml`](render.yaml) (Render → New → Blueprint). Fill in `MONGO_URI`, `CLIENT_URL` and `CORS_ORIGINS`, then add an email provider (see Environment variables).
 
 Socket.IO needs a long-running Node process, so the API can't run on Vercel serverless functions. The recommended setup is a single Render service where the API also serves the built client (`SERVE_CLIENT=true`): one URL, first-party cookies and native WebSockets. Hosting the frontend on Vercel with the API on Render is also supported: set `SERVE_CLIENT=false`, point the rewrites in `client/vercel.json` at the API, and set `VITE_SOCKET_URL` to the API origin. `server/vercel.json` and `server/api/` are legacy and not used by either setup.
+
+## Operations (free)
+
+* **Install as an app.** BachelorMate is an installable web app: "Install the app" in the account menu (Android, desktop) or Share → Add to Home Screen (iPhone). Push notifications work once `VAPID_*` keys are set.
+* **Uptime + keep-awake.** `.github/workflows/uptime.yml` pings `/api/health` every 10 minutes (which also stops Render's free instance from sleeping) and fails — so GitHub emails you — when the app or database is down. Set the repository variable `APP_URL`.
+* **Backups.** `.github/workflows/backup.yml` makes a nightly AES-256 encrypted backup and keeps it 30 days as a workflow artifact. Add the repository secrets `MONGO_URI` and `BACKUP_PASSPHRASE`. To restore, download the artifact and run `npm --prefix server run restore -- <file> --dry-run`; restoring refuses to overwrite existing data unless you add `--replace`.
+* **Errors.** Every 500 gets a short reference id shown to the user and logged; browser crashes are reported to `/api/client-errors`. Add `SENTRY_DSN` to collect them in Sentry.
+* **Your data.** Settings → Your data lets people download everything stored about them and delete their account (anonymised so shared home accounts stay correct).
 
 ## Known limitations
 

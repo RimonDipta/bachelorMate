@@ -2,12 +2,14 @@ import { Suspense, useState } from "react";
 import { NavLink, Outlet, useLocation, useMatch, useNavigate, Link } from "react-router-dom";
 import ErrorBoundary from "../ErrorBoundary";
 import NetworkStatus from "../NetworkStatus";
+import InstallAppDialog from "../InstallApp";
+import { useInstallPrompt } from "../../lib/pwa";
 import BrandMark from "../BrandMark";
 import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard, UtensilsCrossed, CalendarDays, ClipboardList, Wallet, Receipt, ArrowLeftRight, MessagesSquare,
   Megaphone, ShoppingBasket, Users, UserPlus, BarChart3, History, Settings, Bell, Menu as MenuIcon, ChevronsUpDown, ChevronDown,
-  Plus, LogIn, House, UserRound, Palette, LogOut, Moon, Sun, MessageCircle, Mail, Check, CircleUserRound, Repeat, X, DoorOpen, Star, Search,
+  Plus, LogIn, House, UserRound, Palette, LogOut, Moon, Sun, MessageCircle, Mail, Check, CircleUserRound, Repeat, X, DoorOpen, Star, Search, Smartphone,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../context/AuthContext";
@@ -27,8 +29,8 @@ function HomeSwitcher({ homes, current, onNavigate }) {
       align="start"
       width={232}
       trigger={
-        <button className="nav-link" style={{ border: "1px solid var(--border)", background: "var(--surface)", width: "100%", cursor: "pointer", padding: "6px 8px" }} aria-label="Switch home">
-          <span className="home-mark" style={{ width: 26, height: 26, borderRadius: 7, fontSize: 11 }}>{current ? initials(current.name) : <House size={14} />}</span>
+        <button className="nav-link" style={{ border: "1px solid var(--border)", background: "var(--surface)", width: "100%", cursor: "pointer", padding: "6px 8px" }} aria-label={`Switch home: ${current?.name || "Choose a home"}`}>
+          <span aria-hidden="true" className="home-mark" style={{ width: 26, height: 26, borderRadius: 7, fontSize: 11 }}>{current ? <span className="initials" data-initials={initials(current.name)} /> : <House size={14} />}</span>
           <span className="grow truncate" style={{ textAlign: "left", color: "var(--text)" }}>{current?.name || "Choose a home"}</span>
           <ChevronsUpDown size={14} />
         </button>
@@ -38,7 +40,7 @@ function HomeSwitcher({ homes, current, onNavigate }) {
       {active.length === 0 && <div className="menu-item subtle" style={{ cursor: "default" }}>No homes yet</div>}
       {active.map((h) => (
         <MenuItem key={h._id} onClick={() => { navigate(`/h/${h._id}`); onNavigate?.(); }}>
-          <span className="home-mark" style={{ width: 22, height: 22, borderRadius: 6, fontSize: 10 }}>{initials(h.name)}</span>
+          <span aria-hidden="true" className="home-mark" style={{ width: 22, height: 22, borderRadius: 6, fontSize: 10 }}><span className="initials" data-initials={initials(h.name)} /></span>
           <span className="grow truncate">{h.name}</span>
           {current?._id === h._id && <Check size={14} />}
         </MenuItem>
@@ -57,7 +59,10 @@ function AccountMenu({ user, trigger, align = "start", counts = {} }) {
   const navigate = useNavigate();
   const theme = useTheme();
   const dark = theme.resolved === "dark";
+  const app = useInstallPrompt();
+  const [installOpen, setInstallOpen] = useState(false);
   return (
+    <>
     <Menu align={align} width={248} trigger={trigger}>
       <div className="row-3" style={{ padding: "8px 10px 10px" }}>
         <Avatar user={user} size={34} />
@@ -78,9 +83,12 @@ function AccountMenu({ user, trigger, align = "start", counts = {} }) {
       <MenuItem icon={Palette} onClick={() => navigate("/settings/appearance")}>Appearance</MenuItem>
       <MenuItem icon={dark ? Sun : Moon} onClick={() => theme.update({ mode: dark ? "light" : "dark" })}>{dark ? "Light mode" : "Dark mode"}</MenuItem>
       <MenuItem icon={Settings} onClick={() => navigate("/settings/security")}>Account settings</MenuItem>
+      {app.canInstall && <MenuItem icon={Smartphone} onClick={() => setInstallOpen(true)}>Install the app</MenuItem>}
       <div className="menu-sep" />
       <MenuItem icon={LogOut} danger onClick={async () => { await logout(); navigate("/login"); }}>Sign out</MenuItem>
     </Menu>
+    <InstallAppDialog open={installOpen} onClose={() => setInstallOpen(false)} />
+    </>
   );
 }
 
@@ -154,7 +162,7 @@ export default function AppShell() {
             user={user}
             counts={counts}
             trigger={
-              <button className="sidebar-account" aria-label="Account menu">
+              <button className="sidebar-account" aria-label={`${user.name}, account menu`}>
                 <Avatar user={user} size={28} />
                 <span className="grow truncate" style={{ textAlign: "left" }}>
                   <span className="strong text-sm truncate" style={{ display: "block", color: "var(--text)" }}>{user.name}</span>

@@ -1,6 +1,7 @@
 // Express application (no listen) – shared by server.js, serverless and tests.
 const path = require("path");
 const express = require("express");
+const mongoose = require("mongoose");
 const helmet = require("helmet");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
@@ -47,7 +48,9 @@ if (env.SERVE_CLIENT) {
   const dist = path.resolve(__dirname, "..", "client", "dist");
   const fs = require("fs");
   if (fs.existsSync(path.join(dist, "index.html"))) {
-    app.use(express.static(dist, { index: false, maxAge: "1y", setHeaders: (res, file) => file.endsWith(".html") && res.setHeader("Cache-Control", "no-cache") }));
+    // Hashed build assets are cached for a year; the page, service worker and manifest are always revalidated.
+    const revalidate = /(\.html|sw\.js|\.webmanifest|theme-init\.js)$/;
+    app.use(express.static(dist, { index: false, maxAge: "1y", setHeaders: (res, file) => revalidate.test(file) && res.setHeader("Cache-Control", "no-cache") }));
     app.get(/^\/(?!api\/|uploads\/|socket\.io\/|health$).*/, (req, res, next) => {
       if (!req.accepts("html")) return next();
       res.setHeader("Cache-Control", "no-cache");
@@ -69,13 +72,22 @@ app.use(express.urlencoded({ extended: false, limit: "200kb" }));
 app.use(cookieParser());
 if (!env.isTest) app.use(morgan(env.isProd ? "combined" : "dev"));
 
+// Health check for Render and uptime monitors: 200 when the database is reachable, 503 otherwise.
+app.get(["/health", "/api/health"], async (_req, res) => {
+  let db = "down";
+  try {
+    await connectDB();
+    await mongoose.connection.db.admin().ping();
+    db = "up";
+  } catch { /* reported below */ }
+  res.status(db === "up" ? 200 : 503).json({ status: db === "up" ? "ok" : "degraded", db, mail: mailProvider(), uptime: Math.round(process.uptime()) });
+});
+
 // Ensure the DB is connected (cheap after the first call; serverless-friendly).
 app.use(async (_req, _res, next) => {
   await connectDB();
   next();
 });
-
-app.get(["/health", "/api/health"], (_req, res) => res.json({ status: "ok", mail: mailProvider() }));
 
 // Avatars are public; receipts are served through an authorised route.
 app.use(
@@ -92,10 +104,13 @@ app.use("/api/auth", require("./routes/auth"));
 app.use("/api", require("./routes/files"));
 // Public seat listings can be browsed without an account.
 app.use("/api/public", require("./routes/publicListings"));
+// Browser crash reports (logged, and sent to Sentry when configured).
+app.use("/api", require("./routes/clientErrors"));
 
 // Everything below requires authentication.
 app.use("/api", protect);
 app.use("/api/users", require("./routes/users"));
+app.use("/api", require("./routes/push"));
 app.use("/api", require("./routes/join"));
 app.use("/api", require("./routes/chat"));
 app.use("/api", require("./routes/community"));

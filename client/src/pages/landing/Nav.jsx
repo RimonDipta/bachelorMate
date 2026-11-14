@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, Sun, Moon, ArrowRight, ArrowUpRight } from "lucide-react";
+import { Menu, X, Sun, Moon, ArrowRight, ArrowUpRight, Smartphone } from "lucide-react";
 import BrandMark, { Wordmark } from "../../components/BrandMark";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
 import { scrollToId } from "./motion";
+import InstallAppDialog from "../../components/InstallApp";
+import { useInstallPrompt } from "../../lib/pwa";
 
 export function Logo() {
   return (
@@ -45,6 +47,8 @@ export default function Nav() {
   const { user } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const [installOpen, setInstallOpen] = useState(false);
+  const app = useInstallPrompt();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -106,6 +110,11 @@ export default function Nav() {
               </a>
             ))}
             <Link to="/seats" onClick={() => setOpen(false)}>Find a seat <ArrowUpRight /></Link>
+            {app.canInstall && (
+              <button type="button" className="lp-drawer-link" onClick={() => { setOpen(false); setInstallOpen(true); }}>
+                Get the app <Smartphone />
+              </button>
+            )}
           </nav>
           <div className="lp-drawer-cta">
             {user ? (
@@ -119,6 +128,7 @@ export default function Nav() {
           </div>
         </div>
       )}
+      <InstallAppDialog open={installOpen} onClose={() => setInstallOpen(false)} />
     </>
   );
 }

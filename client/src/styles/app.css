@@ -492,3 +492,16 @@ a.list-item:hover { background: var(--surface-hover); text-decoration: none; }
 .brand-svg { display: block; flex-shrink: 0; }
 .wordmark { letter-spacing: -0.02em; }
 .wordmark-mate { font-family: "Instrument Serif", ui-serif, Georgia, serif; font-style: italic; font-weight: 400; font-size: 1.14em; letter-spacing: -0.01em; color: var(--accent-text); }
+
+/* ---------- install the app ---------- */
+.install-perks { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: var(--text-sm); color: var(--text-2); }
+.install-perks li { display: flex; align-items: center; gap: 8px; }
+.install-perks svg { color: var(--accent-text); flex: none; }
+.install-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; font-size: var(--text-sm); }
+.install-steps li { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.install-num { flex: none; width: 22px; height: 22px; border-radius: var(--r-full); display: grid; place-items: center; background: var(--accent-soft); color: var(--accent-text); font-weight: 600; font-size: var(--text-xs); }
+.install-ico { vertical-align: -3px; color: var(--accent-text); }
+
+/* Decorative initials (avatars, home marks) are drawn by CSS so they don't
+   pollute button names for screen readers and voice control. */
+.initials::after { content: attr(data-initials); }

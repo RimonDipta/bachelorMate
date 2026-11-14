@@ -147,7 +147,7 @@ export function MealShowcase() {
         <div className="lp-meal-copy">
           <span className="lp-kicker" data-reveal>Meals, handled</span>
           <h2 className="lp-h2" data-reveal style={{ "--d": "80ms" }} id="meals-title">
-            Who's eating tonight? <span className="lp-serif" style={{ color: "var(--lp-coral)" }}>Sorted.</span>
+            Who's eating tonight? <span className="lp-serif" style={{ color: "var(--lp-coral-ink)" }}>Sorted.</span>
           </h2>
           <div className="lp-meal-points">
             {[

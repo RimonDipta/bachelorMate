@@ -1,0 +1,26 @@
+{
+  "id": "/app",
+  "name": "BachelorMate",
+  "short_name": "BachelorMate",
+  "description": "Meals, rent, bills and chat for your shared home.",
+  "start_url": "/app?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait",
+  "background_color": "#0b0b0f",
+  "theme_color": "#7c3aed",
+  "lang": "en",
+  "categories": ["finance", "lifestyle", "productivity"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "My homes", "short_name": "Homes", "url": "/homes?source=pwa", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Messages", "short_name": "Messages", "url": "/messages?source=pwa", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Notifications", "short_name": "Alerts", "url": "/notifications?source=pwa", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

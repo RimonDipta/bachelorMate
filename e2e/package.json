@@ -1,0 +1,13 @@
+{
+  "name": "bachelormate-e2e",
+  "private": true,
+  "description": "Browser tests: real Chromium against the built app and a throwaway database.",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@playwright/test": "^1.65.1"
+  }
+}
