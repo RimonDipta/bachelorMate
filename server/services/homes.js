@@ -1,3 +1,4 @@
+const { fillTodaysMeals } = require("./mealAutomation");
 const Home = require("../models/Home");
 const Membership = require("../models/Membership");
 const { Conversation } = require("../models/Chat");
@@ -60,6 +61,8 @@ async function joinHome({ home, user, via, invitedBy, profile = {}, forceActive 
     });
   } else {
     realtime.joinHome(user._id, home._id);
+    // New members count for today's meals straight away (from their defaults).
+    await fillTodaysMeals(home).catch(() => {});
     await notifyPermitted(home, "members.view", {
       type: "invitation_accepted",
       title: `${user.name} joined ${home.name}`,
@@ -83,6 +86,7 @@ async function activateMembership(home, membership, actor) {
   membership.joinedAt = new Date();
   await membership.save();
   realtime.joinHome(membership.user, home._id);
+  await fillTodaysMeals(home).catch(() => {});
   await notify([membership.user], {
     type: "membership_approved",
     home: home._id,

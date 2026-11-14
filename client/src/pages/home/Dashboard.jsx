@@ -9,7 +9,7 @@ import { useHome } from "../../context/HomeContext";
 import { useAuth } from "../../context/AuthContext";
 import { useT } from "../../i18n/I18nProvider";
 import { Avatar, Badge, Card, EmptyState, ErrorState, PageSkeleton, Stat } from "../../components/ui";
-import { fmtDay, fmtDayLong, mealTypeLabel, money, num, timeAgo } from "../../lib/format";
+import { fmtDay, fmtDayLong, mealTypeLabel, money, num, periodName, timeAgo } from "../../lib/format";
 import SetupChecklist from "../../components/SetupChecklist";
 import { translateCalendar, translateServer } from "../../i18n/serverText";
 
@@ -54,7 +54,7 @@ export default function Dashboard() {
       <div className="grid-4">
         <Stat icon={Wallet} label={t("common.youNeedToPay")} value={<Link to={`${base}/finance/me`} style={{ color: "inherit" }}>{money(d.finance.myPayable ?? Math.max(0, -bal), currency)}</Link>} hint={bal > 0 ? t("dashboard.advanceCredit", { amount: money(bal, currency) }) : bal < 0 ? t("dashboard.shareAndDues") : t("common.allSettled")} />
         <Stat icon={CalendarRange} label={t("dashboard.spentThisMonth")} value={money(d.month.total, currency)} hint={t("dashboard.onMeals", { amount: money(d.month.meal, currency) })} />
-        <Stat icon={Utensils} label={t("dashboard.mealRateIn", { period: translateServer(d.mealPeriod.name) })} value={money(d.mealPeriod.rate, currency)} hint={t("dashboard.mealsSoFar", { count: d.mealPeriod.chargeableMeals })} />
+        <Stat icon={Utensils} label={t("dashboard.mealRateIn", { period: periodName(d.mealPeriod.name) })} value={money(d.mealPeriod.rate, currency)} hint={t("dashboard.mealsSoFar", { count: d.mealPeriod.chargeableMeals })} />
         <Stat icon={Users} label={t("nav.members")} value={d.memberCount} hint={d.pendingJoins ? t("dashboard.waitingApproval", { count: d.pendingJoins }) : t("dashboard.activeInHome")} />
       </div>
 
@@ -87,7 +87,7 @@ export default function Dashboard() {
           </div>
         </Card>
 
-        <Card className="span-7" title={t("dashboard.mealAccount", { period: translateServer(d.mealPeriod.name) })} actions={<Link to={d.mealPeriod._id ? `${base}/meals/periods/${d.mealPeriod._id}` : `${base}/meals`} className="btn btn-ghost btn-sm">{t("common.details")} <ArrowRight size={14} /></Link>}>
+        <Card className="span-7" title={t("dashboard.mealAccount", { period: periodName(d.mealPeriod.name) })} actions={<Link to={d.mealPeriod._id ? `${base}/meals/periods/${d.mealPeriod._id}` : `${base}/meals`} className="btn btn-ghost btn-sm">{t("common.details")} <ArrowRight size={14} /></Link>}>
           <div className="card-body">
             <div className="grid-2" style={{ gap: 20 }}>
               <div className="col"><span className="text-xs muted">{t("meals.mealExpenses")}</span><span className="strong num text-lg">{money(d.mealPeriod.totalExpense, currency)}</span></div>

@@ -59,6 +59,8 @@ const env = {
   VAPID_SUBJECT: clean(process.env.VAPID_SUBJECT),
   // Optional error tracking (sentry.io free plan). Leave empty to only log errors.
   SENTRY_DSN: clean(process.env.SENTRY_DSN),
+  // Optional: where "Send feedback" messages are emailed (they are always saved in the database).
+  FEEDBACK_EMAIL: clean(process.env.FEEDBACK_EMAIL),
   // Identifies the deployed version in error reports (Render sets RENDER_GIT_COMMIT).
   RELEASE: clean(process.env.RELEASE || process.env.RENDER_GIT_COMMIT)?.slice(0, 12),
   REVIEW_MIN_STAY_DAYS: process.env.REVIEW_MIN_STAY_DAYS !== undefined ? Number(process.env.REVIEW_MIN_STAY_DAYS) : isTest ? 0 : 7,

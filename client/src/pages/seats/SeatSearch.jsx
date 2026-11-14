@@ -6,6 +6,7 @@ import { api, assetUrl } from "../../lib/api";
 import { money, fmtDay, localDay, num } from "../../lib/format";
 import { useT } from "../../i18n/I18nProvider";
 import { useDebounced } from "../../lib/hooks";
+import { normalizeAmount } from "../../lib/money";
 import { AMENITIES, ROOM_TYPES, GENDER } from "../../lib/listing";
 import { Stars } from "../../components/Stars";
 import Nav from "../landing/Nav";
@@ -107,7 +108,7 @@ export default function SeatSearch() {
           {showFilters && (
             <div className="lp-seat-filters">
               <label>{t("listings.city")}<input value={filters.city} onChange={(e) => set("city", e.target.value)} placeholder={t("listings.cityPlaceholder")} /></label>
-              <label>{t("seats.maxRent")}<input inputMode="numeric" value={filters.maxRent} onChange={(e) => set("maxRent", e.target.value.replace(/\D/g, ""))} placeholder="6000" /></label>
+              <label>{t("seats.maxRent")}<input inputMode="numeric" value={filters.maxRent} onChange={(e) => set("maxRent", normalizeAmount(e.target.value).replace(/\D/g, ""))} placeholder="6000" /></label>
               <label>{t("seats.for")}
                 <select value={filters.gender} onChange={(e) => set("gender", e.target.value)}>
                   <option value="">{t("listing.gender.any")}</option><option value="male">{t("seats.male")}</option><option value="female">{t("seats.female")}</option>

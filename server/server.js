@@ -30,7 +30,12 @@ async function start() {
 
   // Post due recurring costs now and then hourly, even for homes nobody opens.
   const { syncAllHomes } = require("./services/recurring");
-  const sweep = () => syncAllHomes().catch((err) => reportError(err, { source: "recurring-sweep" }));
+  const { maintainAllHomes } = require("./services/mealAutomation");
+  const sweep = () => {
+    syncAllHomes().catch((err) => reportError(err, { source: "recurring-sweep" }));
+    // Open this month's meal period and fill today's meals in every home, even ones nobody opens.
+    maintainAllHomes().catch((err) => reportError(err, { source: "meal-sweep" }));
+  };
   sweep();
   setInterval(sweep, 60 * 60 * 1000).unref();
 

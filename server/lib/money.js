@@ -4,10 +4,21 @@ const { badRequest } = require("./http");
 
 const MAX_MINOR = 1e13; // ~100 billion major units – a generous sanity cap.
 
-/** Convert a major-unit input ("120.5", 120.5, "1,200") to integer minor units. */
+const BN_DIGITS = "০১২৩৪৫৬৭৮৯";
+/**
+ * People on a Bangla keyboard type "১,২০০.৫০" or "৳১২০". Map Bangla digits to
+ * 0–9 and drop grouping commas, spaces and the taka sign so it parses like "1200.50".
+ */
+const normalizeAmount = (input) =>
+  String(input)
+    .replace(/[০-৯]/g, (d) => String(BN_DIGITS.indexOf(d)))
+    .replace(/[,\s৳]/g, "");
+
+/** Convert a major-unit input ("120.5", 120.5, "1,200", "১২০.৫০") to integer minor units. */
 function toMinor(input, { allowZero = false, allowNegative = false } = {}) {
   if (input === null || input === undefined || input === "") throw badRequest("Amount is required");
-  const str = String(input).replace(/,/g, "").trim();
+  const str = normalizeAmount(input);
+  if (str === "") throw badRequest("Amount is required");
   if (!/^-?\d+(\.\d{1,2})?$/.test(str)) throw badRequest("Amount must be a number with at most 2 decimals");
   const negative = str.startsWith("-");
   const [whole, frac = ""] = str.replace("-", "").split(".");
@@ -40,4 +51,4 @@ function allocate(total, weights) {
 
 const fromMinor = (minor) => (minor / 100).toFixed(2);
 
-module.exports = { toMinor, allocate, fromMinor };
+module.exports = { toMinor, allocate, fromMinor, normalizeAmount };

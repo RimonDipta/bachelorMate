@@ -1,9 +1,16 @@
 // Client-side mirror of the server's money helpers, used only for live
 // previews. The server recomputes everything authoritatively.
 
-/** "120.5" → 12050, or null when the text isn't a valid amount. */
+const BN_DIGITS = "০১২৩৪৫৬৭৮৯";
+/** "১,২০০.৫০" / "৳ 120" → "1200.50" / "120": Bangla digits to 0–9, no commas, spaces or ৳. Mirrors the server. */
+export const normalizeAmount = (text) =>
+  String(text ?? "")
+    .replace(/[০-৯]/g, (d) => String(BN_DIGITS.indexOf(d)))
+    .replace(/[,\s৳]/g, "");
+
+/** "120.5" or "১২০.৫" → 12050, or null when the text isn't a valid amount. */
 export function parseMinor(text) {
-  const s = String(text ?? "").replace(/,/g, "").trim();
+  const s = normalizeAmount(text);
   if (!/^\d+(\.\d{1,2})?$/.test(s)) return null;
   const [whole, frac = ""] = s.split(".");
   return Number(whole) * 100 + Number((frac + "00").slice(0, 2));

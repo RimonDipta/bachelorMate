@@ -6,7 +6,7 @@ import { api } from "../../lib/api";
 import { useHome } from "../../context/HomeContext";
 import { useAction } from "../../lib/hooks";
 import { Alert, Button, Card, ConfirmDialog, ErrorState, Field, FormModal, Input, PageHeader, PageSkeleton, StatusBadge } from "../../components/ui";
-import { fmtDate, fmtDay, mealTypeLabel, money, num } from "../../lib/format";
+import { fmtDate, fmtDay, mealTypeLabel, money, num, periodName } from "../../lib/format";
 import { useT } from "../../i18n/I18nProvider";
 import { MealStats, MealSummaryTable } from "./Meals";
 
@@ -34,7 +34,7 @@ export default function MealPeriod() {
     <div className="stack-lg">
       <PageHeader
         back={<Link to={`/h/${homeId}/meals`} className="row text-sm muted" style={{ gap: 4 }}><ArrowLeft size={14} /> {t("nav.meals")}</Link>}
-        title={<span className="row">{p.name} <StatusBadge status={p.status} /></span>}
+        title={<span className="row">{periodName(p.name)} <StatusBadge status={p.status} /></span>}
         description={`${fmtDay(p.startDay, { month: "short", day: "numeric", year: "numeric" })} – ${fmtDay(p.endDay, { month: "short", day: "numeric", year: "numeric" })}${closed ? ` · ${t("period.closedOn", { day: fmtDate(p.closedAt) })}${p.closedBy ? ` ${t("period.by", { name: p.closedBy.name || "" })}` : ""}` : ""}`}
         actions={
           can("meals.configure") && (
@@ -61,7 +61,7 @@ export default function MealPeriod() {
         </div>
       </Card>
 
-      <ConfirmDialog open={modal === "close"} onClose={() => setModal(null)} onConfirm={() => close.mutate()} loading={close.isPending} title={t("period.closeTitle", { name: p.name })} confirmLabel={t("period.closeSubmit")}
+      <ConfirmDialog open={modal === "close"} onClose={() => setModal(null)} onConfirm={() => close.mutate()} loading={close.isPending} title={t("period.closeTitle", { name: periodName(p.name) })} confirmLabel={t("period.closeSubmit")}
         description={t("period.closeDesc", { rate: money(s.rate, currency), total: money(s.totalExpense, currency) })} />
       <FormModal open={modal === "reopen"} onClose={() => setModal(null)} title={t("period.reopenTitle")} submitLabel={t("period.reopen")} loading={reopen.isPending} disabled={(form.reason || "").trim().length < 3} onSubmit={() => reopen.mutate()}>
         <Alert tone="warning">{t("period.reopenWarning")}</Alert>

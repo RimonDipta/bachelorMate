@@ -7,7 +7,7 @@ import { useHome } from "../../context/HomeContext";
 import { useAction } from "../../lib/hooks";
 import { useT } from "../../i18n/I18nProvider";
 import { Avatar, Badge, Button, Card, EmptyState, ErrorState, Field, FormModal, Input, LoadingBlock, Money, PageHeader, Stat, StatusBadge } from "../../components/ui";
-import { fmtDay, mealTypeLabel, monthBounds, monthKey, monthLabel, money, num, shiftMonth } from "../../lib/format";
+import { fmtDay, mealTypeLabel, monthBounds, monthKey, monthLabel, money, num, periodName, shiftMonth } from "../../lib/format";
 
 export function MealSummaryTable({ summary, currency, highlight }) {
   const t = useT();
@@ -64,7 +64,7 @@ export function MealStats({ s, currency, mine }) {
 }
 
 export default function Meals() {
-  const { homeId, can, currency, membershipId } = useHome();
+  const { homeId, home, can, currency, membershipId } = useHome();
   const t = useT();
   const [month, setMonth] = useState(monthKey());
   const [modal, setModal] = useState(false);
@@ -120,7 +120,7 @@ export default function Meals() {
               <Link key={p._id} to={`${base}/meals/periods/${p._id}`} className="list-item">
                 {p.status === "closed" ? <Lock size={16} className="subtle" /> : <CalendarRange size={16} className="subtle" />}
                 <div className="grow">
-                  <div className="strong text-sm">{p.name}</div>
+                  <div className="strong text-sm">{periodName(p.name)}</div>
                   <div className="text-xs muted">{fmtDay(p.startDay)} – {fmtDay(p.endDay)}{p.status === "closed" && p.snapshot ? ` · ${t("meals.rateIs", { amount: money(p.snapshot.rate, currency) })}` : ""}</div>
                 </div>
                 <StatusBadge status={p.status} />
@@ -129,6 +129,7 @@ export default function Meals() {
             ))}
           </div>
         )}
+        {home.settings.autoMealPeriods !== false && <div className="card-foot hint">{t("meals.autoPeriodHint")}</div>}
       </Card>
       <FormModal open={modal} onClose={() => setModal(false)} title={t("meals.newPeriodTitle")} description={t("meals.newPeriodHint")} submitLabel={t("meals.createPeriod")} loading={create.isPending} onSubmit={() => create.mutate()}>
         <Field label={t("common.name")}><Input value={form.name || ""} maxLength={60} onChange={(e) => setForm({ ...form, name: e.target.value })} /></Field>

@@ -1,4 +1,5 @@
 import { formatNumber, getLanguage, labelMap, localeTag, translate } from "../i18n";
+import { translateServer } from "../i18n/serverText";
 
 const moneyFormatters = new Map();
 
@@ -104,3 +105,11 @@ export const pluralize = (n, word, plural = `${word}s`) => `${n} ${n === 1 ? wor
 // Homes start with these meal types; a label the admin hasn't renamed is shown in the chosen language.
 const DEFAULT_MEAL_LABELS = { breakfast: "Breakfast", lunch: "Lunch", dinner: "Dinner" };
 export const mealTypeLabel = (t) => (t && DEFAULT_MEAL_LABELS[t.key] === t.label ? translate(`mealTypes.${t.key}`) : t?.label);
+
+const EN_MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+/** Meal period names made automatically are "November 2026"; show those as a month in the chosen language. */
+export const periodName = (name) => {
+  const m = /^([A-Z][a-z]+) (\d{4})$/.exec(name || "");
+  const i = m ? EN_MONTHS.indexOf(m[1]) : -1;
+  return i >= 0 ? monthLabel(`${m[2]}-${String(i + 1).padStart(2, "0")}`) : translateServer(name);
+};

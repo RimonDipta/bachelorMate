@@ -3,6 +3,7 @@ const Membership = require("../models/Membership");
 const Home = require("../models/Home");
 const Session = require("../models/Session");
 const PushSubscription = require("../models/PushSubscription");
+const Feedback = require("../models/Feedback");
 const Invitation = require("../models/Invitation");
 const Request = require("../models/Request");
 const { LedgerEntry, Expense } = require("../models/Finance");
@@ -17,7 +18,7 @@ const { badRequest } = require("../lib/http");
 async function exportUserData(user) {
   const memberships = await Membership.find({ user: user._id }).populate("home", "name currency status").lean();
   const mids = memberships.map((m) => m._id);
-  const [ledger, meals, requests, expenses, messages, homeReviews, reviewsWritten, reviewsAboutMe, friends, listings, notifications] = await Promise.all([
+  const [ledger, meals, requests, expenses, messages, homeReviews, reviewsWritten, reviewsAboutMe, friends, listings, notifications, feedback] = await Promise.all([
     LedgerEntry.find({ membership: { $in: mids } }).sort({ createdAt: 1 }).lean(),
     MealEntry.find({ membership: { $in: mids } }).sort({ day: 1 }).lean(),
     Request.find({ user: user._id }).sort({ createdAt: 1 }).lean(),
@@ -29,6 +30,7 @@ async function exportUserData(user) {
     Friendship.find({ $or: [{ requester: user._id }, { recipient: user._id }] }).populate("requester recipient", "name").lean(),
     Listing.find({ postedBy: user._id }).lean(),
     Notification.find({ user: user._id }).sort({ createdAt: -1 }).limit(500).lean(),
+    Feedback.find({ user: user._id }).select("kind message page createdAt").sort({ createdAt: 1 }).lean(),
   ]);
   return {
     exportedAt: new Date().toISOString(),
@@ -44,6 +46,7 @@ async function exportUserData(user) {
     friends: friends.map((f) => ({ status: f.status, requester: f.requester?.name, recipient: f.recipient?.name, createdAt: f.createdAt })),
     listings,
     notifications,
+    feedback,
   };
 }
 
@@ -89,6 +92,7 @@ async function deleteAccount(user) {
   await Promise.all([
     Session.deleteMany({ user: user._id }),
     PushSubscription.deleteMany({ user: user._id }),
+    Feedback.deleteMany({ user: user._id }),
     Notification.deleteMany({ user: user._id }),
     Friendship.deleteMany({ $or: [{ requester: user._id }, { recipient: user._id }] }),
     ConversationRead.deleteMany({ user: user._id }),
