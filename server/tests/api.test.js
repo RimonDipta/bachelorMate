@@ -121,7 +121,7 @@ describe("BachelorMate API", () => {
       assert.equal(list.body.homes.length, 2);
     });
 
-    it("joins via invitation link with approval", async () => {
+    it("joins via invitation link immediately, even when approval is on", async () => {
       const inv = await A.api.post(`/api/homes/${home._id}/invitations`).send({ kind: "link", expiresInDays: 7, maxUses: 2 });
       assert.equal(inv.status, 201);
       const token = inv.body.token;
@@ -129,17 +129,13 @@ describe("BachelorMate API", () => {
       assert.equal(preview.status, 200);
       assert.equal(preview.body.home.name, "Green Villa");
       assert.deepEqual(preview.body.home.rules, ["Keep the kitchen clean", "Quiet after 11pm"]);
+      assert.equal(preview.body.requiresApproval, false, "links skip approval");
 
       assert.equal((await B.api.post("/api/join").send({ token })).status, 400, "rules must be accepted");
       const join = await B.api.post("/api/join").send({ token, rulesAccepted: true, room: "2B" });
       assert.equal(join.status, 201);
-      assert.equal(join.body.status, "pending");
+      assert.equal(join.body.status, "active");
       assert.equal((await B.api.post("/api/join").send({ token, rulesAccepted: true })).status, 409, "duplicate");
-      assert.equal((await B.api.get(`/api/homes/${home._id}`)).status, 404, "pending members have no access");
-
-      const pending = await A.api.get(`/api/homes/${home._id}/members?status=pending`);
-      const bm = pending.body.members.find((m) => m.user._id === B.user._id);
-      await A.api.post(`/api/homes/${home._id}/members/${bm._id}/approve`).expect(200);
       assert.equal((await B.api.get(`/api/homes/${home._id}`)).status, 200);
 
       // revoke link → unusable
@@ -158,7 +154,9 @@ describe("BachelorMate API", () => {
     it("joins via home code, and without approval when disabled", async () => {
       const code = (await A.api.get(`/api/homes/${home._id}`)).body.home.code;
       assert.ok(code);
-      await C.api.post("/api/join").send({ code, rulesAccepted: true }).expect(201);
+      const joined = await C.api.post("/api/join").send({ code, rulesAccepted: true }).expect(201);
+      assert.equal(joined.body.status, "pending", "code joins follow the approval setting");
+      assert.equal((await C.api.get(`/api/homes/${home._id}`)).status, 404, "pending members have no access");
       const pending = await A.api.get(`/api/homes/${home._id}/members?status=pending`);
       await A.api.post(`/api/homes/${home._id}/members/${pending.body.members[0]._id}/approve`).expect(200);
 

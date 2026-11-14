@@ -88,7 +88,7 @@ function RulesTab() {
         </div>
       </Card>
       <Card pad title="Joining">
-        <SettingRow title="Approve new members" description="Code and link joins wait for an Admin or Manager."><Switch checked={d.requireApproval} onChange={(v) => set("requireApproval", v)} label="Require approval" /></SettingRow>
+        <SettingRow title="Approve code joins" description="People joining with the home code wait for an Admin or Manager. Invite links always join directly."><Switch checked={d.requireApproval} onChange={(v) => set("requireApproval", v)} label="Require approval" /></SettingRow>
         <SettingRow title="Allow joining with the home code" description="Turn off to accept invitation links only."><Switch checked={d.codeJoinEnabled} onChange={(v) => set("codeJoinEnabled", v)} label="Code joining" /></SettingRow>
         <SettingRow title="Members can invite" description="Every member can create invitations and see the home code."><Switch checked={d.allowMemberInvites} onChange={(v) => set("allowMemberInvites", v)} label="Members can invite" /></SettingRow>
       </Card>

@@ -49,7 +49,7 @@ function InviteStep({ home }) {
           <Button size="sm" icon={Copy} onClick={() => copy(home.code)}>Copy</Button>
         </div>
       </Field>
-      <Field label="Invitation link" hint="Valid for 7 days. Anyone with the link can request to join.">
+      <Field label="Invitation link" hint="Valid for 7 days. Anyone with the link joins straight away — share it only with your roommates.">
         {link ? (
           <div className="code-box"><span className="truncate">{link}</span><Button size="sm" icon={Copy} onClick={() => copy(link)}>Copy</Button></div>
         ) : (
@@ -165,7 +165,7 @@ export default function Onboarding() {
                   <Input type="number" min={1} max={28} value={v.paymentDueDay} onChange={(e) => set("paymentDueDay", Math.max(1, Math.min(28, Number(e.target.value) || 1)))} />
                 </Field>
               </div>
-              <SettingRow title="Approve new members" description="People joining with a code or link wait for an Admin or Manager.">
+              <SettingRow title="Approve code joins" description="People joining with the home code wait for an Admin or Manager. Invite links always join directly.">
                 <Switch checked={v.requireApproval} onChange={(x) => set("requireApproval", x)} label="Require approval" />
               </SettingRow>
               <div className="row between">

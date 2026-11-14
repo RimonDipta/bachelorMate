@@ -41,6 +41,16 @@ describe("email verification by code", () => {
       const blocked = await u.api.post("/api/homes").send({ name: "Gated Home" });
       assert.equal(blocked.status, 403);
       assert.equal(blocked.body.code, "EMAIL_NOT_VERIFIED");
+
+      // …but joining a home never needs a verified email.
+      const owner = await registerUser("Owner");
+      await owner.api.post("/api/auth/verify-email-code").send({ code: lastCode(owner.email) }).expect(200);
+      const h = (await owner.api.post("/api/homes").send({ name: "Open Home" })).body.home;
+      const link = await owner.api.post(`/api/homes/${h._id}/invitations`).send({ kind: "link" });
+      const joined = await u.api.post("/api/join").send({ token: link.body.token, rulesAccepted: true });
+      assert.equal(joined.status, 201, "unverified users can join");
+      assert.equal(joined.body.status, "active");
+
       await u.api.post("/api/auth/verify-email-code").send({ code: lastCode(u.email) }).expect(200);
       assert.equal((await u.api.post("/api/homes").send({ name: "Gated Home" })).status, 201);
     } finally {

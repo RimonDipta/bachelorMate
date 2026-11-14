@@ -7,7 +7,6 @@ const Invitation = require("../models/Invitation");
 const { validate, z, objectId, badRequest, notFound } = require("../lib/http");
 const { sha256 } = require("../lib/security");
 const { joinHome } = require("../services/homes");
-const { requireVerified } = require("../middleware/auth");
 const { notify } = require("../services/notify");
 const env = require("../config/env");
 
@@ -19,6 +18,13 @@ const joinLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: env.isTest ? 10
 const target = z
   .object({ token: z.string().min(10).max(100).optional(), code: z.string().trim().toUpperCase().regex(/^[A-Z0-9]{6,10}$/, "Invalid code").optional() })
   .refine((v) => v.token || v.code, "Provide an invitation token or home code");
+
+/**
+ * Invitation links are created by someone allowed to invite, so using one
+ * joins immediately. Joining with the public home code follows the home's
+ * "Approve new members" setting. (Joining never requires a verified email.)
+ */
+const needsApproval = (home, via) => via === "code" && home.settings.requireApproval;
 
 async function resolveTarget({ token, code }) {
   if (token) {
@@ -59,7 +65,7 @@ const preview = async (home, userId) => {
 
 router.get("/join/preview", joinLimiter, validate({ query: target }), async (req, res) => {
   const { home, via } = await resolveTarget(req.v.query);
-  res.json({ home: await preview(home, req.user._id), via, requiresApproval: home.settings.requireApproval });
+  res.json({ home: await preview(home, req.user._id), via, requiresApproval: needsApproval(home, via) });
 });
 
 const profileInput = {
@@ -72,13 +78,12 @@ const profileInput = {
 router.post(
   "/join",
   joinLimiter,
-  requireVerified,
   validate({ body: z.object({ token: z.string().min(10).max(100).optional(), code: z.string().trim().toUpperCase().optional(), ...profileInput }) }),
   async (req, res) => {
     const { token, code, rulesAccepted: _r, ...profile } = req.v.body;
     if (!token && !code) throw badRequest("Provide an invitation token or home code");
     const { home, invitation, via } = await resolveTarget({ token, code });
-    const membership = await joinHome({ home, user: req.user, via, invitedBy: invitation?.createdBy, profile });
+    const membership = await joinHome({ home, user: req.user, via, invitedBy: invitation?.createdBy, profile, forceActive: !needsApproval(home, via) });
     if (invitation) {
       // Atomic increment guards the usage limit against concurrent joins.
       const updated = await Invitation.findOneAndUpdate(
@@ -113,7 +118,6 @@ const findMine = async (req) => {
 
 router.post(
   "/invitations/:id/accept",
-  requireVerified,
   validate({ params: z.object({ id: objectId }), body: z.object(profileInput) }),
   async (req, res) => {
     const inv = await findMine(req);

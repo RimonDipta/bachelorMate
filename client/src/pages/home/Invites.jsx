@@ -49,7 +49,7 @@ export default function Invites() {
         <Card className="span-6" title={<h2 className="row"><KeyRound size={15} /> Home code</h2>} actions={can("invites.manage") && <Button size="sm" variant="ghost" icon={RefreshCw} onClick={() => setConfirmRegen(true)}>Regenerate</Button>}>
           <div className="card-body stack">
             <div className="code-box"><span className="big">{data?.code || home.code || "········"}</span><Button size="sm" icon={Copy} onClick={() => copy(data?.code || home.code)}>Copy</Button></div>
-            <p className="hint">{data?.codeJoinEnabled === false ? "Joining by code is turned off in settings." : home.settings.requireApproval ? "People who join with the code wait for approval." : "People who join with the code become members immediately."}</p>
+            <p className="hint">{data?.codeJoinEnabled === false ? "Joining by code is turned off in settings." : home.settings.requireApproval ? "People who join with the code wait for approval. Invite links join directly." : "Anyone with the code or an invite link joins immediately."}</p>
           </div>
         </Card>
         <Card className="span-6" title={<h2 className="row"><Mail size={15} /> Invite a person</h2>}>
