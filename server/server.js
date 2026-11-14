@@ -24,6 +24,11 @@ async function start() {
   sweep();
   setInterval(sweep, 60 * 60 * 1000).unref();
 
+  // Email setup summary (key masked) so misconfiguration is obvious in the logs.
+  const mail = require("./lib/mailer").mailDiagnostics();
+  console.log(`Email: ${mail.provider}${mail.key ? ` · key ${mail.key}` : ""} · from ${mail.from}`);
+  mail.warnings.forEach((w) => console.warn(`Email warning: ${w}`));
+
   const server = http.createServer(app);
   initSockets(server);
   server.listen(env.PORT, () => console.log(`BachelorMate API listening on http://localhost:${env.PORT}`));

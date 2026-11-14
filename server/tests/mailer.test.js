@@ -45,3 +45,31 @@ test("sends through the Brevo API when BREVO_API_KEY is set", async (t) => {
   }
   assert.equal(mailer.provider(), "test");
 });
+
+test("diagnoses common Brevo key mistakes without revealing the key", async (t) => {
+  const saved = env.BREVO_API_KEY;
+  try {
+    env.BREVO_API_KEY = "xsmtpsib-0123456789abcdef0123456789abcdef-AbCdEf";
+    const d = mailer.mailDiagnostics();
+    assert.equal(d.provider, "brevo");
+    assert.match(d.warnings.join(" "), /SMTP key/);
+    assert.ok(!d.key.includes("0123456789abcdef0123456789abcdef"), "key is masked");
+    t.mock.method(global, "fetch", async () => new Response(JSON.stringify({ message: "Key not found", code: "unauthorized" }), { status: 401 }));
+    const r = await mailer.sendMail({ to: "a@b.com", subject: "x", body: "y" });
+    assert.equal(r.ok, false);
+    assert.match(r.error, /Key not found.*xkeysib-.*looks like the SMTP key/);
+
+    env.BREVO_API_KEY = "xkeysib-goodkey";
+    assert.deepEqual(mailer.mailDiagnostics().warnings, []);
+  } finally {
+    env.BREVO_API_KEY = saved;
+  }
+});
+
+test("cleans pasted secrets", () => {
+  const { clean } = require("../config/env");
+  assert.equal(clean('  "xkeysib-abc"\n'), "xkeysib-abc");
+  assert.equal(clean("'xkeysib-abc'"), "xkeysib-abc");
+  assert.equal(clean('"Rahim" <a@b.com>'), '"Rahim" <a@b.com>');
+  assert.equal(clean("   "), undefined);
+});

@@ -1,6 +1,17 @@
 // Centralised, validated environment configuration.
 require("dotenv").config({ quiet: true });
 
+/**
+ * Cleans pasted secrets: trims whitespace/newlines and removes one pair of
+ * wrapping quotes (a common copy-paste mistake in hosting dashboards).
+ */
+const clean = (v) => {
+  if (v === undefined || v === null) return v;
+  let s = String(v).trim();
+  if (s.length >= 2 && (s[0] === "\"" || s[0] === "'") && s[s.length - 1] === s[0]) s = s.slice(1, -1).trim();
+  return s || undefined;
+};
+
 const bool = (v, def = false) =>
   v === undefined || v === "" ? def : ["1", "true", "yes"].includes(String(v).toLowerCase());
 
@@ -31,13 +42,13 @@ const env = {
   SMTP_SECURE: bool(process.env.SMTP_SECURE, false),
   SMTP_USER: process.env.SMTP_USER,
   SMTP_PASS: process.env.SMTP_PASS,
-  MAIL_FROM: process.env.MAIL_FROM || "BachelorMate <no-reply@bachelormate.local>",
+  MAIL_FROM: clean(process.env.MAIL_FROM) || "BachelorMate <no-reply@bachelormate.local>",
   FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID,
   UPLOAD_DIR: process.env.UPLOAD_DIR || require("path").join(__dirname, "..", "uploads"),
   MAX_UPLOAD_MB: Number(process.env.MAX_UPLOAD_MB) || 5,
   SERVE_CLIENT: bool(process.env.SERVE_CLIENT, false),
-  BREVO_API_KEY: process.env.BREVO_API_KEY,
-  RESEND_API_KEY: process.env.RESEND_API_KEY,
+  BREVO_API_KEY: clean(process.env.BREVO_API_KEY),
+  RESEND_API_KEY: clean(process.env.RESEND_API_KEY),
   MAIL_REPLY_TO: process.env.MAIL_REPLY_TO,
   // When on, unverified accounts can browse but can't create/join homes,
   // post listings or write reviews. Defaults on in production.
@@ -54,3 +65,4 @@ if (isProd && env.JWT_ACCESS_SECRET.length < 32) {
 }
 
 module.exports = env;
+module.exports.clean = clean;

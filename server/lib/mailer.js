@@ -20,6 +20,25 @@ if (!env.BREVO_API_KEY && !env.RESEND_API_KEY && env.SMTP_HOST) {
 const provider = () => (env.BREVO_API_KEY ? "brevo" : env.RESEND_API_KEY ? "resend" : transporter ? "smtp" : env.isTest ? "test" : "console");
 const outbox = [];
 
+/** Shows enough of a secret to recognise it without revealing it: "xkeysib-ab…9f2c (89 chars)". */
+const maskKey = (k) => (k ? `${k.slice(0, 10)}…${k.slice(-4)} (${k.length} chars)` : "not set");
+
+/** Human-readable mail setup summary + likely mistakes (logged at startup). */
+function mailDiagnostics() {
+  const p = provider();
+  const warnings = [];
+  if (p === "brevo") {
+    const k = env.BREVO_API_KEY;
+    if (k.startsWith("xsmtpsib-")) warnings.push("BREVO_API_KEY is the SMTP key (xsmtpsib-…). Create an API key (xkeysib-…) under Brevo → SMTP & API → API keys.");
+    else if (!k.startsWith("xkeysib-")) warnings.push("BREVO_API_KEY does not start with xkeysib- — it is probably not a Brevo API key.");
+    if (/\s/.test(k)) warnings.push("BREVO_API_KEY contains spaces or line breaks.");
+  }
+  if ((p === "brevo" || p === "resend") && !/@/.test(env.MAIL_FROM)) warnings.push("MAIL_FROM has no email address.");
+  if (p === "console" && env.isProd) warnings.push("No email provider configured — emails are only printed to these logs.");
+  const key = p === "brevo" ? env.BREVO_API_KEY : p === "resend" ? env.RESEND_API_KEY : undefined;
+  return { provider: p, from: env.MAIL_FROM, key: key ? maskKey(key) : undefined, warnings };
+}
+
 /** "BachelorMate <me@gmail.com>" → { name: "BachelorMate", email: "me@gmail.com" } */
 function parseAddress(value) {
   const m = /^\s*"?([^"<]*?)"?\s*<([^>]+)>\s*$/.exec(value || "");
@@ -86,7 +105,11 @@ async function sendMail(msg) {
         signal: AbortSignal.timeout(10000),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.message || `Brevo responded ${res.status}`);
+      if (!res.ok) {
+        let reason = data.message || `Brevo responded ${res.status}`;
+        if (res.status === 401) reason += ` — check BREVO_API_KEY (${maskKey(env.BREVO_API_KEY)}). It must be an API key starting with "xkeysib-" from Brevo → SMTP & API → API keys${String(env.BREVO_API_KEY).startsWith("xsmtpsib-") ? "; this looks like the SMTP key" : ""}.`;
+        throw new Error(reason);
+      }
       return { ok: true, provider: p, id: data.messageId };
     }
     if (p === "resend") {
@@ -108,4 +131,4 @@ async function sendMail(msg) {
   }
 }
 
-module.exports = { sendMail, outbox, layout, provider, esc, parseAddress, brevoPayload };
+module.exports = { sendMail, outbox, layout, provider, esc, parseAddress, brevoPayload, mailDiagnostics, maskKey };
